@@ -7,6 +7,7 @@ import { ImportPage } from '@/pages/import-page';
 import { ImportAIPage } from '@/pages/import-ai-page';
 import { ImportFilePage } from '@/pages/import-file-page';
 import { ImportPreviewPage } from '@/pages/import-preview-page';
+import { SettingsPage } from '@/pages/settings-page';
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
         <Route path="/import/ai" element={<ImportAIPage />} />
         <Route path="/import/file" element={<ImportFilePage />} />
         <Route path="/import/preview" element={<ImportPreviewPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
       </Routes>
     </BrowserRouter>
   );

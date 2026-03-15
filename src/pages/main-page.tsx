@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
 import { HeroIncome } from '@/components/main/hero-income';
 import { CategoryCard } from '@/components/main/category-card';
 import { IncomeChart } from '@/components/shared/income-chart';
 import { usePortfolioStats } from '@/hooks/use-portfolio-stats';
 import { useMoexSync } from '@/hooks/use-moex-sync';
+import { getAppSettings } from '@/services/app-settings';
 
 function formatSyncTime(date: Date): string {
   const d = date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
@@ -16,6 +17,19 @@ export function MainPage() {
   const [mode, setMode] = useState<'month' | 'year'>('month');
   const { portfolio, categories } = usePortfolioStats();
   const { syncing, lastSyncAt, error, sync } = useMoexSync();
+
+  const autoSyncDone = useRef(false);
+  useEffect(() => {
+    if (autoSyncDone.current) return;
+    autoSyncDone.current = true;
+    getAppSettings().then((s) => {
+      if (s.autoMoexSync) sync();
+    });
+  }, []);
+
+  useEffect(() => {
+    getAppSettings().then((s) => setMode(s.defaultPeriod));
+  }, []);
 
   const income =
     mode === 'month'
