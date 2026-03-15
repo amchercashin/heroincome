@@ -7,7 +7,7 @@ export interface ISSBlock {
   data: (string | number | null)[][];
 }
 
-interface ISSResponse {
+export interface ISSResponse {
   [blockName: string]: ISSBlock;
 }
 
