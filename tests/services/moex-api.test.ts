@@ -1,8 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
   parseISSBlock,
   calcDividendFrequency,
   parseDividendHistory,
+  resolveSecurityInfo,
+  fetchStockPrice,
+  fetchBondData,
+  fetchDividends,
 } from '@/services/moex-api';
 
 describe('parseISSBlock', () => {
@@ -105,5 +109,149 @@ describe('parseDividendHistory', () => {
     const result = parseDividendHistory(rows, today);
     expect(result!.lastPaymentAmount).toBe(34.84);
     expect(result!.frequencyPerYear).toBe(1);
+  });
+});
+
+function mockFetch(body: object) {
+  return vi
+    .fn()
+    .mockResolvedValue({ ok: true, json: () => Promise.resolve(body) });
+}
+
+describe('resolveSecurityInfo', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('resolves stock ticker to TQBR/shares', async () => {
+    vi.stubGlobal('fetch', mockFetch({
+      securities: {
+        columns: ['secid', 'primary_boardid', 'group', 'is_traded'],
+        data: [
+          ['FIXSBER', 'INPF', 'stock_index', 1],
+          ['SBER', 'TQBR', 'stock_shares', 1],
+        ],
+      },
+    }));
+    const result = await resolveSecurityInfo('SBER');
+    expect(result).toEqual({ secid: 'SBER', primaryBoardId: 'TQBR', market: 'shares' });
+  });
+
+  it('resolves bond ticker to TQOB/bonds', async () => {
+    vi.stubGlobal('fetch', mockFetch({
+      securities: {
+        columns: ['secid', 'primary_boardid', 'group', 'is_traded'],
+        data: [['SU26238RMFS4', 'TQOB', 'stock_bonds', 1]],
+      },
+    }));
+    const result = await resolveSecurityInfo('SU26238RMFS4');
+    expect(result).toEqual({ secid: 'SU26238RMFS4', primaryBoardId: 'TQOB', market: 'bonds' });
+  });
+
+  it('returns null for unknown ticker', async () => {
+    vi.stubGlobal('fetch', mockFetch({
+      securities: { columns: ['secid', 'primary_boardid', 'group', 'is_traded'], data: [] },
+    }));
+    expect(await resolveSecurityInfo('XXXXX')).toBeNull();
+  });
+
+  it('returns null on network error', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Network error')));
+    expect(await resolveSecurityInfo('SBER')).toBeNull();
+  });
+
+  it('returns null for unsupported board', async () => {
+    vi.stubGlobal('fetch', mockFetch({
+      securities: {
+        columns: ['secid', 'primary_boardid', 'group', 'is_traded'],
+        data: [['THING', 'XXXX', 'currency_metal', 1]],
+      },
+    }));
+    expect(await resolveSecurityInfo('THING')).toBeNull();
+  });
+});
+
+describe('fetchStockPrice', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('returns LAST price when available', async () => {
+    vi.stubGlobal('fetch', mockFetch({
+      securities: { columns: ['SECID', 'PREVPRICE'], data: [['SBER', 316.65]] },
+      marketdata: { columns: ['SECID', 'LAST', 'LCURRENTPRICE'], data: [['SBER', 317.63, 317.54]] },
+    }));
+    const result = await fetchStockPrice('SBER', 'TQBR');
+    expect(result).toEqual({ currentPrice: 317.63, prevPrice: 316.65 });
+  });
+
+  it('falls back to LCURRENTPRICE when LAST is null', async () => {
+    vi.stubGlobal('fetch', mockFetch({
+      securities: { columns: ['SECID', 'PREVPRICE'], data: [['SBER', 316.65]] },
+      marketdata: { columns: ['SECID', 'LAST', 'LCURRENTPRICE'], data: [['SBER', null, 317.54]] },
+    }));
+    const result = await fetchStockPrice('SBER', 'TQBR');
+    expect(result!.currentPrice).toBe(317.54);
+  });
+
+  it('returns null on error', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('fail')));
+    expect(await fetchStockPrice('SBER', 'TQBR')).toBeNull();
+  });
+});
+
+describe('fetchBondData', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('returns bond price and coupon info', async () => {
+    vi.stubGlobal('fetch', mockFetch({
+      securities: {
+        columns: ['SECID', 'PREVPRICE', 'FACEVALUE', 'COUPONVALUE', 'NEXTCOUPON', 'COUPONPERIOD'],
+        data: [['SU26238RMFS4', 61.107, 1000, 35.4, '2026-06-03', 182]],
+      },
+      marketdata: {
+        columns: ['SECID', 'LAST', 'LCURRENTPRICE'],
+        data: [['SU26238RMFS4', 61.5, null]],
+      },
+    }));
+    const result = await fetchBondData('SU26238RMFS4', 'TQOB');
+    expect(result).toEqual({
+      currentPrice: 61.5, prevPrice: 61.107,
+      faceValue: 1000, couponValue: 35.4,
+      nextCouponDate: '2026-06-03', couponPeriod: 182,
+    });
+  });
+
+  it('returns null on error', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('fail')));
+    expect(await fetchBondData('SU26238RMFS4', 'TQOB')).toBeNull();
+  });
+});
+
+describe('fetchDividends', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('fetches and parses dividend history', async () => {
+    vi.stubGlobal('fetch', mockFetch({
+      dividends: {
+        columns: ['secid', 'isin', 'registryclosedate', 'value', 'currencyid'],
+        data: [
+          ['SBER', 'RU0009029540', '2024-07-11', 33.3, 'RUB'],
+          ['SBER', 'RU0009029540', '2025-07-18', 34.84, 'RUB'],
+        ],
+      },
+    }));
+    const result = await fetchDividends('SBER');
+    expect(result).not.toBeNull();
+    expect(result!.lastPaymentAmount).toBe(34.84);
+    expect(result!.frequencyPerYear).toBe(1);
+  });
+
+  it('returns null for empty dividend list', async () => {
+    vi.stubGlobal('fetch', mockFetch({
+      dividends: { columns: ['secid', 'registryclosedate', 'value', 'currencyid'], data: [] },
+    }));
+    expect(await fetchDividends('SBER')).toBeNull();
+  });
+
+  it('returns null on network error', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('fail')));
+    expect(await fetchDividends('SBER')).toBeNull();
   });
 });

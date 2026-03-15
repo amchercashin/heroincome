@@ -137,8 +137,112 @@ export function parseDividendHistory(
   };
 }
 
-// Export base URL for use in fetch functions (Task 2)
-export { MOEX_BASE_URL };
+// ============ ISS Fetch Helper ============
 
-// Export resolveMarket for use in security lookup (Task 2)
-export { resolveMarket };
+async function fetchISS(
+  path: string,
+  params?: Record<string, string>,
+): Promise<ISSResponse | null> {
+  const url = new URL(`${MOEX_BASE_URL}${path}`);
+  url.searchParams.set('iss.meta', 'off');
+  if (params) {
+    for (const [key, val] of Object.entries(params)) {
+      url.searchParams.set(key, val);
+    }
+  }
+  try {
+    const res = await fetch(url.toString());
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+// ============ Fetch Functions ============
+
+export async function resolveSecurityInfo(
+  ticker: string,
+): Promise<SecurityInfo | null> {
+  const data = await fetchISS('/securities.json', {
+    q: ticker,
+    'securities.columns': 'secid,primary_boardid,group,is_traded',
+  });
+  if (!data?.securities) return null;
+
+  const rows = parseISSBlock(data.securities);
+  const match = rows.find(
+    (r) => r.secid === ticker && r.is_traded === 1,
+  );
+  if (!match) return null;
+
+  const boardId = match.primary_boardid as string;
+  const group = match.group as string;
+  const market = resolveMarket(boardId, group);
+  if (!market) return null;
+
+  return { secid: ticker, primaryBoardId: boardId, market };
+}
+
+export async function fetchStockPrice(
+  ticker: string,
+  boardId: string,
+): Promise<StockPriceResult | null> {
+  const data = await fetchISS(
+    `/engines/stock/markets/shares/boards/${boardId}/securities/${ticker}.json`,
+    {
+      'marketdata.columns': 'SECID,LAST,LCURRENTPRICE',
+      'securities.columns': 'SECID,PREVPRICE',
+    },
+  );
+  if (!data?.marketdata || !data?.securities) return null;
+
+  const md = parseISSBlock(data.marketdata)[0];
+  const sec = parseISSBlock(data.securities)[0];
+  if (!md && !sec) return null;
+
+  return {
+    currentPrice: (md?.LAST ?? md?.LCURRENTPRICE ?? null) as number | null,
+    prevPrice: (sec?.PREVPRICE ?? null) as number | null,
+  };
+}
+
+export async function fetchBondData(
+  ticker: string,
+  boardId: string,
+): Promise<BondDataResult | null> {
+  const data = await fetchISS(
+    `/engines/stock/markets/bonds/boards/${boardId}/securities/${ticker}.json`,
+    {
+      'marketdata.columns': 'SECID,LAST,LCURRENTPRICE',
+      'securities.columns':
+        'SECID,PREVPRICE,FACEVALUE,COUPONVALUE,NEXTCOUPON,COUPONPERIOD',
+    },
+  );
+  if (!data?.securities) return null;
+
+  const md = data.marketdata ? parseISSBlock(data.marketdata)[0] : null;
+  const sec = parseISSBlock(data.securities)[0];
+  if (!sec) return null;
+
+  return {
+    currentPrice: (md?.LAST ?? md?.LCURRENTPRICE ?? null) as number | null,
+    prevPrice: (sec?.PREVPRICE ?? null) as number | null,
+    faceValue: sec.FACEVALUE as number,
+    couponValue: sec.COUPONVALUE as number,
+    nextCouponDate: (sec.NEXTCOUPON as string) ?? null,
+    couponPeriod: sec.COUPONPERIOD as number,
+  };
+}
+
+export async function fetchDividends(
+  ticker: string,
+): Promise<DividendInfo | null> {
+  const data = await fetchISS(`/securities/${ticker}/dividends.json`);
+  if (!data?.dividends) return null;
+
+  const rows = parseISSBlock(data.dividends);
+  if (rows.length === 0) return null;
+
+  return parseDividendHistory(rows);
+}
