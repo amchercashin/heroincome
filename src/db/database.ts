@@ -19,6 +19,13 @@ class CashFlowDB extends Dexie {
     this.version(2).stores({
       assets: '++id, type, ticker, isin',
     });
+    this.version(3).stores({
+      assets: '++id, type, ticker, isin',
+      paymentSchedules: '++id, assetId',
+      paymentHistory: '++id, [assetId+date]',
+      importRecords: '++id, date',
+      settings: 'key',
+    });
   }
 }
 

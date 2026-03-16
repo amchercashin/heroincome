@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import Dexie from 'dexie';
 import { db } from '@/db/database';
 import type { Asset } from '@/models/types';
 
@@ -69,5 +70,43 @@ describe('Database', () => {
 
     const bonds = await db.assets.where('type').equals('bond').toArray();
     expect(bonds).toHaveLength(1);
+  });
+});
+
+describe('schema v3', () => {
+  beforeEach(async () => {
+    await db.delete();
+    await db.open();
+  });
+
+  it('stores and retrieves forecast fields on PaymentSchedule', async () => {
+    const id = await db.paymentSchedules.add({
+      assetId: 1,
+      frequencyPerYear: 1,
+      lastPaymentAmount: 50,
+      forecastMethod: 'manual',
+      forecastAmount: 100,
+      activeMetric: 'forecast',
+      dataSource: 'manual',
+    });
+    const record = await db.paymentSchedules.get(id);
+    expect(record!.forecastMethod).toBe('manual');
+    expect(record!.forecastAmount).toBe(100);
+    expect(record!.activeMetric).toBe('forecast');
+  });
+
+  it('queries paymentHistory by compound index [assetId+date]', async () => {
+    const cutoff = new Date('2025-03-01');
+    await db.paymentHistory.bulkAdd([
+      { assetId: 1, amount: 10, date: new Date('2025-01-15'), type: 'dividend', dataSource: 'moex' },
+      { assetId: 1, amount: 20, date: new Date('2025-06-15'), type: 'dividend', dataSource: 'moex' },
+      { assetId: 2, amount: 30, date: new Date('2025-02-01'), type: 'coupon', dataSource: 'moex' },
+    ]);
+    const results = await db.paymentHistory
+      .where('[assetId+date]')
+      .between([1, cutoff], [1, Dexie.maxKey])
+      .toArray();
+    expect(results).toHaveLength(1);
+    expect(results[0].amount).toBe(20);
   });
 });

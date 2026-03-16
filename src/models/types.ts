@@ -50,6 +50,9 @@ export interface PaymentSchedule {
   nextExpectedCutoffDate?: Date;
   nextExpectedCreditDate?: Date;
   dataSource: DataSource;
+  forecastMethod?: 'none' | 'manual' | 'decay';
+  forecastAmount?: number | null;
+  activeMetric?: 'fact' | 'forecast';
 }
 
 export interface PaymentHistory {
