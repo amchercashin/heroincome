@@ -5,7 +5,8 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatCurrency(value: number): string {
+export function formatCurrency(value: number | null | undefined): string {
+  if (value == null) return '—';
   if (Math.abs(value) >= 1_000_000) {
     return `₽ ${(value / 1_000_000).toFixed(1)}M`;
   }
@@ -15,12 +16,14 @@ export function formatCurrency(value: number): string {
   return `₽ ${Math.round(value).toLocaleString('ru-RU')}`;
 }
 
-export function formatCurrencyFull(value: number): string {
+export function formatCurrencyFull(value: number | null | undefined): string {
+  if (value == null) return '—';
   return `₽ ${Math.round(value).toLocaleString('ru-RU')}`;
 }
 
-export function formatPercent(value: number): string {
-  return `${value.toFixed(1)}%`;
+export function formatPercent(value: number | null | undefined): string {
+  if (value == null) return '—';
+  return `${(Math.round(value * 10) / 10).toFixed(1)}%`;
 }
 
 export function formatFrequency(perYear: number): string {
