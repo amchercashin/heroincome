@@ -11,9 +11,11 @@ interface AssetRowProps {
 export function AssetRow({ asset, schedule }: AssetRowProps) {
   const incomePerMonth = schedule
     ? calcAssetIncomePerMonth(asset.quantity, schedule.lastPaymentAmount, schedule.frequencyPerYear)
-    : 0;
-  const incomePerYear = incomePerMonth * 12;
-  const value = (asset.currentPrice ?? asset.averagePrice ?? 0) * asset.quantity;
+    : null;
+  const incomePerYear = incomePerMonth != null ? incomePerMonth * 12 : null;
+  const value = (asset.currentPrice ?? asset.averagePrice) != null
+    ? (asset.currentPrice ?? asset.averagePrice)! * asset.quantity
+    : null;
 
   return (
     <Link
