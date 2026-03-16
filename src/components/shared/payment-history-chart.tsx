@@ -38,15 +38,15 @@ export function PaymentHistoryChart({ history, quantity }: PaymentHistoryChartPr
       )}
       <div className="flex items-end gap-1.5" style={{ height: 120 }}>
         {years.map((year, i) => {
-          const height = Math.max((values[i] / maxValue) * 100, 2);
+          const heightPx = Math.max(Math.round((values[i] / maxValue) * 100), 3);
           return (
-            <div key={year} className="flex-1 flex flex-col items-center gap-1">
+            <div key={year} className="flex-1 flex flex-col items-center justify-end" style={{ height: '100%' }}>
               <div
-                className="w-full bg-[#4ecca3] rounded-t"
-                style={{ height: `${height}%` }}
+                className="w-full bg-[#4ecca3] rounded-t min-w-[4px]"
+                style={{ height: heightPx }}
                 title={formatCurrency(values[i])}
               />
-              <span className="text-[9px] text-gray-500">
+              <span className="text-[9px] text-gray-500 mt-1 shrink-0">
                 &apos;{String(year).slice(2)}
               </span>
             </div>

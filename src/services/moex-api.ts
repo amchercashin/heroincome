@@ -281,8 +281,9 @@ export async function fetchCouponHistory(
     const data = await fetchISS(`/securities/${secid}/bondization.json`);
     if (!data?.coupons) return [];
     const rows = parseISSBlock(data.coupons);
+    const now = new Date();
     return rows
-      .filter((r: Record<string, unknown>) => r.coupondate && r.value_rub != null)
+      .filter((r: Record<string, unknown>) => r.coupondate && r.value_rub != null && new Date(r.coupondate as string) <= now)
       .map((r: Record<string, unknown>) => ({
         date: new Date(r.coupondate as string),
         amount: r.value_rub as number,
