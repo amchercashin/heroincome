@@ -7,6 +7,7 @@ import {
   fetchStockPrice,
   fetchBondData,
   fetchDividends,
+  fetchCouponHistory,
 } from '@/services/moex-api';
 
 describe('parseISSBlock', () => {
@@ -268,8 +269,8 @@ describe('fetchDividends', () => {
     }));
     const result = await fetchDividends('SBER');
     expect(result).not.toBeNull();
-    expect(result!.lastPaymentAmount).toBe(34.84);
-    expect(result!.frequencyPerYear).toBe(1);
+    expect(result!.summary.lastPaymentAmount).toBe(34.84);
+    expect(result!.summary.frequencyPerYear).toBe(1);
   });
 
   it('returns null for empty dividend list', async () => {
@@ -282,5 +283,52 @@ describe('fetchDividends', () => {
   it('returns null on network error', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('fail')));
     expect(await fetchDividends('SBER')).toBeNull();
+  });
+});
+
+describe('fetchDividends (with raw rows)', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('returns both summary and raw history rows', async () => {
+    vi.stubGlobal('fetch', mockFetch({
+      dividends: {
+        columns: ['secid', 'isin', 'registryclosedate', 'value', 'currencyid'],
+        data: [
+          ['SBER', 'RU0009029540', '2024-07-11', 33.3, 'RUB'],
+          ['SBER', 'RU0009029540', '2025-07-18', 34.84, 'RUB'],
+        ],
+      },
+    }));
+    const result = await fetchDividends('SBER');
+    expect(result).not.toBeNull();
+    expect(result!.summary.lastPaymentAmount).toBe(34.84);
+    expect(result!.history).toHaveLength(2);
+    expect(result!.history[0]).toEqual({ date: new Date('2024-07-11'), amount: 33.3 });
+    expect(result!.history[1]).toEqual({ date: new Date('2025-07-18'), amount: 34.84 });
+  });
+});
+
+describe('fetchCouponHistory', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('returns coupon payment history from bondization endpoint', async () => {
+    vi.stubGlobal('fetch', mockFetch({
+      coupons: {
+        columns: ['isin', 'coupondate', 'value_rub', 'value'],
+        data: [
+          ['RU000A0JV4Q1', '2025-06-03', 35.4, 35.4],
+          ['RU000A0JV4Q1', '2025-12-03', 35.4, 35.4],
+          ['RU000A0JV4Q1', '2026-06-03', null, null],
+        ],
+      },
+    }));
+    const result = await fetchCouponHistory('SU26238RMFS4');
+    expect(result).toHaveLength(2);
+    expect(result[0]).toEqual({ date: new Date('2025-06-03'), amount: 35.4 });
+  });
+
+  it('returns empty array on error', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('fail')));
+    expect(await fetchCouponHistory('SU26238RMFS4')).toEqual([]);
   });
 });

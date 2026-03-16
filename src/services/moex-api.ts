@@ -39,6 +39,16 @@ export interface DividendInfo {
   nextExpectedCutoffDate: Date | null;
 }
 
+export interface DividendHistoryRow {
+  date: Date;
+  amount: number;
+}
+
+export interface DividendResult {
+  summary: DividendInfo;
+  history: DividendHistoryRow[];
+}
+
 // ============ Board → Market mapping ============
 
 const BOARD_TO_MARKET: Record<string, 'shares' | 'bonds'> = {
@@ -241,13 +251,44 @@ export async function fetchBondData(
 }
 
 export async function fetchDividends(
-  ticker: string,
-): Promise<DividendInfo | null> {
-  const data = await fetchISS(`/securities/${ticker}/dividends.json`);
-  if (!data?.dividends) return null;
+  secid: string,
+): Promise<DividendResult | null> {
+  try {
+    const data = await fetchISS(`/securities/${secid}/dividends.json`);
+    if (!data?.dividends) return null;
+    const rows = parseISSBlock(data.dividends);
+    const summary = parseDividendHistory(rows);
+    if (!summary) return null;
 
-  const rows = parseISSBlock(data.dividends);
-  if (rows.length === 0) return null;
+    const history: DividendHistoryRow[] = rows
+      .filter((r: Record<string, unknown>) => r.registryclosedate && r.value != null)
+      .map((r: Record<string, unknown>) => ({
+        date: new Date(r.registryclosedate as string),
+        amount: r.value as number,
+      }))
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
 
-  return parseDividendHistory(rows);
+    return { summary, history };
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchCouponHistory(
+  secid: string,
+): Promise<DividendHistoryRow[]> {
+  try {
+    const data = await fetchISS(`/securities/${secid}/bondization.json`);
+    if (!data?.coupons) return [];
+    const rows = parseISSBlock(data.coupons);
+    return rows
+      .filter((r: Record<string, unknown>) => r.coupondate && r.value_rub != null)
+      .map((r: Record<string, unknown>) => ({
+        date: new Date(r.coupondate as string),
+        amount: r.value_rub as number,
+      }))
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+  } catch {
+    return [];
+  }
 }

@@ -96,10 +96,10 @@ async function syncStock(secid: string, asset: Asset, boardId: string): Promise<
   const divInfo = await fetchDividends(secid);
   if (divInfo) {
     await upsertMoexSchedule(asset.id!, {
-      frequencyPerYear: divInfo.frequencyPerYear,
-      lastPaymentAmount: divInfo.lastPaymentAmount,
-      lastPaymentDate: divInfo.lastPaymentDate,
-      nextExpectedCutoffDate: divInfo.nextExpectedCutoffDate ?? undefined,
+      frequencyPerYear: divInfo.summary.frequencyPerYear,
+      lastPaymentAmount: divInfo.summary.lastPaymentAmount,
+      lastPaymentDate: divInfo.summary.lastPaymentDate,
+      nextExpectedCutoffDate: divInfo.summary.nextExpectedCutoffDate ?? undefined,
     });
   }
 }

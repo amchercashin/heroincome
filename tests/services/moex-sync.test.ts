@@ -7,6 +7,7 @@ vi.mock('@/services/moex-api', () => ({
   fetchStockPrice: vi.fn(),
   fetchBondData: vi.fn(),
   fetchDividends: vi.fn(),
+  fetchCouponHistory: vi.fn().mockResolvedValue([]),
 }));
 
 import {
@@ -14,6 +15,7 @@ import {
   fetchStockPrice,
   fetchBondData,
   fetchDividends,
+  fetchCouponHistory,
 } from '@/services/moex-api';
 import { syncAllAssets, getLastSyncAt } from '@/services/moex-sync';
 
@@ -45,10 +47,8 @@ describe('syncAllAssets', () => {
       prevPrice: 316.65,
     });
     (fetchDividends as Mock).mockResolvedValue({
-      lastPaymentAmount: 34.84,
-      lastPaymentDate: new Date('2025-07-18'),
-      frequencyPerYear: 1,
-      nextExpectedCutoffDate: null,
+      summary: { lastPaymentAmount: 34.84, lastPaymentDate: new Date('2025-07-18'), frequencyPerYear: 1, nextExpectedCutoffDate: null },
+      history: [{ date: new Date('2025-07-18'), amount: 34.84 }],
     });
 
     const result = await syncAllAssets();
@@ -172,10 +172,8 @@ describe('syncAllAssets', () => {
       prevPrice: 316.65,
     });
     (fetchDividends as Mock).mockResolvedValue({
-      lastPaymentAmount: 34.84,
-      lastPaymentDate: new Date('2025-07-18'),
-      frequencyPerYear: 1,
-      nextExpectedCutoffDate: null,
+      summary: { lastPaymentAmount: 34.84, lastPaymentDate: new Date('2025-07-18'), frequencyPerYear: 1, nextExpectedCutoffDate: null },
+      history: [{ date: new Date('2025-07-18'), amount: 34.84 }],
     });
 
     await syncAllAssets();
@@ -250,10 +248,8 @@ describe('syncAllAssets', () => {
       prevPrice: 316.65,
     });
     (fetchDividends as Mock).mockResolvedValue({
-      lastPaymentAmount: 34.84,
-      lastPaymentDate: new Date('2025-07-18'),
-      frequencyPerYear: 1,
-      nextExpectedCutoffDate: null,
+      summary: { lastPaymentAmount: 34.84, lastPaymentDate: new Date('2025-07-18'), frequencyPerYear: 1, nextExpectedCutoffDate: null },
+      history: [{ date: new Date('2025-07-18'), amount: 34.84 }],
     });
 
     await syncAllAssets();
