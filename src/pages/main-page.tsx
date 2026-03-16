@@ -6,6 +6,9 @@ import { PaymentHistoryChart } from '@/components/shared/payment-history-chart';
 import { usePortfolioStats } from '@/hooks/use-portfolio-stats';
 import { useMoexSync } from '@/hooks/use-moex-sync';
 import { getAppSettings } from '@/services/app-settings';
+import { useAllPaymentHistory } from '@/hooks/use-payment-history';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '@/db/database';
 
 function formatSyncTime(date: Date): string {
   const d = date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
@@ -17,6 +20,14 @@ export function MainPage() {
   const [mode, setMode] = useState<'month' | 'year'>('month');
   const { portfolio, categories } = usePortfolioStats();
   const { syncing, lastSyncAt, error, sync } = useMoexSync();
+  const allHistory = useAllPaymentHistory();
+  const assets = useLiveQuery(() => db.assets.toArray(), [], []);
+
+  const assetMap = new Map(assets.map((a) => [a.id!, a.quantity]));
+  const portfolioHistory = (allHistory ?? []).map((h) => ({
+    amount: h.amount * (assetMap.get(h.assetId) ?? 1),
+    date: new Date(h.date),
+  }));
 
   const autoSyncDone = useRef(false);
   useEffect(() => {
@@ -84,7 +95,7 @@ export function MainPage() {
         ))}
       </div>
 
-      <PaymentHistoryChart history={[]} quantity={1} />
+      <PaymentHistoryChart history={portfolioHistory} quantity={1} />
     </AppShell>
   );
 }

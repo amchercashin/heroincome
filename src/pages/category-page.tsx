@@ -6,6 +6,7 @@ import { AssetRow } from '@/components/category/asset-row';
 import { useAssetsByType } from '@/hooks/use-assets';
 import { useAllPaymentSchedules } from '@/hooks/use-payment-schedules';
 import { usePortfolioStats } from '@/hooks/use-portfolio-stats';
+import { useAllPaymentHistory } from '@/hooks/use-payment-history';
 import { ASSET_TYPE_LABELS, type AssetType } from '@/models/types';
 
 export function CategoryPage() {
@@ -15,9 +16,19 @@ export function CategoryPage() {
   const assets = useAssetsByType(assetType);
   const schedules = useAllPaymentSchedules();
   const { categories } = usePortfolioStats();
+  const allHistory = useAllPaymentHistory();
 
   const catStats = categories.find((c) => c.type === assetType);
   const scheduleMap = new Map(schedules.map((s) => [s.assetId, s]));
+
+  const categoryAssetIds = new Set(assets.map((a) => a.id!));
+  const assetMap = new Map(assets.map((a) => [a.id!, a.quantity]));
+  const categoryHistory = (allHistory ?? [])
+    .filter((h) => categoryAssetIds.has(h.assetId))
+    .map((h) => ({
+      amount: h.amount * (assetMap.get(h.assetId) ?? 1),
+      date: new Date(h.date),
+    }));
 
   const backButton = (
     <button onClick={() => navigate(-1)} className="text-gray-400 text-lg" aria-label="Назад">
@@ -50,7 +61,7 @@ export function CategoryPage() {
         + Добавить
       </Link>
 
-      <PaymentHistoryChart history={[]} quantity={1} />
+      <PaymentHistoryChart history={categoryHistory} quantity={1} />
     </AppShell>
   );
 }
