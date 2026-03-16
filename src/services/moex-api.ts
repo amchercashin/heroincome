@@ -162,26 +162,31 @@ async function fetchISS(
 // ============ Fetch Functions ============
 
 export async function resolveSecurityInfo(
-  ticker: string,
+  query: string,
 ): Promise<SecurityInfo | null> {
   const data = await fetchISS('/securities.json', {
-    q: ticker,
+    q: query,
     'securities.columns': 'secid,primary_boardid,group,is_traded',
   });
   if (!data?.securities) return null;
 
   const rows = parseISSBlock(data.securities);
-  const match = rows.find(
-    (r) => r.secid === ticker && r.is_traded === 1,
+
+  // Exact secid match first (for ticker queries)
+  const exactMatch = rows.find(
+    (r) => r.secid === query && r.is_traded === 1,
   );
+  // Fallback: first traded result (for ISIN queries where secid differs)
+  const match = exactMatch ?? rows.find((r) => r.is_traded === 1);
   if (!match) return null;
 
+  const secid = match.secid as string;
   const boardId = match.primary_boardid as string;
   const group = match.group as string;
   const market = resolveMarket(boardId, group);
   if (!market) return null;
 
-  return { secid: ticker, primaryBoardId: boardId, market };
+  return { secid, primaryBoardId: boardId, market };
 }
 
 export async function fetchStockPrice(

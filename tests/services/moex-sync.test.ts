@@ -290,4 +290,105 @@ describe('syncAllAssets', () => {
     const lastSync = await getLastSyncAt();
     expect(lastSync).not.toBeNull();
   });
+
+  it('resolves by ISIN when ticker resolution fails', async () => {
+    const assetId = (await db.assets.add({
+      type: 'fund',
+      ticker: 'RU000A1068X9',
+      isin: 'RU000A1068X9',
+      name: 'ПАРУС-ДВН',
+      quantity: 186,
+      currentPrice: 1100,
+      dataSource: 'import',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })) as number;
+
+    (resolveSecurityInfo as Mock)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        secid: 'RU000A1068X9',
+        primaryBoardId: 'TQTF',
+        market: 'shares',
+      });
+    (fetchStockPrice as Mock).mockResolvedValue({
+      currentPrice: 1150,
+      prevPrice: 1100,
+    });
+    (fetchDividends as Mock).mockResolvedValue(null);
+
+    const result = await syncAllAssets();
+
+    expect(result.synced).toBe(1);
+    expect(resolveSecurityInfo).toHaveBeenCalledTimes(2);
+
+    const asset = await db.assets.get(assetId);
+    expect(asset!.currentPrice).toBe(1150);
+    expect(asset!.moexSecid).toBe('RU000A1068X9');
+  });
+
+  it('uses cached moexSecid for resolution', async () => {
+    await db.assets.add({
+      type: 'stock',
+      ticker: 'SBER',
+      moexSecid: 'SBER',
+      name: 'Сбербанк',
+      quantity: 800,
+      dataSource: 'manual',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    (resolveSecurityInfo as Mock).mockResolvedValue({
+      secid: 'SBER',
+      primaryBoardId: 'TQBR',
+      market: 'shares',
+    });
+    (fetchStockPrice as Mock).mockResolvedValue({
+      currentPrice: 320.0,
+      prevPrice: 318.0,
+    });
+    (fetchDividends as Mock).mockResolvedValue(null);
+
+    const result = await syncAllAssets();
+
+    expect(result.synced).toBe(1);
+    // Uses cached secid directly (1 call, not ticker→ISIN chain)
+    expect(resolveSecurityInfo).toHaveBeenCalledTimes(1);
+    expect(resolveSecurityInfo).toHaveBeenCalledWith('SBER');
+  });
+
+  it('syncs asset with ISIN but no ticker', async () => {
+    const assetId = (await db.assets.add({
+      type: 'bond',
+      isin: 'RU000A0JV4Q1',
+      name: 'ОФЗ 29010',
+      quantity: 100,
+      dataSource: 'import',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })) as number;
+
+    (resolveSecurityInfo as Mock).mockResolvedValue({
+      secid: 'SU29010RMFS4',
+      primaryBoardId: 'TQOB',
+      market: 'bonds',
+    });
+    (fetchBondData as Mock).mockResolvedValue({
+      currentPrice: 105.5,
+      prevPrice: 105.0,
+      faceValue: 1000,
+      couponValue: 44.88,
+      nextCouponDate: '2026-06-18',
+      couponPeriod: 182,
+    });
+
+    const result = await syncAllAssets();
+
+    expect(result.synced).toBe(1);
+
+    const asset = await db.assets.get(assetId);
+    expect(asset!.currentPrice).toBe(1055);
+    expect(asset!.moexSecid).toBe('SU29010RMFS4');
+  });
 });

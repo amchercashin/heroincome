@@ -19,7 +19,7 @@ export async function syncAllAssets(): Promise<SyncResult> {
   const result: SyncResult = { synced: 0, failed: 0, skipped: 0, errors: [] };
 
   for (const asset of assets) {
-    if (!asset.ticker || !['stock', 'bond', 'fund'].includes(asset.type)) {
+    if ((!asset.ticker && !asset.isin && !asset.moexSecid) || !['stock', 'bond', 'fund'].includes(asset.type)) {
       result.skipped++;
       continue;
     }
@@ -46,18 +46,43 @@ export async function getLastSyncAt(): Promise<Date | null> {
 }
 
 async function syncSingleAsset(asset: Asset): Promise<void> {
-  const info = await resolveSecurityInfo(asset.ticker!);
-  if (!info) throw new Error('Не найден на MOEX');
+  let secid = asset.moexSecid;
+  let boardId: string;
+  let market: 'shares' | 'bonds';
 
-  if (info.market === 'bonds') {
-    await syncBond(asset, info.primaryBoardId);
+  if (secid) {
+    // Cached secid — still need board/market, resolve by secid
+    const info = await resolveSecurityInfo(secid);
+    if (!info) throw new Error('Не найден на MOEX');
+    boardId = info.primaryBoardId;
+    market = info.market;
   } else {
-    await syncStock(asset, info.primaryBoardId);
+    // Resolution chain: ticker → ISIN
+    let info = asset.ticker
+      ? await resolveSecurityInfo(asset.ticker)
+      : null;
+    if (!info && asset.isin) {
+      info = await resolveSecurityInfo(asset.isin);
+    }
+    if (!info) throw new Error('Не найден на MOEX');
+
+    secid = info.secid;
+    boardId = info.primaryBoardId;
+    market = info.market;
+
+    // Cache for next time
+    await db.assets.update(asset.id!, { moexSecid: secid });
+  }
+
+  if (market === 'bonds') {
+    await syncBond(secid, asset, boardId);
+  } else {
+    await syncStock(secid, asset, boardId);
   }
 }
 
-async function syncStock(asset: Asset, boardId: string): Promise<void> {
-  const price = await fetchStockPrice(asset.ticker!, boardId);
+async function syncStock(secid: string, asset: Asset, boardId: string): Promise<void> {
+  const price = await fetchStockPrice(secid, boardId);
   if (price) {
     const currentPrice = price.currentPrice ?? price.prevPrice;
     if (currentPrice != null) {
@@ -68,7 +93,7 @@ async function syncStock(asset: Asset, boardId: string): Promise<void> {
     }
   }
 
-  const divInfo = await fetchDividends(asset.ticker!);
+  const divInfo = await fetchDividends(secid);
   if (divInfo) {
     await upsertMoexSchedule(asset.id!, {
       frequencyPerYear: divInfo.frequencyPerYear,
@@ -79,8 +104,8 @@ async function syncStock(asset: Asset, boardId: string): Promise<void> {
   }
 }
 
-async function syncBond(asset: Asset, boardId: string): Promise<void> {
-  const bondData = await fetchBondData(asset.ticker!, boardId);
+async function syncBond(secid: string, asset: Asset, boardId: string): Promise<void> {
+  const bondData = await fetchBondData(secid, boardId);
   if (!bondData) throw new Error('Нет данных на MOEX');
 
   const pricePercent = bondData.currentPrice ?? bondData.prevPrice;

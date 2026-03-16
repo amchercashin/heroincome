@@ -167,6 +167,35 @@ describe('resolveSecurityInfo', () => {
     }));
     expect(await resolveSecurityInfo('THING')).toBeNull();
   });
+
+  it('resolves by ISIN when secid differs from query', async () => {
+    vi.stubGlobal('fetch', mockFetch({
+      securities: {
+        columns: ['secid', 'primary_boardid', 'group', 'is_traded'],
+        data: [['SU29010RMFS4', 'TQOB', 'government_bond', 1]],
+      },
+    }));
+    const result = await resolveSecurityInfo('RU000A0JV4Q1');
+    expect(result).toEqual({
+      secid: 'SU29010RMFS4',
+      primaryBoardId: 'TQOB',
+      market: 'bonds',
+    });
+  });
+
+  it('prefers exact secid match over first traded result', async () => {
+    vi.stubGlobal('fetch', mockFetch({
+      securities: {
+        columns: ['secid', 'primary_boardid', 'group', 'is_traded'],
+        data: [
+          ['WRONG', 'TQBR', 'stock_shares', 1],
+          ['SBER', 'TQBR', 'stock_shares', 1],
+        ],
+      },
+    }));
+    const result = await resolveSecurityInfo('SBER');
+    expect(result!.secid).toBe('SBER');
+  });
 });
 
 describe('fetchStockPrice', () => {
