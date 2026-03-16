@@ -1,9 +1,9 @@
 import { formatCurrencyFull, formatPercent, formatCurrency } from '@/lib/utils';
 
 interface HeroIncomeProps {
-  income: number;
-  yieldPercent: number;
-  totalValue: number;
+  income: number | null;
+  yieldPercent: number | null;
+  totalValue: number | null;
   mode: 'month' | 'year';
   onToggle: () => void;
 }

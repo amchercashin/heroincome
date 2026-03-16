@@ -6,7 +6,7 @@ import { formatCurrency, formatPercent } from '@/lib/utils';
 interface CategoryCardProps {
   type: AssetType;
   assetCount: number;
-  incomePerMonth: number;
+  incomePerMonth: number | null;
   portfolioSharePercent: number;
 }
 
