@@ -36,7 +36,7 @@ export function AssetDetailPage() {
     : null;
 
   const handleSavePayment = (v: string) => {
-    const num = parseFloat(v.replace(/[^\d.]/g, ''));
+    const num = parseFloat(v.replace(',', '.').replace(/[^\d.]/g, ''));
     if (isNaN(num) || num < 0) return;
     upsertPaymentSchedule(assetId, {
       frequencyPerYear: schedule?.frequencyPerYear ?? 1,
