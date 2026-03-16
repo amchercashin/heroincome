@@ -23,7 +23,13 @@ export async function importAllData(json: string): Promise<void> {
     await db.importRecords.clear();
     await settingsTable.clear();
     if (data.assets?.length) await db.assets.bulkAdd(data.assets);
-    if (data.paymentSchedules?.length) await db.paymentSchedules.bulkAdd(data.paymentSchedules);
+    const schedulesWithDefaults = (data.paymentSchedules ?? []).map((s: Record<string, unknown>) => ({
+      ...s,
+      forecastMethod: s.forecastMethod ?? 'none',
+      forecastAmount: s.forecastAmount ?? null,
+      activeMetric: s.activeMetric ?? 'fact',
+    }));
+    if (schedulesWithDefaults.length) await db.paymentSchedules.bulkAdd(schedulesWithDefaults);
     if (data.paymentHistory?.length) await db.paymentHistory.bulkAdd(data.paymentHistory);
     if (data.importRecords?.length) await db.importRecords.bulkAdd(data.importRecords);
     if (data.settings?.length) {

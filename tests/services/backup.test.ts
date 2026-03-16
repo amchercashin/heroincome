@@ -39,6 +39,24 @@ describe('backup', () => {
     expect(JSON.parse(json).assets).toHaveLength(0);
   });
 
+  it('applies default forecast fields when restoring old backup', async () => {
+    const oldBackup = {
+      assets: [],
+      paymentSchedules: [{
+        id: 1, assetId: 1, frequencyPerYear: 1,
+        lastPaymentAmount: 50, dataSource: 'moex',
+      }],
+      paymentHistory: [],
+      importRecords: [],
+      settings: [],
+    };
+    await importAllData(JSON.stringify(oldBackup));
+    const schedule = await db.paymentSchedules.get(1);
+    expect(schedule!.forecastMethod).toBe('none');
+    expect(schedule!.forecastAmount).toBeNull();
+    expect(schedule!.activeMetric).toBe('fact');
+  });
+
   it('import clears existing data before restoring', async () => {
     await db.assets.add({
       type: 'stock', name: 'Old', quantity: 1,
