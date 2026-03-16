@@ -6,6 +6,7 @@ import { AddAssetPage } from '@/pages/add-asset-page';
 import { ImportPage } from '@/pages/import-page';
 import { ImportAIPage } from '@/pages/import-ai-page';
 import { ImportFilePage } from '@/pages/import-file-page';
+import { ImportSberPage } from '@/pages/import-sber-page';
 import { ImportPreviewPage } from '@/pages/import-preview-page';
 import { SettingsPage } from '@/pages/settings-page';
 import { BackupPage } from '@/pages/backup-page';
@@ -21,6 +22,7 @@ export default function App() {
         <Route path="/import" element={<ImportPage />} />
         <Route path="/import/ai" element={<ImportAIPage />} />
         <Route path="/import/file" element={<ImportFilePage />} />
+        <Route path="/import/sber" element={<ImportSberPage />} />
         <Route path="/import/preview" element={<ImportPreviewPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/backup" element={<BackupPage />} />

@@ -2,10 +2,17 @@ import type { AssetType } from '@/models/types';
 
 export interface ImportAssetRow {
   ticker?: string;
+  isin?: string;
   name: string;
   type: AssetType;
   quantity: number;
   averagePrice?: number;
+  currentPrice?: number;
+  faceValue?: number;
+  currency?: string;
+  emitter?: string;
+  securityCategory?: string;
+  issueInfo?: string;
   lastPaymentAmount?: number;
   frequencyPerYear?: number;
 }

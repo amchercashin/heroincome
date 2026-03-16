@@ -24,11 +24,17 @@ export interface Asset {
   id?: number;
   type: AssetType;
   ticker?: string;
+  isin?: string;
+  moexSecid?: string;
   name: string;
   quantity: number;
   averagePrice?: number;
   currentPrice?: number;
   faceValue?: number;
+  currency?: string;
+  emitter?: string;
+  securityCategory?: string;
+  issueInfo?: string;
   dataSource: DataSource;
   createdAt: Date;
   updatedAt: Date;

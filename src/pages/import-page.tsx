@@ -39,6 +39,12 @@ export function ImportPage() {
 
       <div className="space-y-3">
         <MethodButton
+          icon="🏦"
+          label="Отчёт Сбера"
+          desc="Загрузить HTML-отчёт брокера"
+          onClick={() => navigate('/import/sber', { state: { mode } })}
+        />
+        <MethodButton
           icon="🤖"
           label="Через AI-помощник"
           desc="Промт для ChatGPT/Claude → вставьте таблицу"

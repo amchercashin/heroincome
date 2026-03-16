@@ -22,10 +22,16 @@ export async function applyImportDiff(
           const assetId = (await db.assets.add({
             type: item.imported.type,
             ticker: item.imported.ticker,
+            isin: item.imported.isin,
             name: item.imported.name,
             quantity: item.imported.quantity,
             averagePrice: item.imported.averagePrice,
-            currentPrice: item.imported.averagePrice,
+            currentPrice: item.imported.currentPrice ?? item.imported.averagePrice,
+            faceValue: item.imported.faceValue,
+            currency: item.imported.currency,
+            emitter: item.imported.emitter,
+            securityCategory: item.imported.securityCategory,
+            issueInfo: item.imported.issueInfo,
             dataSource: 'import',
             createdAt: now,
             updatedAt: now,
@@ -81,13 +87,21 @@ export async function applyImportDiff(
 }
 
 async function updateAsset(assetId: number, row: ImportAssetRow): Promise<void> {
-  await db.assets.update(assetId, {
+  const updates: Record<string, unknown> = {
     quantity: row.quantity,
-    averagePrice: row.averagePrice,
     name: row.name,
     dataSource: 'import',
     updatedAt: new Date(),
-  });
+  };
+  if (row.averagePrice != null) updates.averagePrice = row.averagePrice;
+  if (row.currentPrice != null) updates.currentPrice = row.currentPrice;
+  if (row.faceValue != null) updates.faceValue = row.faceValue;
+  if (row.isin) updates.isin = row.isin;
+  if (row.currency) updates.currency = row.currency;
+  if (row.emitter) updates.emitter = row.emitter;
+  if (row.securityCategory) updates.securityCategory = row.securityCategory;
+  if (row.issueInfo) updates.issueInfo = row.issueInfo;
+  await db.assets.update(assetId, updates);
 
   if (row.lastPaymentAmount) {
     const existing = await db.paymentSchedules.where('assetId').equals(assetId).first();

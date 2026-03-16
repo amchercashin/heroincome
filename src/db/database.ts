@@ -16,6 +16,9 @@ class CashFlowDB extends Dexie {
       importRecords: '++id, date',
       settings: 'key',
     });
+    this.version(2).stores({
+      assets: '++id, type, ticker, isin',
+    });
   }
 }
 

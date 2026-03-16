@@ -35,9 +35,11 @@ export async function computeImportDiff(
   const existingAssets = await db.assets.toArray();
   const existingSchedules = await db.paymentSchedules.toArray();
   const byTicker = new Map<string, Asset>();
+  const byIsin = new Map<string, Asset>();
   const scheduleByAssetId = new Map<number, PaymentSchedule>();
   for (const asset of existingAssets) {
     if (asset.ticker) byTicker.set(asset.ticker, asset);
+    if (asset.isin) byIsin.set(asset.isin, asset);
   }
   for (const s of existingSchedules) {
     scheduleByAssetId.set(s.assetId, s);
@@ -46,7 +48,9 @@ export async function computeImportDiff(
   const items: DiffItem[] = [];
 
   for (const row of rows) {
-    const existing = row.ticker ? byTicker.get(row.ticker) : undefined;
+    const existing =
+      (row.ticker ? byTicker.get(row.ticker) : undefined) ??
+      (row.isin ? byIsin.get(row.isin) : undefined);
 
     if (!existing) {
       items.push({ status: 'added', imported: row, changes: [] });
@@ -89,6 +93,9 @@ function compareFields(
   }
   if (row.averagePrice != null && row.averagePrice !== existing.averagePrice) {
     changes.push({ field: 'averagePrice', oldValue: existing.averagePrice, newValue: row.averagePrice });
+  }
+  if (row.currentPrice != null && row.currentPrice !== existing.currentPrice) {
+    changes.push({ field: 'currentPrice', oldValue: existing.currentPrice, newValue: row.currentPrice });
   }
   if (row.name !== existing.name) {
     changes.push({ field: 'name', oldValue: existing.name, newValue: row.name });

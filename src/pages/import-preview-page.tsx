@@ -134,8 +134,10 @@ function DiffItemRow({ item, resolution, onToggle }: {
 
       <div className="text-gray-400 text-[11px]">
         {item.imported.quantity} шт
-        {item.imported.averagePrice != null && ` · ₽${item.imported.averagePrice}`}
+        {item.imported.currentPrice != null && ` · ₽${item.imported.currentPrice}`}
+        {item.imported.averagePrice != null && item.imported.currentPrice == null && ` · ₽${item.imported.averagePrice}`}
         {item.imported.lastPaymentAmount != null && ` · выплата ₽${item.imported.lastPaymentAmount}`}
+        {item.imported.isin && ` · ${item.imported.isin}`}
       </div>
 
       {item.changes.length > 0 && (
