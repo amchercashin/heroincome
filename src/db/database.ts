@@ -1,9 +1,17 @@
 import Dexie, { type EntityTable } from 'dexie';
-import type { Asset, PaymentSchedule, PaymentHistory, ImportRecord } from '@/models/types';
+import type { Asset, PaymentHistory, ImportRecord } from '@/models/types';
+
+const FREQUENCY_DEFAULTS: Record<string, number> = {
+  stock: 1,
+  bond: 2,
+  fund: 12,
+  realestate: 12,
+  deposit: 12,
+  other: 12,
+};
 
 class CashFlowDB extends Dexie {
   assets!: EntityTable<Asset, 'id'>;
-  paymentSchedules!: EntityTable<PaymentSchedule, 'id'>;
   paymentHistory!: EntityTable<PaymentHistory, 'id'>;
   importRecords!: EntityTable<ImportRecord, 'id'>;
 
@@ -26,6 +34,52 @@ class CashFlowDB extends Dexie {
       importRecords: '++id, date',
       settings: 'key',
     });
+    this.version(4)
+      .stores({
+        assets: '++id, type, ticker, isin',
+        paymentSchedules: null,
+        paymentHistory: '++id, [assetId+date]',
+        importRecords: '++id, date',
+        settings: 'key',
+      })
+      .upgrade(async (tx) => {
+        const schedules = await tx.table('paymentSchedules').toArray();
+        const scheduleByAssetId = new Map<number, Record<string, unknown>>();
+        for (const s of schedules) {
+          scheduleByAssetId.set(s.assetId, s);
+        }
+
+        await tx.table('assets').toCollection().modify((asset: Record<string, unknown>) => {
+          const schedule = scheduleByAssetId.get(asset.id as number);
+
+          if (schedule) {
+            asset.frequencyPerYear = schedule.frequencyPerYear;
+            const isFromMoex = schedule.dataSource === 'moex';
+            asset.frequencySource = isFromMoex ? 'moex' : 'manual';
+            asset.moexFrequency = isFromMoex ? schedule.frequencyPerYear : undefined;
+
+            asset.nextExpectedDate = schedule.nextExpectedDate;
+            asset.nextExpectedCutoffDate = schedule.nextExpectedCutoffDate;
+            asset.nextExpectedCreditDate = schedule.nextExpectedCreditDate;
+
+            const wasManualForecast =
+              schedule.activeMetric === 'forecast' &&
+              schedule.forecastMethod === 'manual' &&
+              schedule.forecastAmount != null;
+            asset.paymentPerUnitSource = wasManualForecast ? 'manual' : 'fact';
+            asset.paymentPerUnit = wasManualForecast ? schedule.forecastAmount : undefined;
+          } else {
+            const type = asset.type as string;
+            asset.frequencyPerYear = FREQUENCY_DEFAULTS[type] ?? 12;
+            asset.frequencySource = 'manual';
+            asset.paymentPerUnitSource = 'fact';
+          }
+
+          const ds = asset.dataSource as string;
+          asset.quantitySource = ds === 'import' ? 'import' : 'manual';
+          asset.importedQuantity = ds === 'import' ? asset.quantity : undefined;
+        });
+      });
   }
 }
 
