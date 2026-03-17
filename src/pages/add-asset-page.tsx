@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { addAsset } from '@/hooks/use-assets';
-import { upsertPaymentSchedule } from '@/hooks/use-payment-schedules';
 import { ASSET_TYPE_LABELS, type AssetType } from '@/models/types';
 
 const FREQUENCIES = [
@@ -32,26 +31,31 @@ export function AddAssetPage() {
 
   const isBirzha = type === 'stock' || type === 'bond' || type === 'fund';
 
+  const FREQ_DEFAULTS: Record<string, number> = {
+    stock: 1, bond: 2, fund: 12, realestate: 12, deposit: 12, other: 12,
+  };
+
   const handleSubmit = async () => {
     if (!name || !paymentAmount) return;
     if (isBirzha && !quantity) return;
 
-    const assetId = await addAsset({
+    const freq = parseInt(frequency) || FREQ_DEFAULTS[type] || 12;
+
+    await addAsset({
       type,
       name,
       ticker: isBirzha && ticker ? ticker : undefined,
       quantity: isBirzha ? parseInt(quantity) : 1,
+      quantitySource: 'manual',
       averagePrice: isBirzha && price ? parseFloat(price) : undefined,
       currentPrice: isBirzha
         ? (price ? parseFloat(price) : undefined)
         : (assetValue ? parseFloat(assetValue) : undefined),
       faceValue: type === 'bond' ? 1000 : undefined,
-      dataSource: 'manual',
-    });
-
-    await upsertPaymentSchedule(assetId, {
-      frequencyPerYear: parseInt(frequency),
-      lastPaymentAmount: parseFloat(paymentAmount),
+      paymentPerUnit: parseFloat(paymentAmount),
+      paymentPerUnitSource: 'manual',
+      frequencyPerYear: freq,
+      frequencySource: 'manual',
       dataSource: 'manual',
     });
 
