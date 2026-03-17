@@ -27,10 +27,6 @@ export interface Asset {
   isin?: string;
   moexSecid?: string;
   name: string;
-  quantity: number;
-  averagePrice?: number;
-  currentPrice?: number;
-  faceValue?: number;
   currency?: string;
   emitter?: string;
   securityCategory?: string;
@@ -38,22 +34,31 @@ export interface Asset {
   dataSource: DataSource;
   createdAt: Date;
   updatedAt: Date;
-}
+  averagePrice?: number;
+  currentPrice?: number;
+  faceValue?: number;
 
-export interface PaymentSchedule {
-  id?: number;
-  assetId: number;
+  // quantity with source tracking
+  quantity: number;
+  quantitySource: 'import' | 'manual';
+  importedQuantity?: number;
+
+  // payment per unit with source tracking
+  paymentPerUnit?: number;
+  paymentPerUnitSource: 'fact' | 'manual';
+
+  // frequency with source tracking
   frequencyPerYear: number;
-  lastPaymentAmount: number;
-  lastPaymentDate?: Date;
+  frequencySource: 'moex' | 'manual';
+  moexFrequency?: number;
+
+  // transferred from PaymentSchedule
   nextExpectedDate?: Date;
   nextExpectedCutoffDate?: Date;
   nextExpectedCreditDate?: Date;
-  dataSource: DataSource;
-  forecastMethod?: 'none' | 'manual' | 'decay';
-  forecastAmount?: number | null;
-  activeMetric?: 'fact' | 'forecast';
 }
+
+// PaymentSchedule — DELETED (merged into Asset)
 
 export interface PaymentHistory {
   id?: number;
