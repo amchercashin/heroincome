@@ -97,7 +97,44 @@ describe('computeImportDiff', () => {
     expect(diff.items[0].changes.some((c) => c.field === 'paymentPerUnit')).toBe(true);
   });
 
-  it('treats rows without ticker as always added', async () => {
+  it('matches by ISIN when ticker is absent', async () => {
+    await db.assets.add({
+      type: 'bond', isin: 'RU000A1038V6', name: 'ОФЗ 26238',
+      quantity: 50, quantitySource: 'import', importedQuantity: 50,
+      paymentPerUnitSource: 'fact', frequencyPerYear: 2, frequencySource: 'manual',
+      dataSource: 'import', createdAt: new Date(), updatedAt: new Date(),
+    });
+    const rows: ImportAssetRow[] = [
+      { isin: 'RU000A1038V6', name: 'ОФЗ 26238', type: 'bond', quantity: 100 },
+    ];
+    const diff = await computeImportDiff(rows, 'update');
+    expect(diff.items[0].status).toBe('changed');
+    expect(diff.items[0].existingAsset?.isin).toBe('RU000A1038V6');
+  });
+
+  it('prefers ISIN match over ticker match', async () => {
+    await db.assets.add({
+      type: 'stock', ticker: 'OLD', isin: 'RU0009029540', name: 'Сбербанк',
+      quantity: 800, quantitySource: 'import', importedQuantity: 800,
+      paymentPerUnitSource: 'fact', frequencyPerYear: 1, frequencySource: 'manual',
+      dataSource: 'import', createdAt: new Date(), updatedAt: new Date(),
+    });
+    await db.assets.add({
+      type: 'stock', ticker: 'SBER', name: 'Другой ассет',
+      quantity: 100, quantitySource: 'manual',
+      paymentPerUnitSource: 'fact', frequencyPerYear: 1, frequencySource: 'manual',
+      dataSource: 'manual', createdAt: new Date(), updatedAt: new Date(),
+    });
+    const rows: ImportAssetRow[] = [
+      { ticker: 'SBER', isin: 'RU0009029540', name: 'Сбербанк', type: 'stock', quantity: 800 },
+    ];
+    const diff = await computeImportDiff(rows, 'update');
+    // Should match by ISIN (first asset), not by ticker (second asset)
+    expect(diff.items[0].existingAsset?.isin).toBe('RU0009029540');
+    expect(diff.items[0].existingAsset?.ticker).toBe('OLD');
+  });
+
+  it('treats rows without ticker or isin as always added', async () => {
     await db.assets.add({
       type: 'realestate', name: 'Квартира', quantity: 1,
       quantitySource: 'manual', paymentPerUnitSource: 'fact',

@@ -41,10 +41,21 @@ Every income-related field on `Asset` tracks its origin:
 
 Manual values override calculated ones. Reset buttons revert to the calculated/imported value.
 
+### Tooling details
+
+- **Tailwind v4** — no `tailwind.config` file. All theme config is in `src/index.css` via `@theme inline` + `@tailwindcss/vite` plugin.
+- **Vitest** — config embedded in `vite.config.ts`. Environment: `happy-dom`, globals enabled. Setup file `tests/setup.ts` imports `fake-indexeddb/auto` and `@testing-library/jest-dom/vitest`.
+- **TypeScript** — strict mode with `noUnusedLocals` and `noUnusedParameters`.
+- **Deploy** — GitHub Pages at subpath `/way/`. CI sets `BASE_URL=/way/` env var; `vite.config.ts` reads it for `base`. Workflow in `.github/workflows/deploy.yml`.
+
+### Design system (Wabi-Sabi)
+
+Colors and fonts defined as CSS variables `--way-*` in `src/index.css`. Key tokens: `--way-void` (darkest bg), `--way-stone` (cards), `--way-gold` (accents), `--way-text` (foreground). Fonts: DM Sans (sans), Cormorant Garamond (serif), IBM Plex Mono (mono). Custom keyframes prefixed `way-`.
+
 ## Conventions
 
 - **Russian UI text** — all user-facing strings are in Russian; preserve this when modifying UI.
-- **Dark mode only** — hardcoded dark theme (`#0d1117` background), no light mode toggle.
+- **Dark mode only** — hardcoded in `<html class="dark">`, no toggle.
 - **Path alias** — `@/*` maps to `src/*`.
 - **Tests** — in `tests/` mirroring `src/` structure. Use `fake-indexeddb` for DB tests. Pure function tests dominate; no component tests.
 - **Dexie transactions** — asset mutations (`addAsset`, `updateAsset`, `deleteAsset`) are wrapped in Dexie transactions in `use-assets.ts`.

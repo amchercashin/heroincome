@@ -142,20 +142,24 @@ async function resolveAndCache(asset: Asset): Promise<ResolvedAsset | null> {
   if (asset.moexSecid) {
     info = await resolveSecurityInfo(asset.moexSecid);
   } else {
-    if (asset.ticker) info = await resolveSecurityInfo(asset.ticker);
-    if (!info && asset.isin) info = await resolveSecurityInfo(asset.isin);
+    if (asset.isin) info = await resolveSecurityInfo(asset.isin);
+    if (!info && asset.ticker) info = await resolveSecurityInfo(asset.ticker);
   }
   if (!info) return null;
 
-  // Cache all three fields
-  await db.assets.update(asset.id!, {
+  // Cache resolved fields + auto-fill ticker from secid if missing
+  const cacheUpdates: Partial<Asset> = {
     moexSecid: info.secid,
     moexBoardId: info.primaryBoardId,
     moexMarket: info.market,
-  });
+  };
+  if (!asset.ticker) {
+    cacheUpdates.ticker = info.secid;
+  }
+  await db.assets.update(asset.id!, cacheUpdates);
 
   return {
-    asset: { ...asset, moexSecid: info.secid, moexBoardId: info.primaryBoardId, moexMarket: info.market },
+    asset: { ...asset, ...cacheUpdates },
     secid: info.secid,
     boardId: info.primaryBoardId,
     market: info.market,

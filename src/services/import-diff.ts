@@ -44,8 +44,8 @@ export async function computeImportDiff(
 
   for (const row of rows) {
     const existing =
-      (row.ticker ? byTicker.get(row.ticker) : undefined) ??
-      (row.isin ? byIsin.get(row.isin) : undefined);
+      (row.isin ? byIsin.get(row.isin) : undefined) ??
+      (row.ticker ? byTicker.get(row.ticker) : undefined);
 
     if (!existing) {
       items.push({ status: 'added', imported: row, changes: [] });

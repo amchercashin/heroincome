@@ -99,6 +99,42 @@ Let me know if you need anything else!
     expect(rows).toHaveLength(1);
   });
 
+  it('parses ISIN column', () => {
+    const text = `
+| Тикер | ISIN | Название | Тип | Кол-во | Ср.цена |
+|-------|------|----------|-----|--------|---------|
+| SBER | RU0009029540 | Сбербанк | акция | 800 | 298.60 |
+`;
+    const rows = parseMDTable(text);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].ticker).toBe('SBER');
+    expect(rows[0].isin).toBe('RU0009029540');
+  });
+
+  it('parses table with ISIN but without ticker', () => {
+    const text = `
+| ISIN | Название | Тип | Кол-во | Ср.цена |
+|------|----------|-----|--------|---------|
+| RU000A1038V6 | ОФЗ 26238 | облигация | 50 | 580 |
+`;
+    const rows = parseMDTable(text);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].ticker).toBeUndefined();
+    expect(rows[0].isin).toBe('RU000A1038V6');
+    expect(rows[0].type).toBe('bond');
+  });
+
+  it('leaves isin undefined when column is absent', () => {
+    const text = `
+| Тикер | Название | Тип | Кол-во |
+|-------|----------|-----|--------|
+| SBER | Сбербанк | акция | 800 |
+`;
+    const rows = parseMDTable(text);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].isin).toBeUndefined();
+  });
+
   it('returns empty array for invalid input', () => {
     expect(parseMDTable('')).toEqual([]);
     expect(parseMDTable('no table here')).toEqual([]);

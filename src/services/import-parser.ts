@@ -32,6 +32,7 @@ export function parseTypeLabel(label: string): AssetType {
 
 interface ColumnMap {
   ticker?: number;
+  isin?: number;
   name?: number;
   type?: number;
   quantity?: number;
@@ -42,6 +43,7 @@ interface ColumnMap {
 
 const HEADER_PATTERNS: [keyof ColumnMap, RegExp][] = [
   ['ticker', /тикер|ticker|secid/i],
+  ['isin', /isin|исин/i],
   ['name', /назван|name|наименование/i],
   ['type', /тип|type/i],
   ['quantity', /кол[- ]?во|количество|qty|quantity|шт/i],
@@ -79,6 +81,7 @@ function cellsToRow(cells: string[], colMap: ColumnMap): ImportAssetRow | null {
 
   return {
     ticker: colMap.ticker !== undefined ? cells[colMap.ticker]?.trim() || undefined : undefined,
+    isin: colMap.isin !== undefined ? cells[colMap.isin]?.trim() || undefined : undefined,
     name,
     type: colMap.type !== undefined ? parseTypeLabel(cells[colMap.type]) : 'other',
     quantity,

@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { AppShell } from '@/components/layout/app-shell';
 import { useMoexSync } from '@/hooks/use-moex-sync';
 import type { ImportMode } from '@/services/import-diff';
+import { Landmark, Bot, FileText, RefreshCw, PenLine } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 export function ImportPage() {
   const [mode, setMode] = useState<ImportMode>('update');
@@ -39,32 +41,32 @@ export function ImportPage() {
 
       <div className="space-y-3">
         <MethodButton
-          icon="🏦"
+          icon={Landmark}
           label="Отчёт Сбера"
           desc="Загрузить HTML-отчёт брокера"
           onClick={() => navigate('/import/sber', { state: { mode } })}
         />
         <MethodButton
-          icon="🤖"
+          icon={Bot}
           label="Через AI-помощник"
           desc="Промт для ChatGPT/Claude → вставьте таблицу"
           onClick={() => navigate('/import/ai', { state: { mode } })}
         />
         <MethodButton
-          icon="📄"
+          icon={FileText}
           label="CSV / Markdown"
           desc="Загрузите файл или вставьте текст"
           onClick={() => navigate('/import/file', { state: { mode } })}
         />
         <MethodButton
-          icon="⟳"
+          icon={RefreshCw}
           label="Обновить с MOEX"
           desc={syncing ? 'Обновление...' : 'Цены, дивиденды, купоны'}
           onClick={() => sync()}
           disabled={syncing}
         />
         <MethodButton
-          icon="✏️"
+          icon={PenLine}
           label="Добавить вручную"
           desc="Заполнить форму для одного актива"
           onClick={() => navigate('/add-asset')}
@@ -74,8 +76,8 @@ export function ImportPage() {
   );
 }
 
-function MethodButton({ icon, label, desc, onClick, disabled }: {
-  icon: string; label: string; desc: string;
+function MethodButton({ icon: Icon, label, desc, onClick, disabled }: {
+  icon: LucideIcon; label: string; desc: string;
   onClick: () => void; disabled?: boolean;
 }) {
   return (
@@ -85,7 +87,7 @@ function MethodButton({ icon, label, desc, onClick, disabled }: {
       className="w-full flex items-center gap-3 bg-[var(--way-stone)] rounded-xl p-4 text-left
         hover:bg-[var(--way-stone)] transition-colors disabled:opacity-50"
     >
-      <span className="text-xl">{icon}</span>
+      <Icon size={20} strokeWidth={1.2} className="text-[var(--way-ash)] shrink-0" />
       <div>
         <div className="text-sm text-[var(--way-text)] font-medium">{label}</div>
         <div className="text-[11px] text-[var(--way-ash)]">{desc}</div>
