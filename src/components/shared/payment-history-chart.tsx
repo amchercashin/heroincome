@@ -9,12 +9,8 @@ interface PaymentHistoryChartProps {
   frequencyPerYear?: number;
 }
 
-/** Maps frequencyPerYear to Russian abbreviated label for the detail panel */
 function frequencyLabel(freq: number): string {
-  if (freq >= 12) return `${freq} мес`;
-  if (freq === 4) return '4 кв';
-  if (freq === 2) return '2 полуг';
-  return `${freq} год`;
+  return `${freq}/год`;
 }
 
 export function PaymentHistoryChart({

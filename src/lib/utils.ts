@@ -34,11 +34,5 @@ export function formatCompact(value: number): string {
 }
 
 export function formatFrequency(perYear: number): string {
-  const labels: Record<number, string> = {
-    1: '1×/год',
-    2: '2×/год',
-    4: '4×/год (кварт.)',
-    12: 'ежемес.',
-  };
-  return labels[perYear] ?? `${perYear}×/год`;
+  return `${perYear}/год`;
 }

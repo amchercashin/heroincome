@@ -118,7 +118,7 @@ export function AssetDetailPage() {
       />
 
       <AssetField
-        label="Частота"
+        label="Выплат в год"
         value={formatFrequency(asset.frequencyPerYear)}
         sourceLabel={asset.frequencySource === 'moex' ? 'moex' : 'ручной'}
         isManualSource={asset.frequencySource === 'manual'}
