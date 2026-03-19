@@ -176,3 +176,12 @@
   from { opacity: 0; transform: scaleY(0); }
   to { opacity: 1; transform: scaleY(1); }
 }
+
+@keyframes way-highlight-pulse {
+  0% { background-color: rgba(200, 180, 140, 0.2); }
+  100% { background-color: transparent; }
+}
+
+.animate-highlight-pulse {
+  animation: way-highlight-pulse 2s ease-out forwards;
+}

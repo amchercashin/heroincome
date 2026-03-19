@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import type { Account, Holding } from '@/models/account';
 import type { Asset } from '@/models/types';
 import { formatCurrency } from '@/lib/utils';
-import { updateHolding } from '@/hooks/use-holdings';
+import { updateHolding, deleteHolding } from '@/hooks/use-holdings';
 import { updateAsset } from '@/hooks/use-assets';
-import { updateAccount } from '@/hooks/use-accounts';
+import { updateAccount, deleteAccount } from '@/hooks/use-accounts';
 import { InlineCell } from './inline-cell';
 import { TypeCombobox } from './type-combobox';
 import { AddAssetSheet } from './add-asset-sheet';
@@ -13,11 +13,40 @@ interface AccountSectionProps {
   account: Account;
   holdings: Holding[];
   assets: Asset[];
+  onImport: () => void;
+  highlightAssetId?: number;
 }
 
-export function AccountSection({ account, holdings, assets }: AccountSectionProps) {
+export function AccountSection({ account, holdings, assets, onImport, highlightAssetId }: AccountSectionProps) {
   const [expanded, setExpanded] = useState(true);
   const [addAssetOpen, setAddAssetOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const highlightRowRef = useRef<HTMLDivElement>(null);
+
+  // Auto-expand and scroll to highlighted row
+  useEffect(() => {
+    if (highlightAssetId != null) {
+      setExpanded(true);
+      // Wait for DOM to update after expanding
+      requestAnimationFrame(() => {
+        highlightRowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    }
+  }, [highlightAssetId]);
+
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        closeMenu();
+      }
+    };
+    document.addEventListener('click', handler, true);
+    return () => document.removeEventListener('click', handler, true);
+  }, [menuOpen, closeMenu]);
 
   // Compute total value
   const totalValue = holdings.reduce((sum, h) => {
@@ -74,16 +103,34 @@ export function AccountSection({ account, holdings, assets }: AccountSectionProp
           <span className="text-[var(--way-ash)] text-[13px]">{formatCurrency(totalValue)}</span>
           <span
             className="border border-[var(--way-shadow)] text-[var(--way-ash)] px-2 py-0.5 rounded text-[11px]"
-            onClick={(e) => { e.stopPropagation(); /* TODO: import flow Task 15 */ }}
+            onClick={(e) => { e.stopPropagation(); onImport(); }}
           >
             Импорт
           </span>
-          <span
-            className="border border-[var(--way-shadow)] text-[var(--way-ash)] px-2 py-0.5 rounded text-[11px]"
-            onClick={(e) => { e.stopPropagation(); /* TODO: menu Task 14 */ }}
-          >
-            ⋯
-          </span>
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }}
+              className="border border-[var(--way-shadow)] text-[var(--way-ash)] px-2 py-0.5 rounded text-[11px]"
+            >
+              ⋯
+            </button>
+            {menuOpen && (
+              <div className="absolute right-0 top-full mt-1 bg-[var(--way-stone)] border border-[var(--way-shadow)] rounded-md shadow-lg z-50 min-w-[140px]">
+                <button
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    setMenuOpen(false);
+                    if (window.confirm(`Удалить счёт "${account.name}" и все его позиции?`)) {
+                      await deleteAccount(account.id!);
+                    }
+                  }}
+                  className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-[var(--way-void)] transition-colors rounded-md"
+                >
+                  Удалить счёт
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </button>
 
@@ -117,19 +164,25 @@ export function AccountSection({ account, holdings, assets }: AccountSectionProp
                 </div>
 
                 {/* Table header */}
-                <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-2 px-3 py-1 text-[11px] text-[var(--way-muted)]">
+                <div className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-x-2 px-3 py-1 text-[11px] text-[var(--way-muted)]">
                   <span>Тикер</span>
                   <span className="text-right w-14">Кол-во</span>
                   <span className="text-right w-16">Цена пок.</span>
                   <span className="text-right w-16">Стоимость</span>
+                  <span className="w-4"></span>
                 </div>
 
                 {/* Rows */}
                 {items.map(({ asset, holding }) => {
                   const price = asset.currentPrice ?? holding.averagePrice ?? 0;
                   const rowValue = price * holding.quantity;
+                  const isHighlighted = highlightAssetId != null && asset.id === highlightAssetId;
                   return (
-                    <div key={holding.id} className="grid grid-cols-[1fr_auto_auto_auto] gap-x-2 px-3 py-2 border-t border-[var(--way-void)] text-[13px]">
+                    <div
+                      key={holding.id}
+                      ref={isHighlighted ? highlightRowRef : undefined}
+                      className={`grid grid-cols-[1fr_auto_auto_auto_auto] gap-x-2 px-3 py-2 border-t border-[var(--way-void)] text-[13px]${isHighlighted ? ' animate-highlight-pulse' : ''}`}
+                    >
                       <div className="min-w-0">
                         {asset.ticker ? (
                           <>
@@ -177,6 +230,16 @@ export function AccountSection({ account, holdings, assets }: AccountSectionProp
                       <span className="text-right text-[var(--way-ash)] tabular-nums w-16">
                         {formatCurrency(rowValue)}
                       </span>
+                      <button
+                        onClick={async () => {
+                          if (window.confirm(`Удалить ${asset.ticker ?? asset.name} из счёта?`)) {
+                            await deleteHolding(holding.id!);
+                          }
+                        }}
+                        className="text-[var(--way-muted)] hover:text-red-400 transition-colors text-xs ml-1 w-4"
+                      >
+                        ×
+                      </button>
                     </div>
                   );
                 })}
