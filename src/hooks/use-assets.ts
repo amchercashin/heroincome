@@ -1,13 +1,13 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/database';
-import type { Asset, AssetType } from '@/models/types';
+import type { Asset } from '@/models/types';
 
 export function useAssets() {
   const assets = useLiveQuery(() => db.assets.toArray()) ?? [];
   return assets;
 }
 
-export function useAssetsByType(type: AssetType) {
+export function useAssetsByType(type: string) {
   const assets = useLiveQuery(() => db.assets.where('type').equals(type).toArray(), [type]) ?? [];
   return assets;
 }

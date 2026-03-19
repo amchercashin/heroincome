@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { addAsset } from '@/hooks/use-assets';
-import { ASSET_TYPE_LABELS, type AssetType } from '@/models/types';
+import { KNOWN_TYPE_CONFIG, getDefaultFrequency } from '@/models/account';
 
 const FREQUENCIES = [
   { value: '1', label: '1 раз в год' },
@@ -18,9 +18,9 @@ const FREQUENCIES = [
 export function AddAssetPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const defaultType = (params.get('type') as AssetType) ?? 'stock';
+  const defaultType = params.get('type') ?? 'Акции';
 
-  const [type, setType] = useState<AssetType>(defaultType);
+  const [type, setType] = useState<string>(defaultType);
   const [name, setName] = useState('');
   const [ticker, setTicker] = useState('');
   const [quantity, setQuantity] = useState('');
@@ -29,29 +29,22 @@ export function AddAssetPage() {
   const [frequency, setFrequency] = useState('1');
   const [assetValue, setAssetValue] = useState('');
 
-  const isBirzha = type === 'stock' || type === 'bond' || type === 'fund';
-
-  const FREQ_DEFAULTS: Record<string, number> = {
-    stock: 1, bond: 2, fund: 12, realestate: 12, deposit: 12, other: 12,
-  };
+  const isBirzha = type === 'Акции' || type === 'Облигации' || type === 'Фонды';
 
   const handleSubmit = async () => {
     if (!name || !paymentAmount) return;
     if (isBirzha && !quantity) return;
 
-    const freq = parseInt(frequency) || FREQ_DEFAULTS[type] || 12;
+    const freq = parseInt(frequency) || getDefaultFrequency(type) || 12;
 
     await addAsset({
       type,
       name,
       ticker: isBirzha && ticker ? ticker : undefined,
-      quantity: isBirzha ? parseInt(quantity) : 1,
-      quantitySource: 'manual',
-      averagePrice: isBirzha && price ? parseFloat(price) : undefined,
       currentPrice: isBirzha
         ? (price ? parseFloat(price) : undefined)
         : (assetValue ? parseFloat(assetValue) : undefined),
-      faceValue: type === 'bond' ? 1000 : undefined,
+      faceValue: type === 'Облигации' ? 1000 : undefined,
       paymentPerUnit: parseFloat(paymentAmount),
       paymentPerUnitSource: 'manual',
       frequencyPerYear: freq,
@@ -71,14 +64,14 @@ export function AddAssetPage() {
       <div className="space-y-4">
         <div>
           <Label className="text-[var(--way-ash)] text-xs">Тип актива</Label>
-          <Select value={type} onValueChange={(v) => setType(v as AssetType)}>
+          <Select value={type} onValueChange={setType}>
             <SelectTrigger className="bg-[var(--way-stone)] border-none text-[var(--way-text)] mt-1">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-[var(--way-stone)] border-[rgba(200,180,140,0.08)]">
-              {Object.entries(ASSET_TYPE_LABELS).map(([key, label]) => (
+              {Object.entries(KNOWN_TYPE_CONFIG).map(([key, config]) => (
                 <SelectItem key={key} value={key} className="text-[var(--way-text)]">
-                  {label}
+                  {config.label}
                 </SelectItem>
               ))}
             </SelectContent>

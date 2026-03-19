@@ -11,15 +11,12 @@ describe('Database', () => {
 
   it('adds and retrieves an asset', async () => {
     const asset: Asset = {
-      type: 'stock',
+      type: 'Акции',
       ticker: 'SBER',
       name: 'Сбербанк',
-      quantity: 800,
-      quantitySource: 'manual',
       paymentPerUnitSource: 'fact',
       frequencyPerYear: 1,
       frequencySource: 'manual',
-      averagePrice: 298.6,
       currentPrice: 308.2,
       dataSource: 'manual',
       createdAt: new Date(),
@@ -31,16 +28,13 @@ describe('Database', () => {
 
     expect(retrieved).toBeDefined();
     expect(retrieved!.ticker).toBe('SBER');
-    expect(retrieved!.quantity).toBe(800);
   });
 
   it('adds and retrieves asset with payment fields', async () => {
     const assetId = await db.assets.add({
-      type: 'stock',
+      type: 'Акции',
       name: 'Сбербанк',
       ticker: 'SBER',
-      quantity: 800,
-      quantitySource: 'manual',
       paymentPerUnit: 186,
       paymentPerUnitSource: 'manual',
       frequencyPerYear: 1,
@@ -60,15 +54,15 @@ describe('Database', () => {
   it('queries assets by type', async () => {
     const now = new Date();
     await db.assets.bulkAdd([
-      { type: 'stock', name: 'Сбер', ticker: 'SBER', quantity: 100, quantitySource: 'manual', paymentPerUnitSource: 'fact', frequencyPerYear: 1, frequencySource: 'manual', dataSource: 'manual', createdAt: now, updatedAt: now },
-      { type: 'stock', name: 'Лукойл', ticker: 'LKOH', quantity: 10, quantitySource: 'manual', paymentPerUnitSource: 'fact', frequencyPerYear: 1, frequencySource: 'manual', dataSource: 'manual', createdAt: now, updatedAt: now },
-      { type: 'bond', name: 'ОФЗ 26238', ticker: 'SU26238', quantity: 50, quantitySource: 'manual', paymentPerUnitSource: 'fact', frequencyPerYear: 2, frequencySource: 'manual', dataSource: 'manual', createdAt: now, updatedAt: now },
+      { type: 'Акции', name: 'Сбер', ticker: 'SBER', paymentPerUnitSource: 'fact' as const, frequencyPerYear: 1, frequencySource: 'manual' as const, dataSource: 'manual' as const, createdAt: now, updatedAt: now },
+      { type: 'Акции', name: 'Лукойл', ticker: 'LKOH', paymentPerUnitSource: 'fact' as const, frequencyPerYear: 1, frequencySource: 'manual' as const, dataSource: 'manual' as const, createdAt: now, updatedAt: now },
+      { type: 'Облигации', name: 'ОФЗ 26238', ticker: 'SU26238', paymentPerUnitSource: 'fact' as const, frequencyPerYear: 2, frequencySource: 'manual' as const, dataSource: 'manual' as const, createdAt: now, updatedAt: now },
     ]);
 
-    const stocks = await db.assets.where('type').equals('stock').toArray();
+    const stocks = await db.assets.where('type').equals('Акции').toArray();
     expect(stocks).toHaveLength(2);
 
-    const bonds = await db.assets.where('type').equals('bond').toArray();
+    const bonds = await db.assets.where('type').equals('Облигации').toArray();
     expect(bonds).toHaveLength(1);
   });
 });
@@ -81,8 +75,7 @@ describe('schema v4', () => {
 
   it('stores and retrieves payment per unit fields on Asset', async () => {
     const id = await db.assets.add({
-      type: 'stock', name: 'Сбербанк', ticker: 'SBER',
-      quantity: 800, quantitySource: 'manual',
+      type: 'Акции', name: 'Сбербанк', ticker: 'SBER',
       paymentPerUnit: 100, paymentPerUnitSource: 'manual',
       frequencyPerYear: 1, frequencySource: 'moex', moexFrequency: 1,
       dataSource: 'manual', createdAt: new Date(), updatedAt: new Date(),

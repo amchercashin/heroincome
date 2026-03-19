@@ -29,7 +29,6 @@ import {
 import { syncAllAssets, getLastSyncAt } from '@/services/moex-sync';
 
 const ASSET_DEFAULTS = {
-  quantitySource: 'manual' as const,
   paymentPerUnitSource: 'fact' as const,
   frequencyPerYear: 1,
   frequencySource: 'manual' as const,
@@ -44,10 +43,9 @@ describe('syncAllAssets', () => {
 
   it('syncs stock: updates price and writes frequency to asset', async () => {
     const assetId = (await db.assets.add({
-      type: 'stock',
+      type: 'Акции',
       ticker: 'SBER',
       name: 'Сбербанк',
-      quantity: 800,
       dataSource: 'manual',
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -83,10 +81,9 @@ describe('syncAllAssets', () => {
 
   it('syncs bond: converts price from % to rub, updates frequency on asset', async () => {
     const assetId = (await db.assets.add({
-      type: 'bond',
+      type: 'Облигации',
       ticker: 'SU26238RMFS4',
       name: 'ОФЗ 26238',
-      quantity: 50,
       faceValue: 1000,
       dataSource: 'manual',
       createdAt: new Date(),
@@ -127,9 +124,8 @@ describe('syncAllAssets', () => {
 
   it('skips non-exchange assets (realestate, deposit, other)', async () => {
     await db.assets.add({
-      type: 'realestate',
+      type: 'Недвижимость',
       name: 'Квартира',
-      quantity: 1,
       dataSource: 'manual',
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -146,9 +142,8 @@ describe('syncAllAssets', () => {
 
   it('skips assets without ticker', async () => {
     await db.assets.add({
-      type: 'stock',
+      type: 'Акции',
       name: 'Какая-то акция',
-      quantity: 100,
       dataSource: 'manual',
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -161,10 +156,9 @@ describe('syncAllAssets', () => {
 
   it('does not overwrite manual frequency on asset', async () => {
     const assetId = (await db.assets.add({
-      type: 'stock',
+      type: 'Акции',
       ticker: 'SBER',
       name: 'Сбербанк',
-      quantity: 800,
       dataSource: 'manual',
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -198,10 +192,9 @@ describe('syncAllAssets', () => {
 
   it('updates price but keeps asset fields when dividends fetch fails', async () => {
     const assetId = (await db.assets.add({
-      type: 'stock',
+      type: 'Акции',
       ticker: 'SBER',
       name: 'Сбербанк',
-      quantity: 800,
       dataSource: 'manual',
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -228,10 +221,9 @@ describe('syncAllAssets', () => {
 
   it('updates existing moex frequency on asset with fresh data', async () => {
     const assetId = (await db.assets.add({
-      type: 'stock',
+      type: 'Акции',
       ticker: 'SBER',
       name: 'Сбербанк',
-      quantity: 800,
       dataSource: 'manual',
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -264,10 +256,9 @@ describe('syncAllAssets', () => {
 
   it('reports failed asset when API returns null', async () => {
     await db.assets.add({
-      type: 'stock',
+      type: 'Акции',
       ticker: 'UNKNOWN',
       name: 'Unknown Stock',
-      quantity: 10,
       dataSource: 'manual',
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -283,8 +274,8 @@ describe('syncAllAssets', () => {
 
   it('saves lastSyncAt timestamp when at least one asset synced', async () => {
     await db.assets.add({
-      type: 'stock', ticker: 'SBER', moexSecid: 'SBER', moexBoardId: 'TQBR', moexMarket: 'shares',
-      name: 'Сбербанк', quantity: 100, dataSource: 'manual',
+      type: 'Акции', ticker: 'SBER', moexSecid: 'SBER', moexBoardId: 'TQBR', moexMarket: 'shares',
+      name: 'Сбербанк', dataSource: 'manual',
       createdAt: new Date(), updatedAt: new Date(), ...ASSET_DEFAULTS,
     });
     (fetchBatchStockPrices as Mock).mockResolvedValue(
@@ -309,17 +300,15 @@ describe('syncAllAssets', () => {
 
   it('resolves by ISIN when ticker resolution fails', async () => {
     const assetId = (await db.assets.add({
-      type: 'fund',
+      type: 'Фонды',
       ticker: 'RU000A1068X9',
       isin: 'RU000A1068X9',
       name: 'ПАРУС-ДВН',
-      quantity: 186,
       currentPrice: 1100,
       dataSource: 'import',
       createdAt: new Date(),
       updatedAt: new Date(),
       ...ASSET_DEFAULTS,
-      quantitySource: 'import' as const,
     })) as number;
 
     (resolveSecurityInfo as Mock)
@@ -346,13 +335,12 @@ describe('syncAllAssets', () => {
 
   it('uses cached moexSecid/boardId/market and skips resolveSecurityInfo', async () => {
     const assetId = (await db.assets.add({
-      type: 'stock',
+      type: 'Акции',
       ticker: 'SBER',
       moexSecid: 'SBER',
       moexBoardId: 'TQBR',
       moexMarket: 'shares',
       name: 'Сбербанк',
-      quantity: 800,
       dataSource: 'manual',
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -376,11 +364,10 @@ describe('syncAllAssets', () => {
 
   it('resolves and caches boardId/market when only moexSecid present', async () => {
     const assetId = (await db.assets.add({
-      type: 'stock',
+      type: 'Акции',
       ticker: 'SBER',
       moexSecid: 'SBER',
       name: 'Сбербанк',
-      quantity: 800,
       dataSource: 'manual',
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -412,8 +399,8 @@ describe('syncAllAssets', () => {
 
   it('writes dividend rows to paymentHistory on stock sync', async () => {
     const assetId = (await db.assets.add({
-      type: 'stock', name: 'Sber', ticker: 'SBER', moexSecid: 'SBER',
-      quantity: 100, dataSource: 'moex', createdAt: new Date(), updatedAt: new Date(),
+      type: 'Акции', name: 'Sber', ticker: 'SBER', moexSecid: 'SBER',
+      dataSource: 'moex', createdAt: new Date(), updatedAt: new Date(),
       ...ASSET_DEFAULTS,
     })) as number;
 
@@ -440,8 +427,8 @@ describe('syncAllAssets', () => {
 
   it('deduplicates payment history on re-sync', async () => {
     const assetId = (await db.assets.add({
-      type: 'stock', name: 'Sber', ticker: 'SBER', moexSecid: 'SBER',
-      quantity: 100, dataSource: 'moex', createdAt: new Date(), updatedAt: new Date(),
+      type: 'Акции', name: 'Sber', ticker: 'SBER', moexSecid: 'SBER',
+      dataSource: 'moex', createdAt: new Date(), updatedAt: new Date(),
       ...ASSET_DEFAULTS,
     })) as number;
 
@@ -470,15 +457,13 @@ describe('syncAllAssets', () => {
 
   it('syncs asset with ISIN but no ticker', async () => {
     const assetId = (await db.assets.add({
-      type: 'bond',
+      type: 'Облигации',
       isin: 'RU000A0JV4Q1',
       name: 'ОФЗ 29010',
-      quantity: 100,
       dataSource: 'import',
       createdAt: new Date(),
       updatedAt: new Date(),
       ...ASSET_DEFAULTS,
-      quantitySource: 'import' as const,
       frequencyPerYear: 2,
     })) as number;
 
@@ -510,13 +495,13 @@ describe('syncAllAssets', () => {
   it('groups assets by market+board for batch pricing', async () => {
     // Two stocks on TQBR — should be fetched in one batch
     await db.assets.add({
-      type: 'stock', ticker: 'SBER', moexSecid: 'SBER', moexBoardId: 'TQBR', moexMarket: 'shares',
-      name: 'Сбербанк', quantity: 100, dataSource: 'manual',
+      type: 'Акции', ticker: 'SBER', moexSecid: 'SBER', moexBoardId: 'TQBR', moexMarket: 'shares',
+      name: 'Сбербанк', dataSource: 'manual',
       createdAt: new Date(), updatedAt: new Date(), ...ASSET_DEFAULTS,
     });
     await db.assets.add({
-      type: 'stock', ticker: 'GAZP', moexSecid: 'GAZP', moexBoardId: 'TQBR', moexMarket: 'shares',
-      name: 'Газпром', quantity: 200, dataSource: 'manual',
+      type: 'Акции', ticker: 'GAZP', moexSecid: 'GAZP', moexBoardId: 'TQBR', moexMarket: 'shares',
+      name: 'Газпром', dataSource: 'manual',
       createdAt: new Date(), updatedAt: new Date(), ...ASSET_DEFAULTS,
     });
 
@@ -541,13 +526,13 @@ describe('syncAllAssets', () => {
 
   it('isolates errors: one asset failing does not block others', async () => {
     await db.assets.add({
-      type: 'stock', ticker: 'GOOD', moexSecid: 'GOOD', moexBoardId: 'TQBR', moexMarket: 'shares',
-      name: 'Good Stock', quantity: 100, dataSource: 'manual',
+      type: 'Акции', ticker: 'GOOD', moexSecid: 'GOOD', moexBoardId: 'TQBR', moexMarket: 'shares',
+      name: 'Good Stock', dataSource: 'manual',
       createdAt: new Date(), updatedAt: new Date(), ...ASSET_DEFAULTS,
     });
     await db.assets.add({
-      type: 'stock', ticker: 'BAD',
-      name: 'Bad Stock', quantity: 100, dataSource: 'manual',
+      type: 'Акции', ticker: 'BAD',
+      name: 'Bad Stock', dataSource: 'manual',
       createdAt: new Date(), updatedAt: new Date(), ...ASSET_DEFAULTS,
     });
 
@@ -567,13 +552,13 @@ describe('syncAllAssets', () => {
 
   it('handles mixed stock+bond portfolio', async () => {
     await db.assets.add({
-      type: 'stock', ticker: 'SBER', moexSecid: 'SBER', moexBoardId: 'TQBR', moexMarket: 'shares',
-      name: 'Сбербанк', quantity: 100, dataSource: 'manual',
+      type: 'Акции', ticker: 'SBER', moexSecid: 'SBER', moexBoardId: 'TQBR', moexMarket: 'shares',
+      name: 'Сбербанк', dataSource: 'manual',
       createdAt: new Date(), updatedAt: new Date(), ...ASSET_DEFAULTS,
     });
     await db.assets.add({
-      type: 'bond', ticker: 'SU26238RMFS4', moexSecid: 'SU26238RMFS4', moexBoardId: 'TQOB', moexMarket: 'bonds',
-      name: 'ОФЗ 26238', quantity: 50, dataSource: 'manual',
+      type: 'Облигации', ticker: 'SU26238RMFS4', moexSecid: 'SU26238RMFS4', moexBoardId: 'TQOB', moexMarket: 'bonds',
+      name: 'ОФЗ 26238', dataSource: 'manual',
       createdAt: new Date(), updatedAt: new Date(), ...ASSET_DEFAULTS,
     });
 

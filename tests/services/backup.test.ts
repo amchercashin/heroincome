@@ -11,8 +11,7 @@ describe('backup', () => {
   it('exports and imports data round-trip', async () => {
     const now = new Date();
     await db.assets.add({
-      type: 'stock', ticker: 'SBER', name: 'Сбербанк',
-      quantity: 800, quantitySource: 'manual',
+      type: 'Акции', ticker: 'SBER', name: 'Сбербанк',
       paymentPerUnitSource: 'fact', frequencyPerYear: 1, frequencySource: 'manual',
       dataSource: 'manual', createdAt: now, updatedAt: now,
     });
@@ -64,8 +63,11 @@ describe('backup', () => {
     expect(assets[0].moexFrequency).toBe(1);
     expect(assets[0].paymentPerUnitSource).toBe('manual');
     expect(assets[0].paymentPerUnit).toBe(42);
-    expect(assets[0].quantitySource).toBe('import');
-    expect(assets[0].importedQuantity).toBe(800);
+    // Old fields still present in DB data (backward compat migration)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect((assets[0] as any).quantitySource).toBe('import');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect((assets[0] as any).importedQuantity).toBe(800);
   });
 
   it('rejects invalid JSON', async () => {
@@ -83,8 +85,7 @@ describe('backup', () => {
   it('preserves existing data when import validation fails', async () => {
     const now = new Date();
     await db.assets.add({
-      type: 'stock', ticker: 'KEEP', name: 'Keep Me',
-      quantity: 1, quantitySource: 'manual',
+      type: 'Акции', ticker: 'KEEP', name: 'Keep Me',
       paymentPerUnitSource: 'fact', frequencyPerYear: 1, frequencySource: 'manual',
       dataSource: 'manual', createdAt: now, updatedAt: now,
     });
@@ -98,8 +99,7 @@ describe('backup', () => {
   it('rehydrates Date fields from ISO strings on import', async () => {
     const now = new Date();
     await db.assets.add({
-      type: 'stock', ticker: 'SBER', name: 'Сбербанк',
-      quantity: 800, quantitySource: 'manual',
+      type: 'Акции', ticker: 'SBER', name: 'Сбербанк',
       paymentPerUnitSource: 'fact', frequencyPerYear: 1, frequencySource: 'manual',
       dataSource: 'manual', createdAt: now, updatedAt: now,
     });
@@ -121,8 +121,8 @@ describe('backup', () => {
 
   it('import clears existing data before restoring', async () => {
     await db.assets.add({
-      type: 'stock', name: 'Old', quantity: 1,
-      quantitySource: 'manual', paymentPerUnitSource: 'fact',
+      type: 'Акции', name: 'Old',
+      paymentPerUnitSource: 'fact',
       frequencyPerYear: 1, frequencySource: 'manual',
       dataSource: 'manual', createdAt: new Date(), updatedAt: new Date(),
     });

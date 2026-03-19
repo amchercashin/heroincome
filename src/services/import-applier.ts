@@ -2,10 +2,7 @@ import { db } from '@/db/database';
 import type { ImportRecord } from '@/models/types';
 import type { ImportAssetRow } from './import-parser';
 import type { ImportDiff } from './import-diff';
-
-const FREQUENCY_DEFAULTS: Record<string, number> = {
-  stock: 1, bond: 2, fund: 12, realestate: 12, deposit: 12, other: 12,
-};
+import { getDefaultFrequency } from '@/models/account';
 
 export async function applyImportDiff(
   diff: ImportDiff,
@@ -23,16 +20,12 @@ export async function applyImportDiff(
       switch (item.status) {
         case 'added': {
           const now = new Date();
-          const freq = item.imported.frequencyPerYear ?? FREQUENCY_DEFAULTS[item.imported.type] ?? 12;
+          const freq = item.imported.frequencyPerYear ?? getDefaultFrequency(item.imported.type) ?? 12;
           await db.assets.add({
             type: item.imported.type,
             ticker: item.imported.ticker,
             isin: item.imported.isin,
             name: item.imported.name,
-            quantity: item.imported.quantity,
-            quantitySource: 'import',
-            importedQuantity: item.imported.quantity,
-            averagePrice: item.imported.averagePrice,
             currentPrice: item.imported.currentPrice ?? item.imported.averagePrice,
             faceValue: item.imported.faceValue,
             currency: item.imported.currency,
@@ -78,10 +71,11 @@ export async function applyImportDiff(
   const record: Omit<ImportRecord, 'id'> = {
     date: new Date(),
     source,
-    mode: diff.mode,
     itemsChanged,
     itemsAdded,
     itemsUnchanged,
+    itemsRemoved: 0,
+    accountId: 0, // TODO: will be set properly when import is rewritten for accounts in Task 5
   };
 
   await db.importRecords.add(record as ImportRecord);
@@ -90,14 +84,10 @@ export async function applyImportDiff(
 
 async function updateAsset(assetId: number, row: ImportAssetRow): Promise<void> {
   const updates: Record<string, unknown> = {
-    quantity: row.quantity,
-    quantitySource: 'import',
-    importedQuantity: row.quantity,
     name: row.name,
     dataSource: 'import',
     updatedAt: new Date(),
   };
-  if (row.averagePrice != null) updates.averagePrice = row.averagePrice;
   if (row.currentPrice != null) updates.currentPrice = row.currentPrice;
   if (row.faceValue != null) updates.faceValue = row.faceValue;
   if (row.isin) updates.isin = row.isin;

@@ -1,28 +1,8 @@
 export type DataSource = 'moex' | 'import' | 'manual';
 
-export type AssetType = 'stock' | 'bond' | 'fund' | 'realestate' | 'deposit' | 'other';
-
-export const ASSET_TYPE_LABELS: Record<AssetType, string> = {
-  stock: 'Акции',
-  bond: 'Облигации',
-  fund: 'Фонды',
-  realestate: 'Недвижимость',
-  deposit: 'Вклады',
-  other: 'Прочее',
-};
-
-export const ASSET_TYPE_COLORS: Record<AssetType, string> = {
-  stock: '#c8b48c',
-  bond: '#8b7355',
-  fund: '#a09080',
-  realestate: '#7a6a5a',
-  deposit: '#6b8070',
-  other: '#5a5548',
-};
-
 export interface Asset {
   id?: number;
-  type: AssetType;
+  type: string;
   ticker?: string;
   isin?: string;
   moexSecid?: string;
@@ -36,14 +16,8 @@ export interface Asset {
   dataSource: DataSource;
   createdAt: Date;
   updatedAt: Date;
-  averagePrice?: number;
   currentPrice?: number;
   faceValue?: number;
-
-  // quantity with source tracking
-  quantity: number;
-  quantitySource: 'import' | 'manual';
-  importedQuantity?: number;
 
   // payment per unit with source tracking
   paymentPerUnit?: number;
@@ -75,10 +49,11 @@ export interface ImportRecord {
   id?: number;
   date: Date;
   source: 'sber_xls' | 'sber_html' | 'csv' | 'markdown' | 'ai_import' | 'manual';
-  mode: 'update' | 'add';
   itemsChanged: number;
   itemsAdded: number;
   itemsUnchanged: number;
+  itemsRemoved: number;
+  accountId: number;
 }
 
 export interface PortfolioStats {
@@ -89,7 +64,7 @@ export interface PortfolioStats {
 }
 
 export interface CategoryStats extends PortfolioStats {
-  type: AssetType;
+  type: string;
   assetCount: number;
   portfolioSharePercent: number;
 }

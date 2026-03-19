@@ -102,7 +102,7 @@ describe('sber-html-parser', () => {
     const gazp = rows.find((r) => r.ticker === 'GAZP');
     expect(gazp).toBeDefined();
     expect(gazp!.name).toBe('ГАЗПРОМ ао');
-    expect(gazp!.type).toBe('stock');
+    expect(gazp!.type).toBe('Акции');
     expect(gazp!.quantity).toBe(500);
     expect(gazp!.currentPrice).toBe(130.27);
     expect(gazp!.faceValue).toBeUndefined();
@@ -118,7 +118,7 @@ describe('sber-html-parser', () => {
     const bond = rows.find((r) => r.ticker === 'SU29010RMFS4');
     expect(bond).toBeDefined();
     expect(bond!.name).toBe('ОФЗ 29010');
-    expect(bond!.type).toBe('bond');
+    expect(bond!.type).toBe('Облигации');
     expect(bond!.quantity).toBe(100);
     expect(bond!.currentPrice).toBe(1062);
     expect(bond!.faceValue).toBe(1000);
@@ -135,7 +135,7 @@ describe('sber-html-parser', () => {
     expect(fund).toBeDefined();
     expect(fund!.ticker).toBe('RU000A1068X9');
     expect(fund!.isin).toBe('RU000A1068X9');
-    expect(fund!.type).toBe('fund');
+    expect(fund!.type).toBe('Фонды');
     expect(fund!.quantity).toBe(50);
     expect(fund!.currentPrice).toBe(1150);
     expect(fund!.emitter).toBe('ПАРУС УА');

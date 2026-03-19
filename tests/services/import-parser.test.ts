@@ -6,24 +6,24 @@ import {
 } from '@/services/import-parser';
 
 describe('parseTypeLabel', () => {
-  it('maps Russian labels to AssetType', () => {
-    expect(parseTypeLabel('акция')).toBe('stock');
-    expect(parseTypeLabel('Облигация')).toBe('bond');
-    expect(parseTypeLabel('фонд')).toBe('fund');
-    expect(parseTypeLabel('ETF')).toBe('fund');
-    expect(parseTypeLabel('вклад')).toBe('deposit');
-    expect(parseTypeLabel('недвижимость')).toBe('realestate');
-    expect(parseTypeLabel('прочее')).toBe('other');
+  it('maps Russian labels to type strings', () => {
+    expect(parseTypeLabel('акция')).toBe('Акции');
+    expect(parseTypeLabel('Облигация')).toBe('Облигации');
+    expect(parseTypeLabel('фонд')).toBe('Фонды');
+    expect(parseTypeLabel('ETF')).toBe('Фонды');
+    expect(parseTypeLabel('вклад')).toBe('Вклады');
+    expect(parseTypeLabel('недвижимость')).toBe('Недвижимость');
+    expect(parseTypeLabel('прочее')).toBe('Прочее');
   });
 
   it('maps English labels', () => {
-    expect(parseTypeLabel('stock')).toBe('stock');
-    expect(parseTypeLabel('bond')).toBe('bond');
+    expect(parseTypeLabel('stock')).toBe('Акции');
+    expect(parseTypeLabel('bond')).toBe('Облигации');
   });
 
-  it('defaults to other for unknown types', () => {
-    expect(parseTypeLabel('xyz')).toBe('other');
-    expect(parseTypeLabel('')).toBe('other');
+  it('defaults to Прочее for unknown types', () => {
+    expect(parseTypeLabel('xyz')).toBe('Прочее');
+    expect(parseTypeLabel('')).toBe('Прочее');
   });
 });
 
@@ -40,7 +40,7 @@ describe('parseMDTable', () => {
     expect(rows[0]).toEqual({
       ticker: 'SBER',
       name: 'Сбербанк',
-      type: 'stock',
+      type: 'Акции',
       quantity: 800,
       averagePrice: 298.60,
       lastPaymentAmount: 34.84,
@@ -71,7 +71,7 @@ describe('parseMDTable', () => {
     expect(rows).toHaveLength(1);
     expect(rows[0].ticker).toBeUndefined();
     expect(rows[0].averagePrice).toBeUndefined();
-    expect(rows[0].type).toBe('realestate');
+    expect(rows[0].type).toBe('Недвижимость');
   });
 
   it('handles alternative header names from AI', () => {
@@ -121,7 +121,7 @@ Let me know if you need anything else!
     expect(rows).toHaveLength(1);
     expect(rows[0].ticker).toBeUndefined();
     expect(rows[0].isin).toBe('RU000A1038V6');
-    expect(rows[0].type).toBe('bond');
+    expect(rows[0].type).toBe('Облигации');
   });
 
   it('leaves isin undefined when column is absent', () => {

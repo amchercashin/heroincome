@@ -7,8 +7,6 @@ import { usePortfolioStats } from '@/hooks/use-portfolio-stats';
 import { useMoexSync } from '@/hooks/use-moex-sync';
 import { getAppSettings } from '@/services/app-settings';
 import { useAllPaymentHistory } from '@/hooks/use-payment-history';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/db/database';
 
 function formatSyncTime(date: Date): string {
   const d = date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
@@ -21,15 +19,14 @@ export function MainPage() {
   const { portfolio, categories } = usePortfolioStats();
   const { syncing, lastSyncAt, error, sync } = useMoexSync();
   const allHistory = useAllPaymentHistory();
-  const assets = useLiveQuery(() => db.assets.toArray(), [], []);
 
   const portfolioHistory = useMemo(() => {
-    const assetMap = new Map(assets.map((a) => [a.id!, a.quantity]));
+    // TODO: quantity moved to Holding — using 1 as multiplier until Task 4
     return (allHistory ?? []).map((h) => ({
-      amount: h.amount * (assetMap.get(h.assetId) ?? 1),
+      amount: h.amount,
       date: new Date(h.date),
     }));
-  }, [assets, allHistory]);
+  }, [allHistory]);
 
   const autoSyncDone = useRef(false);
   useEffect(() => {

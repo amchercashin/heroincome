@@ -2,6 +2,7 @@ import { db } from '@/db/database';
 
 const FREQUENCY_DEFAULTS: Record<string, number> = {
   stock: 1, bond: 2, fund: 12, realestate: 12, deposit: 12, other: 12,
+  'Акции': 1, 'Облигации': 2, 'Фонды': 12, 'Недвижимость': 12, 'Вклады': 12, 'Крипта': 12, 'Прочее': 12,
 };
 
 export async function exportAllData(): Promise<string> {

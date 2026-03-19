@@ -81,12 +81,9 @@ function compareFields(
 ): DiffChange[] {
   const changes: DiffChange[] = [];
 
-  if (row.quantity !== existing.quantity) {
-    changes.push({ field: 'quantity', oldValue: existing.quantity, newValue: row.quantity });
-  }
-  if (row.averagePrice != null && row.averagePrice !== existing.averagePrice) {
-    changes.push({ field: 'averagePrice', oldValue: existing.averagePrice, newValue: row.averagePrice });
-  }
+  // NOTE: quantity comparison removed — quantity moved to Holding.
+  // Will be re-added when import is rewritten for holdings in Task 5.
+
   if (row.currentPrice != null && row.currentPrice !== existing.currentPrice) {
     changes.push({ field: 'currentPrice', oldValue: existing.currentPrice, newValue: row.currentPrice });
   }

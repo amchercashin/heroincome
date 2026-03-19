@@ -8,17 +8,15 @@ import { useAssetsByType } from '@/hooks/use-assets';
 import { usePortfolioStats } from '@/hooks/use-portfolio-stats';
 import { useAllPaymentHistory } from '@/hooks/use-payment-history';
 import { calcFactPaymentPerUnit, type PaymentRecord } from '@/services/income-calculator';
-import { ASSET_TYPE_LABELS, type AssetType } from '@/models/types';
 
 export function CategoryPage() {
   const { type } = useParams<{ type: string }>();
   const navigate = useNavigate();
-  const assetType = type as AssetType;
-  const assets = useAssetsByType(assetType);
+  const assets = useAssetsByType(type ?? '');
   const { categories } = usePortfolioStats();
   const allHistory = useAllPaymentHistory();
 
-  const catStats = categories.find((c) => c.type === assetType);
+  const catStats = categories.find((c) => c.type === type);
 
   const { historyByAsset, categoryHistory, now } = useMemo(() => {
     const now = new Date();
@@ -30,11 +28,11 @@ export function CategoryPage() {
     }
 
     const categoryAssetIds = new Set(assets.map((a) => a.id!));
-    const assetMap = new Map(assets.map((a) => [a.id!, a.quantity]));
     const categoryHistory = (allHistory ?? [])
       .filter((h) => categoryAssetIds.has(h.assetId))
       .map((h) => ({
-        amount: h.amount * (assetMap.get(h.assetId) ?? 1),
+        // TODO: quantity moved to Holding — using 1 as multiplier until Task 4
+        amount: h.amount,
         date: new Date(h.date),
       }));
 
@@ -50,7 +48,7 @@ export function CategoryPage() {
   return (
     <AppShell
       leftAction={backButton}
-      title={ASSET_TYPE_LABELS[assetType] ?? type}
+      title={type ?? ''}
     >
       {catStats && (
         <StatBlocks
@@ -73,7 +71,7 @@ export function CategoryPage() {
       })}
 
       <Link
-        to={`/add-asset?type=${assetType}`}
+        to={`/add-asset?type=${type}`}
         className="block text-center py-3 border border-dashed border-[var(--way-shadow)] rounded-xl text-[var(--way-ash)] text-sm mt-3 active:border-[var(--way-gold)] active:text-[var(--way-gold)]"
       >
         + Добавить

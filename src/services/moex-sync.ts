@@ -58,7 +58,7 @@ export async function syncAllAssets(): Promise<SyncResult> {
 
   // Filter syncable assets
   const syncable = assets.filter(
-    (a) => (a.ticker || a.isin || a.moexSecid) && ['stock', 'bond', 'fund'].includes(a.type),
+    (a) => (a.ticker || a.isin || a.moexSecid) && ['Акции', 'Облигации', 'Фонды'].includes(a.type),
   );
   result.skipped = assets.length - syncable.length;
 

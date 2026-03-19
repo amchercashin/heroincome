@@ -1,4 +1,3 @@
-import type { AssetType } from '@/models/types';
 import type { ImportAssetRow } from './import-parser';
 
 interface PortfolioPosition {
@@ -13,22 +12,22 @@ interface PortfolioPosition {
 interface SecurityInfo {
   ticker: string;
   isin: string;
-  type: AssetType;
+  type: string;
   emitter: string;
   securityCategory: string;
   issueInfo: string;
 }
 
-const SBER_TYPE_MAP: Record<string, AssetType> = {
-  'обыкновенная акция': 'stock',
-  'привилегированная акция': 'stock',
-  'государственная облигация': 'bond',
-  'корпоративная облигация': 'bond',
-  'облигация': 'bond',
-  'муниципальная облигация': 'bond',
-  'фонд закрытого типа': 'fund',
-  'фонд открытого типа': 'fund',
-  'биржевой паевой инвестиционный фонд': 'fund',
+const SBER_TYPE_MAP: Record<string, string> = {
+  'обыкновенная акция': 'Акции',
+  'привилегированная акция': 'Акции',
+  'государственная облигация': 'Облигации',
+  'корпоративная облигация': 'Облигации',
+  'облигация': 'Облигации',
+  'муниципальная облигация': 'Облигации',
+  'фонд закрытого типа': 'Фонды',
+  'фонд открытого типа': 'Фонды',
+  'биржевой паевой инвестиционный фонд': 'Фонды',
 };
 
 function parseSberNumber(s: string): number | undefined {
@@ -72,7 +71,7 @@ function parseSecuritiesReference(table: HTMLTableElement | null): Map<string, S
 
     if (!name || !ticker) continue;
 
-    const type = SBER_TYPE_MAP[securityCategory.toLowerCase()] ?? 'other';
+    const type = SBER_TYPE_MAP[securityCategory.toLowerCase()] ?? 'Прочее';
     map.set(name, { ticker, isin, type, emitter, securityCategory, issueInfo });
   }
 
@@ -125,9 +124,9 @@ export function parseSberHTML(html: string): ImportAssetRow[] {
 
   return positions.map((pos) => {
     const info = securityInfo.get(pos.name);
-    const isBond = info?.type === 'bond';
+    const isBond = info?.type === 'Облигации';
 
-    // Bonds: market price is in % of face value → convert to rubles
+    // Bonds: market price is in % of face value -> convert to rubles
     let currentPrice: number;
     if (isBond && pos.faceValue && pos.faceValue > 0) {
       currentPrice = Math.round(pos.faceValue * pos.marketPrice / 100 * 100) / 100;
@@ -139,7 +138,7 @@ export function parseSberHTML(html: string): ImportAssetRow[] {
       ticker: info?.ticker,
       isin: info?.isin ?? pos.isin,
       name: pos.name,
-      type: info?.type ?? 'other',
+      type: info?.type ?? 'Прочее',
       quantity: pos.quantity,
       currentPrice,
       faceValue: isBond ? pos.faceValue : undefined,

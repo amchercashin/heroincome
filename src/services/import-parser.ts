@@ -1,10 +1,8 @@
-import type { AssetType } from '@/models/types';
-
 export interface ImportAssetRow {
   ticker?: string;
   isin?: string;
   name: string;
-  type: AssetType;
+  type: string;
   quantity: number;
   averagePrice?: number;
   currentPrice?: number;
@@ -17,17 +15,17 @@ export interface ImportAssetRow {
   frequencyPerYear?: number;
 }
 
-const TYPE_MAP: Record<string, AssetType> = {
-  акция: 'stock', акции: 'stock', stock: 'stock',
-  облигация: 'bond', облигации: 'bond', bond: 'bond',
-  фонд: 'fund', etf: 'fund', бпиф: 'fund', fund: 'fund',
-  недвижимость: 'realestate', realestate: 'realestate',
-  вклад: 'deposit', deposit: 'deposit',
-  прочее: 'other', other: 'other',
+const TYPE_MAP: Record<string, string> = {
+  акция: 'Акции', акции: 'Акции', stock: 'Акции',
+  облигация: 'Облигации', облигации: 'Облигации', bond: 'Облигации',
+  фонд: 'Фонды', etf: 'Фонды', бпиф: 'Фонды', fund: 'Фонды',
+  недвижимость: 'Недвижимость', realestate: 'Недвижимость',
+  вклад: 'Вклады', deposit: 'Вклады',
+  прочее: 'Прочее', other: 'Прочее',
 };
 
-export function parseTypeLabel(label: string): AssetType {
-  return TYPE_MAP[label.trim().toLowerCase()] ?? 'other';
+export function parseTypeLabel(label: string): string {
+  return TYPE_MAP[label.trim().toLowerCase()] ?? 'Прочее';
 }
 
 interface ColumnMap {
@@ -83,7 +81,7 @@ function cellsToRow(cells: string[], colMap: ColumnMap): ImportAssetRow | null {
     ticker: colMap.ticker !== undefined ? cells[colMap.ticker]?.trim() || undefined : undefined,
     isin: colMap.isin !== undefined ? cells[colMap.isin]?.trim() || undefined : undefined,
     name,
-    type: colMap.type !== undefined ? parseTypeLabel(cells[colMap.type]) : 'other',
+    type: colMap.type !== undefined ? parseTypeLabel(cells[colMap.type]) : 'Прочее',
     quantity,
     averagePrice: colMap.averagePrice !== undefined ? parseNumber(cells[colMap.averagePrice]) : undefined,
     lastPaymentAmount: colMap.lastPaymentAmount !== undefined ? parseNumber(cells[colMap.lastPaymentAmount]) : undefined,

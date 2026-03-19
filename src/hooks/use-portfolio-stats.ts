@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/database';
-import type { AssetType, PortfolioStats, CategoryStats } from '@/models/types';
+import type { PortfolioStats, CategoryStats } from '@/models/types';
 import { calcFactPaymentPerUnit, calcAssetIncomePerMonth, calcYieldPercent, type PaymentRecord } from '@/services/income-calculator';
 import { useAllPaymentHistory } from './use-payment-history';
 
@@ -35,16 +35,18 @@ export function usePortfolioStats(): {
     // Single pass: accumulate portfolio totals AND per-category stats
     let totalValue = 0;
     let totalIncomePerMonth = 0;
-    const categoryMap = new Map<AssetType, { value: number; incomePerMonth: number; count: number }>();
+    const categoryMap = new Map<string, { value: number; incomePerMonth: number; count: number }>();
 
     for (const asset of assets) {
-      const price = asset.currentPrice ?? asset.averagePrice ?? 0;
-      const assetValue = price * asset.quantity;
+      const price = asset.currentPrice ?? 0;
+      // TODO: quantity moved to Holding — using 0 until Task 4 wires holdings
+      const quantity = 0;
+      const assetValue = price * quantity;
       totalValue += assetValue;
 
       const paymentPerUnit = resolvePaymentPerUnit(asset);
       const assetIncomePerMonth = calcAssetIncomePerMonth(
-        asset.quantity,
+        quantity,
         paymentPerUnit,
         asset.frequencyPerYear,
       );

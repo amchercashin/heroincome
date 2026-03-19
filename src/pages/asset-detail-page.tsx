@@ -31,10 +31,12 @@ export function AssetDetailPage() {
       paymentPerUnit = calcFactPaymentPerUnit(historyRecords, asset.frequencyPerYear, now);
     }
 
-    const incomePerMonth = calcAssetIncomePerMonth(asset.quantity, paymentPerUnit, asset.frequencyPerYear);
+    // TODO: quantity moved to Holding — using 0 until Task 4 wires holdings
+    const quantity = 0;
+    const incomePerMonth = calcAssetIncomePerMonth(quantity, paymentPerUnit, asset.frequencyPerYear);
 
-    const value = (asset.currentPrice ?? asset.averagePrice) != null
-      ? (asset.currentPrice ?? asset.averagePrice)! * asset.quantity
+    const value = asset.currentPrice != null
+      ? asset.currentPrice * quantity
       : null;
     const yieldPct = (value != null)
       ? calcYieldPercent(incomePerMonth * 12, value)
@@ -45,16 +47,10 @@ export function AssetDetailPage() {
 
     const isManual =
       asset.paymentPerUnitSource === 'manual' ||
-      asset.quantitySource === 'manual' ||
       asset.frequencySource === 'manual';
 
-    return { paymentPerUnit, incomePerMonth, value, yieldPct, sharePercent, isManual, historyRecords };
+    return { paymentPerUnit, incomePerMonth, value, yieldPct, sharePercent, isManual, historyRecords, quantity };
   }, [asset, history, portfolio.totalValue]);
-
-  const handleSaveQuantity = useCallback((v: string) => {
-    const num = parseInt(v);
-    if (num > 0) updateAsset(assetId, { quantity: num, quantitySource: 'manual' });
-  }, [assetId]);
 
   const handleSavePaymentPerUnit = useCallback((v: string) => {
     const num = parseFloat(v.replace(',', '.').replace(/[^\d.]/g, ''));
@@ -72,7 +68,7 @@ export function AssetDetailPage() {
     return <AppShell title="Загрузка..."><div /></AppShell>;
   }
 
-  const { paymentPerUnit, incomePerMonth, value, yieldPct, sharePercent, isManual, historyRecords } = computed;
+  const { paymentPerUnit, incomePerMonth, value, yieldPct, sharePercent, isManual, historyRecords, quantity } = computed;
 
   const title = asset.ticker ? `${asset.ticker} · ${asset.name}` : asset.name;
 
@@ -88,19 +84,6 @@ export function AssetDetailPage() {
         yieldPercent={yieldPct}
         portfolioSharePercent={sharePercent}
         isManualIncome={isManual}
-      />
-
-      <AssetField
-        label="Количество"
-        value={`${asset.quantity} шт`}
-        sourceLabel={asset.quantitySource === 'import' ? 'импорт' : 'ручной'}
-        isManualSource={asset.quantitySource === 'manual'}
-        onSave={handleSaveQuantity}
-        resetLabel={asset.importedQuantity != null && asset.quantitySource === 'manual' ? 'Вернуться к импорту' : undefined}
-        onReset={asset.importedQuantity != null ? () => updateAsset(assetId, {
-          quantity: asset.importedQuantity!,
-          quantitySource: 'import',
-        }) : undefined}
       />
 
       <AssetField
@@ -132,13 +115,13 @@ export function AssetDetailPage() {
 
       <ExpectedPayment
         paymentPerUnit={paymentPerUnit}
-        quantity={asset.quantity}
+        quantity={quantity}
         nextExpectedDate={asset.nextExpectedDate}
         nextExpectedCutoffDate={asset.nextExpectedCutoffDate}
         nextExpectedCreditDate={asset.nextExpectedCreditDate}
       />
 
-      <PaymentHistoryChart history={historyRecords} quantity={asset.quantity} />
+      <PaymentHistoryChart history={historyRecords} quantity={quantity} />
     </AppShell>
   );
 }

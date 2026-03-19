@@ -1,18 +1,16 @@
 import { Link } from 'react-router-dom';
-import type { AssetType } from '@/models/types';
-import { ASSET_TYPE_LABELS, ASSET_TYPE_COLORS } from '@/models/types';
+import { getTypeColor } from '@/models/account';
 import { formatCurrency, formatPercent } from '@/lib/utils';
 
 interface CategoryCardProps {
-  type: AssetType;
+  type: string;
   assetCount: number;
   incomePerMonth: number | null;
   portfolioSharePercent: number;
 }
 
 export function CategoryCard({ type, assetCount, incomePerMonth, portfolioSharePercent }: CategoryCardProps) {
-  const color = ASSET_TYPE_COLORS[type];
-  const label = ASSET_TYPE_LABELS[type];
+  const color = getTypeColor(type);
 
   return (
     <Link
@@ -22,7 +20,7 @@ export function CategoryCard({ type, assetCount, incomePerMonth, portfolioShareP
       <div className="flex items-center gap-2.5">
         <div className="w-[3px] h-[22px] rounded-sm flex-shrink-0" style={{ backgroundColor: color }} />
         <div>
-          <div className="text-[13px] text-[var(--way-text)]">{label}</div>
+          <div className="text-[13px] text-[var(--way-text)]">{type}</div>
           <div className="font-mono text-[9px] text-[var(--way-muted)]">
             {assetCount} {assetCount === 1 ? 'позиция' : assetCount < 5 ? 'позиции' : 'позиций'}
           </div>
