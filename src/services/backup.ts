@@ -1,15 +1,12 @@
 import { db } from '@/db/database';
 
-const FREQUENCY_DEFAULTS: Record<string, number> = {
-  stock: 1, bond: 2, fund: 12, realestate: 12, deposit: 12, other: 12,
-  'Акции': 1, 'Облигации': 2, 'Фонды': 12, 'Недвижимость': 12, 'Вклады': 12, 'Крипта': 12, 'Прочее': 12,
-};
-
 export async function exportAllData(): Promise<string> {
   const data = {
-    version: 2,
+    version: 3,
     exportedAt: new Date().toISOString(),
+    accounts: await db.accounts.toArray(),
     assets: await db.assets.toArray(),
+    holdings: await db.holdings.toArray(),
     paymentHistory: await db.paymentHistory.toArray(),
     importRecords: await db.importRecords.toArray(),
     settings: await db.table('settings').toArray(),
@@ -25,13 +22,22 @@ export async function importAllData(json: string): Promise<void> {
     throw new Error('Невалидный формат: некорректный JSON');
   }
 
-  if (!data || typeof data !== 'object' || !Array.isArray(data.assets)) {
-    throw new Error('Невалидный формат: отсутствует массив assets');
+  if (!data || typeof data !== 'object') {
+    throw new Error('Невалидный формат данных');
+  }
+  if (!Array.isArray(data.accounts) || !Array.isArray(data.assets) || !Array.isArray(data.holdings)) {
+    throw new Error('Невалидный формат: требуется версия 3 с accounts, assets и holdings');
   }
 
   const settingsTable = db.table('settings');
 
-  // Rehydrate Date fields before writing
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const accounts = (data.accounts as any[]).map((a: any) => ({
+    ...a,
+    createdAt: a.createdAt ? new Date(a.createdAt) : new Date(),
+    updatedAt: a.updatedAt ? new Date(a.updatedAt) : new Date(),
+  }));
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const assets = (data.assets as any[]).map((a: any) => ({
     ...a,
@@ -43,51 +49,32 @@ export async function importAllData(json: string): Promise<void> {
   }));
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const holdings = (data.holdings as any[]).map((h: any) => ({
+    ...h,
+    createdAt: h.createdAt ? new Date(h.createdAt) : new Date(),
+    updatedAt: h.updatedAt ? new Date(h.updatedAt) : new Date(),
+  }));
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const paymentHistory = ((data.paymentHistory as any[] | undefined) ?? []).map((h: any) => ({
     ...h,
     date: h.date ? new Date(h.date) : new Date(),
   }));
 
-  // Backward compat: migrate old format with paymentSchedules
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let migratedAssets: any[] = assets;
-  if ((data.paymentSchedules as unknown[] | undefined)?.length) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const scheduleByAssetId = new Map<number, any>();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    for (const s of data.paymentSchedules as any[]) {
-      scheduleByAssetId.set(s.assetId as number, s);
-    }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    migratedAssets = assets.map((asset: any) => {
-      if (asset.frequencyPerYear != null) return asset;
-      const schedule = scheduleByAssetId.get(asset.id as number);
-      const type = asset.type as string;
-      const ds = asset.dataSource as string;
-      return {
-        ...asset,
-        frequencyPerYear: schedule?.frequencyPerYear ?? FREQUENCY_DEFAULTS[type] ?? 12,
-        frequencySource: schedule?.dataSource === 'moex' ? 'moex' : 'manual',
-        moexFrequency: schedule?.dataSource === 'moex' ? schedule.frequencyPerYear : undefined,
-        paymentPerUnitSource: schedule?.activeMetric === 'forecast' && schedule?.forecastMethod === 'manual' ? 'manual' : 'fact',
-        paymentPerUnit: schedule?.activeMetric === 'forecast' && schedule?.forecastMethod === 'manual' ? schedule.forecastAmount : undefined,
-        quantitySource: ds === 'import' ? 'import' : 'manual',
-        importedQuantity: ds === 'import' ? asset.quantity : undefined,
-        nextExpectedDate: schedule?.nextExpectedDate ? new Date(schedule.nextExpectedDate as string) : undefined,
-        nextExpectedCutoffDate: schedule?.nextExpectedCutoffDate ? new Date(schedule.nextExpectedCutoffDate as string) : undefined,
-        nextExpectedCreditDate: schedule?.nextExpectedCreditDate ? new Date(schedule.nextExpectedCreditDate as string) : undefined,
-      };
-    });
-  }
-
-  await db.transaction('rw', db.assets, db.paymentHistory, db.importRecords, settingsTable, async () => {
+  await db.transaction('rw', [db.accounts, db.assets, db.holdings, db.paymentHistory, db.importRecords, settingsTable], async () => {
+    await db.accounts.clear();
     await db.assets.clear();
+    await db.holdings.clear();
     await db.paymentHistory.clear();
     await db.importRecords.clear();
     await settingsTable.clear();
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (migratedAssets.length) await db.assets.bulkAdd(migratedAssets as any);
+    if (accounts.length) await db.accounts.bulkAdd(accounts as any);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (assets.length) await db.assets.bulkAdd(assets as any);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (holdings.length) await db.holdings.bulkAdd(holdings as any);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (paymentHistory.length) await db.paymentHistory.bulkAdd(paymentHistory as any);
     if ((data.importRecords as unknown[] | undefined)?.length) {
