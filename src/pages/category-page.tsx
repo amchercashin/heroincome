@@ -14,12 +14,13 @@ import { db } from '@/db/database';
 export function CategoryPage() {
   const { type } = useParams<{ type: string }>();
   const navigate = useNavigate();
-  const assets = useAssetsByType(type ?? '');
+  const decodedType = decodeURIComponent(type ?? '');
+  const assets = useAssetsByType(decodedType);
   const { categories } = usePortfolioStats();
   const allHistory = useAllPaymentHistory();
   const holdings = useLiveQuery(() => db.holdings.toArray(), [], []);
 
-  const catStats = categories.find((c) => c.type === type);
+  const catStats = categories.find((c) => c.type === decodedType);
 
   const quantityByAsset = useMemo(() => {
     const map = new Map<number, number>();
@@ -58,7 +59,7 @@ export function CategoryPage() {
   return (
     <AppShell
       leftAction={backButton}
-      title={type ?? ''}
+      title={decodedType}
     >
       {catStats && (
         <StatBlocks
@@ -81,7 +82,7 @@ export function CategoryPage() {
       })}
 
       <Link
-        to={`/add-asset?type=${type}`}
+        to={`/add-asset?type=${encodeURIComponent(decodedType)}`}
         className="block text-center py-3 border border-dashed border-[var(--way-shadow)] rounded-xl text-[var(--way-ash)] text-sm mt-3 active:border-[var(--way-gold)] active:text-[var(--way-gold)]"
       >
         + Добавить

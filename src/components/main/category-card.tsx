@@ -14,7 +14,7 @@ export function CategoryCard({ type, assetCount, incomePerMonth, portfolioShareP
 
   return (
     <Link
-      to={`/category/${type}`}
+      to={`/category/${encodeURIComponent(type)}`}
       className="flex items-center justify-between py-3 border-b border-[rgba(200,180,140,0.04)] transition-colors active:bg-[var(--way-stone)]"
     >
       <div className="flex items-center gap-2.5">
