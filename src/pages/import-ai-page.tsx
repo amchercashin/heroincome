@@ -3,7 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { AppShell } from '@/components/layout/app-shell';
 import { Button } from '@/components/ui/button';
 import { parseMDTable } from '@/services/import-parser';
-import type { ImportMode } from '@/services/import-diff';
+// ImportMode removed — will be rewritten in Task 15
+type ImportMode = string;
 
 const AI_PROMPT = `Преобразуй данные из отчёта брокера в Markdown-таблицу:
 

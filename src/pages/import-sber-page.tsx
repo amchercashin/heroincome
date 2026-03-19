@@ -3,12 +3,10 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { AppShell } from '@/components/layout/app-shell';
 import { Button } from '@/components/ui/button';
 import { parseSberHTML } from '@/services/sber-html-parser';
-import type { ImportMode } from '@/services/import-diff';
-
 export function ImportSberPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const mode = ((location.state as Record<string, unknown>)?.mode ?? 'update') as ImportMode;
+  const mode = ((location.state as Record<string, unknown>)?.mode ?? 'update') as string;
   const [error, setError] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);

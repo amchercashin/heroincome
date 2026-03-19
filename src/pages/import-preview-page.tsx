@@ -2,34 +2,34 @@ import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AppShell } from '@/components/layout/app-shell';
 import { Button } from '@/components/ui/button';
-import { computeImportDiff, type ImportDiff, type ImportMode, type DiffItem } from '@/services/import-diff';
+import { computeImportDiff, type ImportDiff, type DiffItem } from '@/services/import-diff';
 import { applyImportDiff } from '@/services/import-applier';
 import type { ImportAssetRow } from '@/services/import-parser';
 import type { ImportRecord } from '@/models/types';
 
-const STATUS_STYLES = {
+const STATUS_STYLES: Record<string, { bg: string; border: string; label: string; text: string }> = {
   added: { bg: 'bg-[rgba(200,180,140,0.1)]', border: 'border-[rgba(200,180,140,0.08)]', label: 'Новый', text: 'text-[var(--way-gold)]' },
   changed: { bg: 'bg-[rgba(139,115,85,0.12)]', border: 'border-[rgba(139,115,85,0.15)]', label: 'Обновлён', text: 'text-[var(--way-earth)]' },
   unchanged: { bg: 'bg-[rgba(90,85,72,0.1)]', border: 'border-[rgba(200,180,140,0.08)]', label: 'Без изменений', text: 'text-[var(--way-ash)]' },
-  conflict: { bg: 'bg-[rgba(184,65,58,0.15)]', border: 'border-[rgba(184,65,58,0.2)]', label: 'Конфликт', text: 'text-[var(--destructive)]' },
+  removed: { bg: 'bg-[rgba(184,65,58,0.15)]', border: 'border-[rgba(184,65,58,0.2)]', label: 'Удалён', text: 'text-[var(--destructive)]' },
 };
 
 export function ImportPreviewPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const state = location.state as {
-    mode: ImportMode;
+    accountId: number | null;
+    accountName?: string;
     rows: ImportAssetRow[];
     source: string;
   } | null;
 
   const [diff, setDiff] = useState<ImportDiff | null>(null);
-  const [resolutions, setResolutions] = useState<Map<number, 'import' | 'keep'>>(new Map());
   const [applying, setApplying] = useState(false);
 
   useEffect(() => {
     if (!state) return;
-    computeImportDiff(state.rows, state.mode).then(setDiff);
+    computeImportDiff(state.rows, state.accountId).then(setDiff);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -44,16 +44,8 @@ export function ImportPreviewPage() {
   const handleApply = async () => {
     if (!diff) return;
     setApplying(true);
-    await applyImportDiff(diff, state.source as ImportRecord['source'], resolutions);
+    await applyImportDiff(diff, state.source as ImportRecord['source'], state.accountName);
     navigate('/');
-  };
-
-  const toggleResolution = (index: number) => {
-    setResolutions((prev) => {
-      const next = new Map(prev);
-      next.set(index, next.get(index) === 'import' ? 'keep' : 'import');
-      return next;
-    });
   };
 
   const backButton = (
@@ -64,8 +56,7 @@ export function ImportPreviewPage() {
     return <AppShell leftAction={backButton} title="Загрузка..."><div /></AppShell>;
   }
 
-  const actionableCount = diff.summary.added + diff.summary.changed +
-    [...resolutions.values()].filter((v) => v === 'import').length;
+  const actionableCount = diff.summary.added + diff.summary.changed + diff.summary.removed;
 
   return (
     <AppShell leftAction={backButton} title="Предпросмотр">
@@ -79,19 +70,14 @@ export function ImportPreviewPage() {
         {diff.summary.unchanged > 0 && (
           <span className="text-[var(--way-ash)]">={diff.summary.unchanged} без изменений</span>
         )}
-        {diff.summary.conflicts > 0 && (
-          <span className="text-[var(--destructive)]">⚠{diff.summary.conflicts} конфликтов</span>
+        {diff.summary.removed > 0 && (
+          <span className="text-[var(--destructive)]">-{diff.summary.removed} удалено</span>
         )}
       </div>
 
       <div className="space-y-2 mb-6">
         {diff.items.map((item, i) => (
-          <DiffItemRow
-            key={i}
-            item={item}
-            resolution={resolutions.get(i)}
-            onToggle={item.status === 'conflict' ? () => toggleResolution(i) : undefined}
-          />
+          <DiffItemRow key={i} item={item} />
         ))}
       </div>
 
@@ -115,15 +101,11 @@ export function ImportPreviewPage() {
   );
 }
 
-function DiffItemRow({ item, resolution, onToggle }: {
-  item: DiffItem;
-  resolution?: 'import' | 'keep';
-  onToggle?: () => void;
-}) {
-  const style = STATUS_STYLES[item.status];
-  const displayName = item.imported.ticker
-    ? `${item.imported.ticker} · ${item.imported.name}`
-    : item.imported.name;
+function DiffItemRow({ item }: { item: DiffItem }) {
+  const style = STATUS_STYLES[item.status] ?? STATUS_STYLES.unchanged;
+  const displayName = item.imported
+    ? (item.imported.ticker ? `${item.imported.ticker} · ${item.imported.name}` : item.imported.name)
+    : (item.existingAsset?.ticker ? `${item.existingAsset.ticker} · ${item.existingAsset.name}` : item.existingAsset?.name ?? '—');
 
   return (
     <div className={`${style.bg} border ${style.border} rounded-lg p-3`}>
@@ -132,13 +114,15 @@ function DiffItemRow({ item, resolution, onToggle }: {
         <span className={`text-[10px] ${style.text}`}>{style.label}</span>
       </div>
 
-      <div className="text-[var(--way-ash)] text-[11px]">
-        {item.imported.quantity} шт
-        {item.imported.currentPrice != null && ` · ₽${item.imported.currentPrice}`}
-        {item.imported.averagePrice != null && item.imported.currentPrice == null && ` · ₽${item.imported.averagePrice}`}
-        {item.imported.lastPaymentAmount != null && ` · выплата ₽${item.imported.lastPaymentAmount}`}
-        {item.imported.isin && ` · ${item.imported.isin}`}
-      </div>
+      {item.imported && (
+        <div className="text-[var(--way-ash)] text-[11px]">
+          {item.imported.quantity} шт
+          {item.imported.currentPrice != null && ` · ₽${item.imported.currentPrice}`}
+          {item.imported.averagePrice != null && item.imported.currentPrice == null && ` · ₽${item.imported.averagePrice}`}
+          {item.imported.lastPaymentAmount != null && ` · выплата ₽${item.imported.lastPaymentAmount}`}
+          {item.imported.isin && ` · ${item.imported.isin}`}
+        </div>
+      )}
 
       {item.changes.length > 0 && (
         <div className="mt-1 text-[10px] text-[var(--way-ash)]">
@@ -148,17 +132,6 @@ function DiffItemRow({ item, resolution, onToggle }: {
             </span>
           ))}
         </div>
-      )}
-
-      {item.status === 'conflict' && onToggle && (
-        <button
-          onClick={onToggle}
-          className="mt-2 text-[11px] px-2 py-1 rounded bg-[var(--way-stone)]"
-        >
-          {resolution === 'import'
-            ? '✓ Использовать импорт'
-            : '⊘ Оставить текущее'}
-        </button>
       )}
     </div>
   );

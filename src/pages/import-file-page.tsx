@@ -3,7 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { AppShell } from '@/components/layout/app-shell';
 import { Button } from '@/components/ui/button';
 import { parseMDTable, parseCSV } from '@/services/import-parser';
-import type { ImportMode } from '@/services/import-diff';
+// ImportMode removed — will be rewritten in Task 15
+type ImportMode = string;
 
 export function ImportFilePage() {
   const location = useLocation();

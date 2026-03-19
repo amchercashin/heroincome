@@ -110,6 +110,15 @@ function parsePortfolioTable(table: HTMLTableElement): PortfolioPosition[] {
   return positions;
 }
 
+export function extractAgreementNumber(html: string): string | undefined {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  const title = doc.querySelector('title')?.textContent?.trim();
+  if (!title) return undefined;
+  const lines = title.split(/\n/).map(l => l.trim()).filter(Boolean);
+  return lines.length >= 2 ? lines[lines.length - 1] : undefined;
+}
+
 export function parseSberHTML(html: string): ImportAssetRow[] {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');

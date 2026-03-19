@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppShell } from '@/components/layout/app-shell';
 import { useMoexSync } from '@/hooks/use-moex-sync';
-import type { ImportMode } from '@/services/import-diff';
+// ImportMode removed — will be rewritten in Task 15
+type ImportMode = string;
 import { Landmark, Bot, FileText, RefreshCw, PenLine } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
