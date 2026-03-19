@@ -31,7 +31,8 @@ export async function updateAsset(id: number, changes: Partial<Asset>): Promise<
 }
 
 export async function deleteAsset(id: number): Promise<void> {
-  await db.transaction('rw', db.assets, db.paymentHistory, async () => {
+  await db.transaction('rw', db.assets, db.holdings, db.paymentHistory, async () => {
+    await db.holdings.where('assetId').equals(id).delete();
     await db.paymentHistory.where('assetId').equals(id).delete();
     await db.assets.delete(id);
   });
