@@ -3,12 +3,7 @@ import { ErrorBoundary } from '@/components/error-boundary';
 import { MainPage } from '@/pages/main-page';
 import { CategoryPage } from '@/pages/category-page';
 import { AssetDetailPage } from '@/pages/asset-detail-page';
-import { AddAssetPage } from '@/pages/add-asset-page';
-import { ImportPage } from '@/pages/import-page';
-import { ImportAIPage } from '@/pages/import-ai-page';
-import { ImportFilePage } from '@/pages/import-file-page';
-import { ImportSberPage } from '@/pages/import-sber-page';
-import { ImportPreviewPage } from '@/pages/import-preview-page';
+import { DataPage } from '@/pages/data-page';
 import { SettingsPage } from '@/pages/settings-page';
 import { BackupPage } from '@/pages/backup-page';
 
@@ -20,12 +15,7 @@ export default function App() {
           <Route path="/" element={<MainPage />} />
           <Route path="/category/:type" element={<CategoryPage />} />
           <Route path="/asset/:id" element={<AssetDetailPage />} />
-          <Route path="/add-asset" element={<AddAssetPage />} />
-          <Route path="/import" element={<ImportPage />} />
-          <Route path="/import/ai" element={<ImportAIPage />} />
-          <Route path="/import/file" element={<ImportFilePage />} />
-          <Route path="/import/sber" element={<ImportSberPage />} />
-          <Route path="/import/preview" element={<ImportPreviewPage />} />
+          <Route path="/data" element={<DataPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/backup" element={<BackupPage />} />
         </Routes>
