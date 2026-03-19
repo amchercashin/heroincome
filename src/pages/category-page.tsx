@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { AppShell } from '@/components/layout/app-shell';
 import { StatBlocks } from '@/components/shared/stat-blocks';
 import { PaymentHistoryChart } from '@/components/shared/payment-history-chart';
@@ -8,6 +9,7 @@ import { useAssetsByType } from '@/hooks/use-assets';
 import { usePortfolioStats } from '@/hooks/use-portfolio-stats';
 import { useAllPaymentHistory } from '@/hooks/use-payment-history';
 import { calcFactPaymentPerUnit, type PaymentRecord } from '@/services/income-calculator';
+import { db } from '@/db/database';
 
 export function CategoryPage() {
   const { type } = useParams<{ type: string }>();
@@ -15,8 +17,17 @@ export function CategoryPage() {
   const assets = useAssetsByType(type ?? '');
   const { categories } = usePortfolioStats();
   const allHistory = useAllPaymentHistory();
+  const holdings = useLiveQuery(() => db.holdings.toArray(), [], []);
 
   const catStats = categories.find((c) => c.type === type);
+
+  const quantityByAsset = useMemo(() => {
+    const map = new Map<number, number>();
+    for (const h of holdings) {
+      map.set(h.assetId, (map.get(h.assetId) ?? 0) + h.quantity);
+    }
+    return map;
+  }, [holdings]);
 
   const { historyByAsset, categoryHistory, now } = useMemo(() => {
     const now = new Date();
@@ -31,7 +42,6 @@ export function CategoryPage() {
     const categoryHistory = (allHistory ?? [])
       .filter((h) => categoryAssetIds.has(h.assetId))
       .map((h) => ({
-        // TODO: quantity moved to Holding — using 1 as multiplier until Task 4
         amount: h.amount,
         date: new Date(h.date),
       }));
@@ -67,7 +77,7 @@ export function CategoryPage() {
           const history = historyByAsset.get(asset.id!) ?? [];
           paymentPerUnit = calcFactPaymentPerUnit(history, asset.frequencyPerYear, now);
         }
-        return <AssetRow key={asset.id} asset={asset} paymentPerUnit={paymentPerUnit} />;
+        return <AssetRow key={asset.id} asset={asset} paymentPerUnit={paymentPerUnit} totalQuantity={quantityByAsset.get(asset.id!) ?? 0} />;
       })}
 
       <Link

@@ -10,10 +10,17 @@ export function usePortfolioStats(): {
   categories: CategoryStats[];
 } {
   const assets = useLiveQuery(() => db.assets.toArray(), [], []);
+  const holdings = useLiveQuery(() => db.holdings.toArray(), [], []);
   const allHistory = useAllPaymentHistory();
 
   const { portfolio, categories } = useMemo(() => {
     const now = new Date();
+
+    // Build quantity lookup from holdings (sum per assetId)
+    const quantityByAsset = new Map<number, number>();
+    for (const h of holdings) {
+      quantityByAsset.set(h.assetId, (quantityByAsset.get(h.assetId) ?? 0) + h.quantity);
+    }
 
     // Build history lookup
     const historyByAsset = new Map<number, PaymentRecord[]>();
@@ -38,15 +45,14 @@ export function usePortfolioStats(): {
     const categoryMap = new Map<string, { value: number; incomePerMonth: number; count: number }>();
 
     for (const asset of assets) {
+      const totalQuantity = quantityByAsset.get(asset.id!) ?? 0;
       const price = asset.currentPrice ?? 0;
-      // TODO: quantity moved to Holding — using 0 until Task 4 wires holdings
-      const quantity = 0;
-      const assetValue = price * quantity;
+      const assetValue = price * totalQuantity;
       totalValue += assetValue;
 
       const paymentPerUnit = resolvePaymentPerUnit(asset);
       const assetIncomePerMonth = calcAssetIncomePerMonth(
-        quantity,
+        totalQuantity,
         paymentPerUnit,
         asset.frequencyPerYear,
       );
@@ -90,7 +96,7 @@ export function usePortfolioStats(): {
     categories.sort((a, b) => b.totalIncomePerMonth - a.totalIncomePerMonth);
 
     return { portfolio, categories };
-  }, [assets, allHistory]);
+  }, [assets, holdings, allHistory]);
 
   return { portfolio, categories };
 }

@@ -6,19 +6,18 @@ import { calcAssetIncomePerMonth } from '@/services/income-calculator';
 interface AssetRowProps {
   asset: Asset;
   paymentPerUnit: number;
+  totalQuantity: number;
 }
 
-export function AssetRow({ asset, paymentPerUnit }: AssetRowProps) {
-  // TODO: quantity moved to Holding — using 0 until Task 4 wires holdings
-  const quantity = 0;
+export function AssetRow({ asset, paymentPerUnit, totalQuantity }: AssetRowProps) {
   const incomePerMonth = calcAssetIncomePerMonth(
-    quantity,
+    totalQuantity,
     paymentPerUnit,
     asset.frequencyPerYear,
   );
   const incomePerYear = incomePerMonth * 12;
   const value = asset.currentPrice != null
-    ? asset.currentPrice * quantity
+    ? asset.currentPrice * totalQuantity
     : null;
 
   const isManual =
@@ -49,7 +48,7 @@ export function AssetRow({ asset, paymentPerUnit }: AssetRowProps) {
         </div>
       </div>
       <div className="flex justify-between font-mono text-[9px] text-[var(--way-muted)] mt-1">
-        <span>{quantity} шт · {formatCurrency(value)}</span>
+        <span>{totalQuantity} шт · {formatCurrency(value)}</span>
         <span>
           <span className="bg-[rgba(139,115,85,0.12)] text-[var(--way-earth)] px-1.5 py-0.5 rounded text-[9px]">
             {formatFrequency(asset.frequencyPerYear)}
