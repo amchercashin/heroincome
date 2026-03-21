@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ErrorBoundary } from '@/components/error-boundary';
+import { PwaUpdatePrompt } from '@/components/pwa-update-prompt';
 import { SyncProvider } from '@/contexts/sync-context';
 import { MainPage } from '@/pages/main-page';
 import { CategoryPage } from '@/pages/category-page';
@@ -12,6 +13,7 @@ import { PaymentsPage } from '@/pages/payments-page';
 export default function App() {
   return (
     <ErrorBoundary>
+      <PwaUpdatePrompt />
       <BrowserRouter>
         <SyncProvider>
           <Routes>

@@ -12,14 +12,6 @@ if ('serviceWorker' in navigator) {
       }
     }
   });
-  // Reload when a new SW takes control (new deploy available)
-  let refreshing = false;
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (!refreshing) {
-      refreshing = true;
-      location.reload();
-    }
-  });
 }
 
 createRoot(document.getElementById('root')!).render(
