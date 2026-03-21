@@ -32,6 +32,7 @@ export default defineConfig({
         navigateFallback: 'index.html',
         skipWaiting: true,
         clientsClaim: true,
+        cleanupOutdatedCaches: true,
       },
     }),
   ],
