@@ -14,7 +14,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <PwaUpdatePrompt />
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <SyncProvider>
           <Routes>
             <Route path="/" element={<MainPage />} />
