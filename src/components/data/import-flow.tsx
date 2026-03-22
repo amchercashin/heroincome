@@ -218,7 +218,7 @@ export function ImportFlow({ open, onClose, accountId, accountName }: ImportFlow
 
               {/* AI prompt with copy button */}
               <div className="relative">
-                <pre className="bg-[var(--way-stone)] border border-[var(--way-shadow)] rounded-lg p-3 pr-10 text-xs text-[var(--way-ash)] whitespace-pre-wrap overflow-x-auto max-h-40 overflow-y-auto">
+                <pre className="bg-[var(--way-stone)] border border-[var(--way-shadow)] rounded-lg p-3 pr-10 text-xs text-[var(--way-ash)] whitespace-pre-wrap overflow-x-auto max-h-40 overflow-y-auto max-w-full">
                   {AI_PROMPT}
                 </pre>
                 <button

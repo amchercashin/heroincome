@@ -94,9 +94,6 @@ function DiffRow({ item }: { item: DiffItem }) {
   const oldQty = item.existingHolding?.quantity;
   const newQty = item.imported?.quantity;
 
-  // Average price display
-  const oldPrice = item.existingHolding?.averagePrice;
-  const newPrice = item.imported?.averagePrice;
 
   return (
     <div className={`${bgColor} ${borderColor} border-l-3 rounded px-2 py-1.5 flex items-center justify-between text-[13px]`}>
@@ -113,8 +110,6 @@ function DiffRow({ item }: { item: DiffItem }) {
       <div className="flex gap-3 text-right flex-shrink-0 ml-2">
         {/* Quantity */}
         <DiffValue oldVal={oldQty} newVal={newQty} status={item.status} suffix=" шт" />
-        {/* Price */}
-        <DiffValue oldVal={oldPrice} newVal={newPrice} status={item.status} suffix="₽" />
       </div>
     </div>
   );

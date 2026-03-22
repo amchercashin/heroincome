@@ -76,14 +76,14 @@ export function AccountSection({ account, holdings, assets, onImport, highlightA
   }
 
   return (
-    <div className="border border-[var(--way-shadow)]/50 rounded-xl overflow-hidden">
+    <div className="border border-[var(--way-shadow)]/50 rounded-xl">
       {/* Header */}
       <div
         role="button"
         tabIndex={0}
         onClick={() => setExpanded(!expanded)}
         onKeyDown={(e) => e.key === 'Enter' && setExpanded(!expanded)}
-        className="w-full bg-[var(--way-stone)] px-3 py-3 flex items-center justify-between cursor-pointer"
+        className={`w-full bg-[var(--way-stone)] px-3 py-3 flex items-center justify-between cursor-pointer rounded-t-xl ${!expanded ? 'rounded-b-xl' : ''}`}
       >
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-[var(--way-text)] text-xs flex-shrink-0">{expanded ? '▾' : '▸'}</span>

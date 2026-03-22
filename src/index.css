@@ -140,11 +140,15 @@
     @apply border-border outline-ring/50;
     }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground overflow-x-hidden;
     }
   html {
     @apply font-sans;
     }
+}
+
+[data-slot="sheet-content"][data-side="bottom"] {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }
 
 @keyframes way-fade-in {
