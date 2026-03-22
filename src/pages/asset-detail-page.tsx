@@ -1,5 +1,6 @@
 import { useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { withViewTransition } from '@/lib/view-transition';
 import { AppShell } from '@/components/layout/app-shell';
 import { StatBlocks } from '@/components/shared/stat-blocks';
 import { PaymentHistoryChart } from '@/components/shared/payment-history-chart';
@@ -81,7 +82,7 @@ export function AssetDetailPage() {
   const title = asset.ticker ? `${asset.ticker} · ${asset.name}` : asset.name;
 
   const backButton = (
-    <button onClick={() => navigate(-1)} className="text-[var(--way-ash)] text-lg" aria-label="Назад">‹</button>
+    <button onClick={() => withViewTransition(() => navigate(-1))} className="text-[var(--way-ash)] text-lg" aria-label="Назад">‹</button>
   );
 
   return (
@@ -96,11 +97,11 @@ export function AssetDetailPage() {
 
       <div
         className="bg-[var(--way-stone)] rounded-lg p-3 mb-2 cursor-pointer hover:border-[var(--way-gold)] border border-transparent transition-colors"
-        onClick={() => navigate('/data', {
+        onClick={() => withViewTransition(() => navigate('/data', {
           state: holdings.length > 0
             ? { highlightAccountId: holdings[0].accountId, highlightAssetId: assetId }
             : undefined
-        })}
+        }))}
       >
         <div className="font-mono text-[10px] text-[var(--way-ash)] mb-1">Количество</div>
         <div className="font-mono text-[14px] text-[var(--way-text)]">
@@ -128,7 +129,7 @@ export function AssetDetailPage() {
         isManualSource={asset.paymentPerUnitSource === 'manual'}
         subtitle={
           <button
-            onClick={() => navigate('/payments', { state: { highlightAssetId: assetId } })}
+            onClick={() => withViewTransition(() => navigate('/payments', { state: { highlightAssetId: assetId } }))}
             className="text-[var(--way-gold)] hover:underline"
           >
             {asset.paymentPerUnitSource === 'fact' ? 'расчёт из истории выплат →' : 'история выплат →'}

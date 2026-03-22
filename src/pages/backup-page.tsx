@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { withViewTransition } from '@/lib/view-transition';
 import { AppShell } from '@/components/layout/app-shell';
 import { Button } from '@/components/ui/button';
 import { exportAllData, importAllData } from '@/services/backup';
@@ -38,7 +39,7 @@ export function BackupPage() {
   };
 
   const backButton = (
-    <button onClick={() => navigate(-1)} className="text-[var(--way-ash)] text-lg" aria-label="Назад">‹</button>
+    <button onClick={() => withViewTransition(() => navigate(-1))} className="text-[var(--way-ash)] text-lg" aria-label="Назад">‹</button>
   );
 
   return (

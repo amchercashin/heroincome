@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { TransitionLink } from '@/components/ui/transition-link';
 import type { Asset } from '@/models/types';
 import { formatCurrency, formatFrequency } from '@/lib/utils';
 import { calcAssetIncomePerMonth } from '@/services/income-calculator';
@@ -25,7 +25,7 @@ export function AssetRow({ asset, paymentPerUnit, totalQuantity }: AssetRowProps
     asset.frequencySource === 'manual';
 
   return (
-    <Link
+    <TransitionLink
       to={`/asset/${asset.id}`}
       className="block py-3 border-b border-[rgba(200,180,140,0.04)] transition-colors active:bg-[var(--way-stone)]"
     >
@@ -57,6 +57,6 @@ export function AssetRow({ asset, paymentPerUnit, totalQuantity }: AssetRowProps
           {formatCurrency(incomePerYear)}/год
         </span>
       </div>
-    </Link>
+    </TransitionLink>
   );
 }

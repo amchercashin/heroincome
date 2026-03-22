@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { withViewTransition } from '@/lib/view-transition';
 import { AppShell } from '@/components/layout/app-shell';
 import { getAppSettings, updateAppSetting, clearAllData, type AppSettings } from '@/services/app-settings';
 
@@ -19,11 +20,11 @@ export function SettingsPage() {
   const handleClear = async () => {
     if (!confirm('Удалить все данные? Это действие необратимо.')) return;
     await clearAllData();
-    navigate('/');
+    withViewTransition(() => navigate('/'));
   };
 
   const backButton = (
-    <button onClick={() => navigate(-1)} className="text-[var(--way-ash)] text-lg" aria-label="Назад">‹</button>
+    <button onClick={() => withViewTransition(() => navigate(-1))} className="text-[var(--way-ash)] text-lg" aria-label="Назад">‹</button>
   );
 
   if (!settings) return <AppShell leftAction={backButton} title="Настройки"><div /></AppShell>;
