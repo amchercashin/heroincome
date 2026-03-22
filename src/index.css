@@ -24,7 +24,7 @@
     --way-muted: #4a4540;
 
     /* Fluid typography tokens */
-    --way-text-display: clamp(36px, 11vw, 52px);
+    --way-text-display: clamp(40px, 12vw, 56px);
     --way-text-nav:     clamp(20px, 5.5vw, 24px);
     --way-text-title:   clamp(16px, 4.5vw, 20px);
     --way-text-heading: clamp(14px, 3.8vw, 16px);

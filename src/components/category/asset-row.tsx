@@ -1,6 +1,6 @@
 import { TransitionLink } from '@/components/ui/transition-link';
 import type { Asset } from '@/models/types';
-import { formatCurrency, formatFrequency } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 import { calcAssetIncomePerMonth } from '@/services/income-calculator';
 
 interface AssetRowProps {
@@ -15,7 +15,6 @@ export function AssetRow({ asset, paymentPerUnit, totalQuantity }: AssetRowProps
     paymentPerUnit,
     asset.frequencyPerYear,
   );
-  const incomePerYear = incomePerMonth * 12;
   const value = asset.currentPrice != null
     ? asset.currentPrice * totalQuantity
     : null;
@@ -47,15 +46,8 @@ export function AssetRow({ asset, paymentPerUnit, totalQuantity }: AssetRowProps
           </span>
         </div>
       </div>
-      <div className="flex justify-between font-mono text-[length:var(--way-text-caption)] text-[var(--way-muted)] mt-1">
-        <span>{totalQuantity} шт · {formatCurrency(value)}</span>
-        <span>
-          <span className="bg-[rgba(139,115,85,0.12)] text-[var(--way-earth)] px-1.5 py-0.5 rounded text-[length:var(--way-text-caption)]">
-            {formatFrequency(asset.frequencyPerYear)}
-          </span>
-          {' '}
-          <span className="text-[length:var(--way-text-caption)]">{formatCurrency(incomePerYear)}/год</span>
-        </span>
+      <div className="font-mono text-[length:var(--way-text-caption)] text-[var(--way-muted)] mt-1">
+        {totalQuantity} шт · {formatCurrency(value)}
       </div>
     </TransitionLink>
   );

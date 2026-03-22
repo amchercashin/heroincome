@@ -7,7 +7,7 @@ interface PaymentRowProps {
 }
 
 const formatDate = (date: Date) =>
-  new Date(date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' }).replace('.', '');
+  new Date(date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
 export function PaymentRow({ payment, onToggleExcluded, onDelete }: PaymentRowProps) {
   const isExcluded = payment.excluded;
@@ -28,7 +28,7 @@ export function PaymentRow({ payment, onToggleExcluded, onDelete }: PaymentRowPr
       </span>
 
       {/* Source badge */}
-      <span className={`text-[length:var(--way-text-caption)] px-1.5 py-0.5 rounded ${
+      <span className={`text-[length:var(--way-text-micro)] px-1 py-0.5 rounded ${
         payment.dataSource === 'moex'
           ? 'bg-[#2d5a2d] text-[#6bba6b]'
           : 'bg-[#5a5a2d] text-[#baba6b]'
@@ -42,14 +42,14 @@ export function PaymentRow({ payment, onToggleExcluded, onDelete }: PaymentRowPr
           <>
             <button
               onClick={() => onToggleExcluded(payment.id!)}
-              className="text-[#6bba6b] hover:text-green-300 text-[length:var(--way-text-body)] min-w-[36px] min-h-[36px] flex items-center justify-center transition-colors"
+              className="text-[#6bba6b] hover:text-green-300 text-[length:var(--way-text-heading)] min-w-[36px] min-h-[36px] flex items-center justify-center transition-colors"
               title="Восстановить"
             >
               ↩
             </button>
             <button
               onClick={() => onDelete(payment.id!)}
-              className="text-red-400 hover:text-red-300 text-[length:var(--way-text-body)] min-w-[36px] min-h-[36px] flex items-center justify-center transition-colors"
+              className="text-red-400 hover:text-red-300 text-[length:var(--way-text-heading)] min-w-[36px] min-h-[36px] flex items-center justify-center transition-colors"
               title="Удалить навсегда"
             >
               ×
@@ -58,7 +58,7 @@ export function PaymentRow({ payment, onToggleExcluded, onDelete }: PaymentRowPr
         ) : (
           <button
             onClick={() => onToggleExcluded(payment.id!)}
-            className="text-[var(--way-gold)] hover:text-yellow-300 text-[length:var(--way-text-body)] min-w-[36px] min-h-[36px] flex items-center justify-center transition-colors"
+            className="text-[var(--way-gold)] hover:text-yellow-300 text-[length:var(--way-text-heading)] min-w-[36px] min-h-[36px] flex items-center justify-center transition-colors"
             title="Исключить из расчётов"
           >
             ⊘

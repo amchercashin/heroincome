@@ -156,18 +156,15 @@ export function AssetDetailPage() {
         }) : undefined}
       />
 
-      <ExpectedPayment
-        paymentPerUnit={paymentPerUnit}
-        quantity={totalQuantity}
-        nextExpectedDate={asset.nextExpectedDate}
-        nextExpectedCutoffDate={asset.nextExpectedCutoffDate}
-        nextExpectedCreditDate={asset.nextExpectedCreditDate}
-      />
-
       <PaymentHistoryChart
         history={allHistoryRecords}
         paymentPerUnit={paymentPerUnit}
         frequencyPerYear={asset.frequencyPerYear}
+      />
+
+      <ExpectedPayment
+        paymentPerUnit={paymentPerUnit}
+        nextExpectedDate={asset.nextExpectedDate}
       />
     </AppShell>
   );

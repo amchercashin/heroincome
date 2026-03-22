@@ -18,7 +18,7 @@ interface AccountSectionProps {
 }
 
 export function AccountSection({ account, holdings, assets, onImport, highlightAssetId }: AccountSectionProps) {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const [addAssetOpen, setAddAssetOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -97,19 +97,13 @@ export function AccountSection({ account, holdings, assets, onImport, highlightA
             />
           </span>
           {statusLabel && (
-            <span className={`${statusColor} px-1.5 py-0.5 rounded text-[length:var(--way-text-caption)] flex-shrink-0`}>
+            <span className={`${statusColor} px-1 py-0.5 rounded text-[length:var(--way-text-micro)] flex-shrink-0`}>
               {statusLabel}
             </span>
           )}
         </div>
         <div className="flex items-center gap-2 flex-shrink-0 ml-2">
           <span className="text-[var(--way-ash)] text-[length:var(--way-text-body)]">{formatCurrency(totalValue)}</span>
-          <span
-            className="border border-[var(--way-shadow)] text-[var(--way-ash)] px-2 py-0.5 rounded text-[length:var(--way-text-body)] min-h-[36px] flex items-center justify-center"
-            onClick={(e) => { e.stopPropagation(); onImport(); }}
-          >
-            Импорт
-          </span>
           <div className="relative" ref={menuRef}>
             <button
               onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }}
@@ -120,6 +114,16 @@ export function AccountSection({ account, holdings, assets, onImport, highlightA
             {menuOpen && (
               <div className="absolute right-0 top-full mt-1 bg-[var(--way-stone)] border border-[var(--way-shadow)] rounded-md shadow-lg z-50 min-w-[140px]">
                 <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenuOpen(false);
+                    onImport();
+                  }}
+                  className="w-full text-left px-3 py-2 text-sm text-[var(--way-text)] hover:bg-[var(--way-void)] transition-colors rounded-t-md"
+                >
+                  Импорт
+                </button>
+                <button
                   onClick={async (e) => {
                     e.stopPropagation();
                     setMenuOpen(false);
@@ -127,7 +131,7 @@ export function AccountSection({ account, holdings, assets, onImport, highlightA
                       await deleteAccount(account.id!);
                     }
                   }}
-                  className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-[var(--way-void)] transition-colors rounded-md"
+                  className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-[var(--way-void)] transition-colors rounded-b-md"
                 >
                   Удалить счёт
                 </button>
@@ -150,7 +154,7 @@ export function AccountSection({ account, holdings, assets, onImport, highlightA
               <div key={type}>
                 {/* Type sub-header */}
                 <div className="flex justify-between items-center px-3 py-1.5 bg-[var(--way-void)]">
-                  <span className="text-[var(--way-ash)] text-[length:var(--way-text-body)] uppercase tracking-wider" onClick={(e) => e.stopPropagation()}>
+                  <span className="text-[var(--way-ash)] text-[length:var(--way-text-heading)] uppercase tracking-wider" onClick={(e) => e.stopPropagation()}>
                     <TypeCombobox
                       value={type}
                       existingTypes={allTypes}
@@ -167,7 +171,7 @@ export function AccountSection({ account, holdings, assets, onImport, highlightA
                 </div>
 
                 {/* Table header */}
-                <div className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-x-2 px-3 py-1 text-[length:var(--way-text-body)] text-[var(--way-muted)]">
+                <div className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-x-2 px-3 py-1 text-[length:var(--way-text-caption)] text-[var(--way-muted)]">
                   <span>Тикер</span>
                   <span className="text-right w-14">Кол-во</span>
                   <span className="text-right w-16">Цена пок.</span>
@@ -184,26 +188,16 @@ export function AccountSection({ account, holdings, assets, onImport, highlightA
                     <div
                       key={holding.id}
                       ref={isHighlighted ? highlightRowRef : undefined}
-                      className={`grid grid-cols-[1fr_auto_auto_auto_auto] gap-x-2 px-3 py-2 border-t border-[var(--way-void)] text-[length:var(--way-text-heading)]${isHighlighted ? ' animate-highlight-pulse' : ''}`}
+                      className={`grid grid-cols-[1fr_auto_auto_auto_auto] gap-x-2 px-3 py-2 border-t border-[var(--way-void)] text-[length:var(--way-text-body)]${isHighlighted ? ' animate-highlight-pulse' : ''}`}
                     >
                       <div className="min-w-0">
                         {asset.ticker ? (
                           <>
                             <div className="font-medium text-[var(--way-text)] truncate">{asset.ticker}</div>
-                            <div className="text-[var(--way-muted)] text-[length:var(--way-text-body)] truncate">
-                              <InlineCell
-                                value={asset.name}
-                                onSave={(v) => asset.id != null && updateAsset(asset.id, { name: v })}
-                              />
-                            </div>
+                            <div className="text-[var(--way-muted)] text-[length:var(--way-text-caption)] truncate">{asset.name}</div>
                           </>
                         ) : (
-                          <div className="font-medium text-[var(--way-text)] truncate">
-                            <InlineCell
-                              value={asset.name}
-                              onSave={(v) => asset.id != null && updateAsset(asset.id, { name: v })}
-                            />
-                          </div>
+                          <div className="font-medium text-[var(--way-text)] truncate">{asset.name}</div>
                         )}
                       </div>
                       <span className="text-right text-[var(--way-text)] tabular-nums w-14">
@@ -239,7 +233,7 @@ export function AccountSection({ account, holdings, assets, onImport, highlightA
                             await deleteHolding(holding.id!);
                           }
                         }}
-                        className="text-[var(--way-muted)] hover:text-red-400 transition-colors text-[length:var(--way-text-body)] ml-1 w-4 min-h-[36px] flex items-center justify-center"
+                        className="text-red-400 hover:text-red-300 transition-colors text-[length:var(--way-text-heading)] ml-1 min-w-[36px] min-h-[36px] flex items-center justify-center"
                       >
                         ×
                       </button>

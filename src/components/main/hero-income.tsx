@@ -14,13 +14,13 @@ export function HeroIncome({ income, yieldPercent, totalValue, mode, onToggle }:
 
   return (
     <div className="text-center mb-4" style={{ animation: 'way-fade-slide-up 0.7s ease-out 0.2s both' }}>
-      <div className="font-mono text-[length:var(--way-text-caption)] uppercase tracking-[0.3em] text-[var(--way-ash)]"
-           style={{ animation: 'way-fade-in 0.5s ease-out 0.3s both' }}>
-        расчётный пассивный доход
-      </div>
-      <div className="font-serif text-[length:var(--way-text-display)] font-light text-[var(--way-gold)] tracking-tight mt-1"
-           style={{ animation: 'way-fade-scale-in 0.8s ease-out 0.4s both' }}>
+      <div className="font-serif text-[length:var(--way-text-display)] font-light text-[var(--way-gold)] tracking-tight"
+           style={{ animation: 'way-fade-scale-in 0.8s ease-out 0.3s both' }}>
         {formatCurrencyFull(animatedIncome)}
+      </div>
+      <div className="font-mono text-[length:var(--way-text-caption)] uppercase tracking-[0.3em] text-[var(--way-ash)] mt-1"
+           style={{ animation: 'way-fade-in 0.5s ease-out 0.4s both' }}>
+        расчётный пассивный доход
       </div>
       <div className="font-mono text-[length:var(--way-text-caption)] text-[var(--way-muted)] mt-0.5"
            style={{ animation: 'way-fade-in 0.5s ease-out 0.6s both' }}>
