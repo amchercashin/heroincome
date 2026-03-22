@@ -76,7 +76,7 @@ export function AddAssetSheet({ open, onClose, accountId, existingTypes }: AddAs
   };
 
   const inputCls =
-    'w-full bg-[var(--way-stone)] border border-[var(--way-shadow)] rounded-lg px-3 py-2 text-sm text-[var(--way-text)] placeholder:text-[var(--way-muted)] outline-none focus:border-[var(--way-gold)]';
+    'w-full bg-[var(--way-stone)] border border-[var(--way-shadow)] rounded-lg px-3 py-2 text-base text-[var(--way-text)] placeholder:text-[var(--way-muted)] outline-none focus:border-[var(--way-gold)]';
 
   return (
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
