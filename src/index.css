@@ -158,9 +158,13 @@
   }
 }
 
+[data-slot="sheet-content"] {
+  overflow-x: hidden;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
 [data-slot="sheet-content"][data-side="bottom"] {
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
-  overflow-x: hidden;
 }
 
 @keyframes way-fade-in {
