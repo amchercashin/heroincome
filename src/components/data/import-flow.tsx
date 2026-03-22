@@ -238,7 +238,7 @@ export function ImportFlow({ open, onClose, accountId, accountName }: ImportFlow
                 value={aiText}
                 onChange={(e) => setAiText(e.target.value)}
                 placeholder="Вставьте Markdown-таблицу из ответа AI..."
-                className="w-full bg-[var(--way-stone)] border border-[var(--way-shadow)] rounded-lg px-3 py-2 text-sm text-[var(--way-text)] placeholder:text-[var(--way-shadow)] outline-none focus:border-[var(--way-gold)] min-h-[120px] resize-y font-mono"
+                className="w-full bg-[var(--way-stone)] border border-[var(--way-shadow)] rounded-lg px-3 py-2 text-base text-[var(--way-text)] placeholder:text-[var(--way-shadow)] outline-none focus:border-[var(--way-gold)] min-h-[120px] resize-y font-mono"
               />
 
               <button
@@ -266,7 +266,7 @@ export function ImportFlow({ open, onClose, accountId, accountName }: ImportFlow
                     type="text"
                     value={editableName}
                     onChange={(e) => setEditableName(e.target.value)}
-                    className="w-full bg-[var(--way-stone)] border border-[var(--way-shadow)] rounded-lg px-3 py-2 text-sm text-[var(--way-text)] outline-none focus:border-[var(--way-gold)]"
+                    className="w-full bg-[var(--way-stone)] border border-[var(--way-shadow)] rounded-lg px-3 py-2 text-base text-[var(--way-text)] outline-none focus:border-[var(--way-gold)]"
                   />
                 </div>
               )}

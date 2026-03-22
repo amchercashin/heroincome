@@ -85,7 +85,7 @@ export function TypeCombobox({ value, existingTypes, onSave, className = '' }: T
         value={editValue}
         onChange={(e) => { setEditValue(e.target.value); setShowDropdown(true); }}
         onKeyDown={handleKeyDown}
-        className={`bg-[var(--way-void)] border border-[var(--way-gold)] rounded px-1.5 py-0.5 text-[var(--way-text)] outline-none w-full ${className}`}
+        className={`bg-[var(--way-void)] border border-[var(--way-gold)] rounded px-1.5 py-0.5 !text-base text-[var(--way-text)] outline-none w-full ${className}`}
       />
       {showDropdown && suggestions.length > 0 && (
         <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-[var(--way-stone)] border border-[var(--way-shadow)] rounded-md shadow-lg max-h-48 overflow-y-auto">

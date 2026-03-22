@@ -49,7 +49,7 @@ export function AssetField({
         <div>
           <div className="flex gap-2">
             <input
-              className="flex-1 bg-[var(--way-void)] border border-[var(--way-gold)] rounded-lg px-2 py-1 text-sm text-[var(--way-text)] outline-none font-mono"
+              className="flex-1 bg-[var(--way-void)] border border-[var(--way-gold)] rounded-lg px-2 py-1 text-base text-[var(--way-text)] outline-none font-mono"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               onBlur={handleSave}

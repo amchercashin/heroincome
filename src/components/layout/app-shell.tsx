@@ -24,13 +24,13 @@ export function AppShell({ title, leftAction, rightAction, children }: AppShellP
 
   return (
     <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
-      <div className="min-h-screen bg-[var(--way-void)] text-[var(--way-text)]">
-        <header className="flex items-center justify-between px-5 pb-2" style={{ paddingTop: 'max(38px, env(safe-area-inset-top))' }}>
+      <div className="h-[100vh] h-[100dvh] flex flex-col overflow-hidden bg-[var(--way-void)] text-[var(--way-text)]">
+        <header className="flex-shrink-0 flex items-center justify-between px-5 pb-2" style={{ paddingTop: 'max(38px, env(safe-area-inset-top))' }}>
           <div>{leftAction ?? <SheetTrigger asChild>{defaultLeft}</SheetTrigger>}</div>
           {title && <h1 className="text-sm font-medium text-[var(--way-text)]">{title}</h1>}
           <div>{rightAction ?? <div className="w-5" />}</div>
         </header>
-        <main className="px-5 pb-8">{children}</main>
+        <main className="flex-1 overflow-y-auto overflow-x-hidden overscroll-none px-5 pb-8">{children}</main>
       </div>
       <DrawerMenu onClose={() => setDrawerOpen(false)} />
     </Sheet>

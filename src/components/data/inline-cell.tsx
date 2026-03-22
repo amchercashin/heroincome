@@ -43,7 +43,7 @@ export function InlineCell({ value, onSave, className = '', type = 'text' }: Inl
         onChange={(e) => setEditValue(e.target.value)}
         onBlur={handleSave}
         onKeyDown={handleKeyDown}
-        className={`bg-[var(--way-void)] border border-[var(--way-gold)] rounded px-1.5 py-0.5 text-[var(--way-text)] outline-none ${className}`}
+        className={`bg-[var(--way-void)] border border-[var(--way-gold)] rounded px-1.5 py-0.5 !text-base text-[var(--way-text)] outline-none ${className}`}
         inputMode={type === 'number' ? 'decimal' : 'text'}
       />
     );

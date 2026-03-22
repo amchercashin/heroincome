@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { withViewTransition } from '@/lib/view-transition';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { AppShell } from '@/components/layout/app-shell';
 import { StatBlocks } from '@/components/shared/stat-blocks';
@@ -42,7 +43,7 @@ export function CategoryPage() {
   }, [allHistory]);
 
   const backButton = (
-    <button onClick={() => navigate(-1)} className="text-[var(--way-ash)] text-lg" aria-label="Назад">
+    <button onClick={() => withViewTransition(() => navigate(-1))} className="text-[var(--way-ash)] text-lg" aria-label="Назад">
       ‹
     </button>
   );

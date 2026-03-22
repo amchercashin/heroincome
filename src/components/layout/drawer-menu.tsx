@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { TransitionLink } from '@/components/ui/transition-link';
 import { SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { BarChart3, Database, CalendarDays, Settings, Save } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -46,7 +46,7 @@ export function DrawerMenu({ onClose }: DrawerMenuProps) {
               {section.title}
             </div>
             {section.items.map((item) => (
-              <Link
+              <TransitionLink
                 key={item.path}
                 to={item.path}
                 onClick={onClose}
@@ -54,7 +54,7 @@ export function DrawerMenu({ onClose }: DrawerMenuProps) {
               >
                 <item.icon size={16} strokeWidth={1.2} className="text-[var(--way-ash)]" />
                 {item.label}
-              </Link>
+              </TransitionLink>
             ))}
           </div>
         ))}

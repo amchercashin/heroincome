@@ -33,7 +33,7 @@ export function AddPaymentForm({ assetId, paymentType, onAdd, onCancel }: AddPay
         type="date"
         value={dateStr}
         onChange={(e) => setDateStr(e.target.value)}
-        className="bg-transparent border border-[var(--way-shadow)] rounded px-2 py-1 text-[12px] text-[var(--way-text)] font-mono w-[130px]"
+        className="bg-transparent border border-[var(--way-shadow)] rounded px-2 py-1 text-base text-[var(--way-text)] font-mono w-[130px]"
       />
       <input
         type="text"
@@ -41,7 +41,7 @@ export function AddPaymentForm({ assetId, paymentType, onAdd, onCancel }: AddPay
         value={amountStr}
         onChange={(e) => setAmountStr(e.target.value)}
         placeholder="Сумма ₽"
-        className="bg-transparent border border-[var(--way-shadow)] rounded px-2 py-1 text-[12px] text-[var(--way-text)] font-mono w-[90px]"
+        className="bg-transparent border border-[var(--way-shadow)] rounded px-2 py-1 text-base text-[var(--way-text)] font-mono w-[90px]"
         onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
       />
       <button

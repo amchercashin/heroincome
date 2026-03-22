@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { TransitionLink } from '@/components/ui/transition-link';
 import { getTypeColor } from '@/models/account';
 import { formatCurrency, formatPercent } from '@/lib/utils';
 
@@ -13,7 +13,7 @@ export function CategoryCard({ type, assetCount, incomePerMonth, portfolioShareP
   const color = getTypeColor(type);
 
   return (
-    <Link
+    <TransitionLink
       to={`/category/${encodeURIComponent(type)}`}
       className="flex items-center justify-between py-3 border-b border-[rgba(200,180,140,0.04)] transition-colors active:bg-[var(--way-stone)]"
     >
@@ -33,6 +33,6 @@ export function CategoryCard({ type, assetCount, incomePerMonth, portfolioShareP
         </div>
         <span className="text-[var(--way-shadow)]">›</span>
       </div>
-    </Link>
+    </TransitionLink>
   );
 }
