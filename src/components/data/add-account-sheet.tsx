@@ -26,7 +26,7 @@ export function AddAccountSheet({ open, onClose, onImport }: AddAccountSheetProp
           <SheetTitle className="text-[var(--way-text)]">Добавить счёт</SheetTitle>
           <SheetDescription className="sr-only">Создание нового брокерского счёта</SheetDescription>
         </SheetHeader>
-        <div className="mt-4 space-y-4">
+        <div className="mt-4 space-y-4 px-4">
           {/* Empty account */}
           <div>
             <label className="text-xs text-[var(--way-ash)] block mb-1">Название</label>

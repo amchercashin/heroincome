@@ -149,6 +149,7 @@
 
 [data-slot="sheet-content"][data-side="bottom"] {
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  overflow-x: hidden;
 }
 
 @keyframes way-fade-in {

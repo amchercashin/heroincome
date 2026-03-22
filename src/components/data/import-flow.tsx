@@ -186,7 +186,7 @@ export function ImportFlow({ open, onClose, accountId, accountName }: ImportFlow
           </SheetDescription>
         </SheetHeader>
 
-        <div className="mt-4">
+        <div className="mt-4 px-4">
           {/* Step: method selection */}
           {step === 'method' && (
             <div className="space-y-2">
