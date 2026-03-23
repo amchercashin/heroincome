@@ -23,7 +23,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     setSyncing(true);
     setError(null);
     try {
-      const result = await syncAllAssets();
+      const result = await syncAllAssets({ pricesOnly: true });
       if (result.synced > 0) {
         setLastSyncAt(new Date());
       }

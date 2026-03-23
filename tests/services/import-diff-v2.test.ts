@@ -139,9 +139,9 @@ describe('computeImportDiff (account-scoped)', () => {
       { isin: 'RU000A1038V6', name: 'ОФЗ 26238 Обновлённый', type: 'Облигации', quantity: 100 },
     ];
     const diff = await computeImportDiff(rows, accId);
-    expect(diff.items[0].status).toBe('changed');
+    // Name differs but diff only tracks portfolio composition (quantity, averagePrice)
+    expect(diff.items[0].status).toBe('unchanged');
     expect(diff.items[0].existingAsset?.isin).toBe('RU000A1038V6');
-    expect(diff.items[0].changes.some(c => c.field === 'name')).toBe(true);
   });
 
   it('prefers ISIN match over ticker match', async () => {

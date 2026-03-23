@@ -88,7 +88,7 @@ export function AccountSection({ account, holdings, assets, onImport, highlightA
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-[var(--way-text)] text-[length:var(--way-text-caption)] flex-shrink-0">{expanded ? '▾' : '▸'}</span>
           <span
-            className="font-semibold text-[length:var(--way-text-heading)] text-[var(--way-text)] truncate"
+            className="font-semibold text-[length:var(--way-text-heading)] text-[var(--way-text)] truncate min-w-0"
             onClick={(e) => e.stopPropagation()}
           >
             <InlineCell
@@ -153,8 +153,8 @@ export function AccountSection({ account, holdings, assets, onImport, highlightA
             return (
               <div key={type}>
                 {/* Type sub-header */}
-                <div className="flex justify-between items-center px-3 py-1.5 bg-[var(--way-void)]">
-                  <span className="text-[var(--way-ash)] text-[length:var(--way-text-heading)] uppercase tracking-wider" onClick={(e) => e.stopPropagation()}>
+                <div className="flex justify-between items-center px-3 pt-4 pb-1.5 bg-[var(--way-void)]">
+                  <span className="text-[var(--way-ash)] text-[length:var(--way-text-heading)] uppercase tracking-wider min-w-0" onClick={(e) => e.stopPropagation()}>
                     <TypeCombobox
                       value={type}
                       existingTypes={allTypes}
@@ -171,12 +171,12 @@ export function AccountSection({ account, holdings, assets, onImport, highlightA
                 </div>
 
                 {/* Table header */}
-                <div className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-x-2 px-3 py-1 text-[length:var(--way-text-caption)] text-[var(--way-muted)]">
+                <div className="grid grid-cols-[1fr_5rem_4rem_4rem_1.5rem] gap-x-2 px-3 text-[length:var(--way-text-caption)] text-[var(--way-muted)]">
                   <span>Тикер</span>
-                  <span className="text-right w-14">Кол-во</span>
-                  <span className="text-right w-16">Цена пок.</span>
-                  <span className="text-right w-16">Стоимость</span>
-                  <span className="w-4"></span>
+                  <span className="text-right">Кол-во</span>
+                  <span className="text-right">Цена пок.</span>
+                  <span className="text-right">Стоимость</span>
+                  <span></span>
                 </div>
 
                 {/* Rows */}
@@ -188,21 +188,22 @@ export function AccountSection({ account, holdings, assets, onImport, highlightA
                     <div
                       key={holding.id}
                       ref={isHighlighted ? highlightRowRef : undefined}
-                      className={`grid grid-cols-[1fr_auto_auto_auto_auto] gap-x-2 px-3 py-2 border-t border-[var(--way-void)] text-[length:var(--way-text-body)]${isHighlighted ? ' animate-highlight-pulse' : ''}`}
+                      className={`grid grid-cols-[1fr_5rem_4rem_4rem_1.5rem] gap-x-2 px-3 items-baseline border-t border-[var(--way-void)] text-[length:var(--way-text-body)]${isHighlighted ? ' animate-highlight-pulse' : ''}`}
                     >
                       <div className="min-w-0">
                         {asset.ticker ? (
                           <>
                             <div className="font-medium text-[var(--way-text)] truncate">{asset.ticker}</div>
-                            <div className="text-[var(--way-muted)] text-[length:var(--way-text-caption)] truncate">{asset.name}</div>
+                            <div className="text-[var(--way-muted)] text-[length:var(--way-text-micro)] truncate">{asset.name}</div>
                           </>
                         ) : (
                           <div className="font-medium text-[var(--way-text)] truncate">{asset.name}</div>
                         )}
                       </div>
-                      <span className="text-right text-[var(--way-text)] tabular-nums w-14">
+                      <span className="text-right text-[var(--way-text)] tabular-nums">
                         <InlineCell
                           value={String(holding.quantity)}
+                          displayValue={Number(holding.quantity).toLocaleString('ru-RU')}
                           type="number"
                           onSave={(v) => {
                             const num = parseFloat(v);
@@ -212,9 +213,10 @@ export function AccountSection({ account, holdings, assets, onImport, highlightA
                           }}
                         />
                       </span>
-                      <span className="text-right text-[var(--way-ash)] tabular-nums w-16">
+                      <span className="text-right text-[var(--way-ash)] tabular-nums">
                         <InlineCell
                           value={holding.averagePrice != null ? holding.averagePrice.toFixed(0) : ''}
+                          displayValue={holding.averagePrice != null ? `${Number(holding.averagePrice).toLocaleString('ru-RU', { maximumFractionDigits: 0 })} ₽` : ''}
                           type="number"
                           onSave={(v) => {
                             const num = parseFloat(v);
@@ -224,7 +226,7 @@ export function AccountSection({ account, holdings, assets, onImport, highlightA
                           }}
                         />
                       </span>
-                      <span className="text-right text-[var(--way-ash)] tabular-nums w-16">
+                      <span className="text-right text-[var(--way-ash)] tabular-nums">
                         {formatCurrency(rowValue)}
                       </span>
                       <button
@@ -233,7 +235,7 @@ export function AccountSection({ account, holdings, assets, onImport, highlightA
                             await deleteHolding(holding.id!);
                           }
                         }}
-                        className="text-red-400 hover:text-red-300 transition-colors text-[length:var(--way-text-heading)] ml-1 min-w-[36px] min-h-[36px] flex items-center justify-center"
+                        className="text-red-400/50 hover:text-red-300/70 transition-colors text-[length:var(--way-text-title)] min-w-[36px] min-h-[36px]"
                       >
                         ×
                       </button>

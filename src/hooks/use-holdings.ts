@@ -41,6 +41,10 @@ export async function deleteHolding(id: number): Promise<void> {
 
     await db.holdings.delete(id);
 
+    // Mark remaining holdings in the same account as manual (portfolio manually modified)
+    await db.holdings.where('accountId').equals(holding.accountId)
+      .modify({ quantitySource: 'manual', updatedAt: new Date() });
+
     const remaining = await db.holdings.where('assetId').equals(holding.assetId).count();
     if (remaining === 0) {
       await db.paymentHistory.where('assetId').equals(holding.assetId).delete();

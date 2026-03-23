@@ -3,6 +3,7 @@ import type { Asset, PaymentHistory } from '@/models/types';
 import { PaymentRow } from './payment-row';
 import { AddPaymentForm } from './add-payment-form';
 import { toggleExcluded, deletePayment, addPayment } from '@/hooks/use-payment-history';
+import { isSyncable, syncAssetPayments, deleteManualPayments } from '@/services/moex-sync';
 
 const PAYMENT_TYPE_MAP: Record<string, PaymentHistory['type']> = {
   'Акции': 'dividend',
@@ -23,7 +24,8 @@ interface AssetPaymentsProps {
 
 export function AssetPayments({ asset, payments, isHighlighted }: AssetPaymentsProps) {
   const [addFormOpen, setAddFormOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(!isHighlighted && payments.length === 0);
+  const [collapsed, setCollapsed] = useState(!isHighlighted);
+  const [syncing, setSyncing] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -37,6 +39,28 @@ export function AssetPayments({ asset, payments, isHighlighted }: AssetPaymentsP
   const sorted = [...payments].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   const paymentType = PAYMENT_TYPE_MAP[asset.type] ?? 'other';
   const label = asset.ticker ? `${asset.ticker} · ${asset.name}` : asset.name;
+  const syncable = isSyncable(asset);
+  const manualCount = payments.filter(p => p.dataSource === 'manual').length;
+  const hasManual = manualCount > 0;
+  const allMoex = payments.length > 0 && !hasManual;
+
+  const handleSync = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (syncing) return;
+
+    if (hasManual) {
+      const ok = window.confirm(`Ручные выплаты (${manualCount} шт.) будут удалены при синхронизации с MOEX. Продолжить?`);
+      if (!ok) return;
+      await deleteManualPayments(asset.id!);
+    }
+
+    setSyncing(true);
+    try {
+      await syncAssetPayments(asset.id!);
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   return (
     <div
@@ -55,6 +79,25 @@ export function AssetPayments({ asset, payments, isHighlighted }: AssetPaymentsP
           </span>
           {collapsed && sorted.length > 0 && (
             <span className="text-[var(--way-muted)] text-[length:var(--way-text-body)] flex-shrink-0">({sorted.length})</span>
+          )}
+          {syncable && payments.length > 0 && (
+            <span className={`text-[length:var(--way-text-micro)] px-1 py-0.5 rounded flex-shrink-0 ${
+              allMoex
+                ? 'bg-[#2d5a2d] text-[#6bba6b]'
+                : 'bg-[#5a5a2d] text-[#baba6b]'
+            }`}>
+              {allMoex ? 'moex' : 'ручной'}
+            </span>
+          )}
+          {syncable && (
+            <button
+              onClick={handleSync}
+              disabled={syncing}
+              className="text-[var(--way-ash)] text-[length:var(--way-text-title)] hover:text-[var(--way-gold)] transition-colors flex-shrink-0 disabled:opacity-50 ml-1.5 min-w-[32px] min-h-[32px] flex items-center justify-center"
+              title="Синхронизировать выплаты с MOEX"
+            >
+              <span className={syncing ? 'inline-block animate-spin' : ''}>⟳</span>
+            </button>
           )}
         </div>
         <button

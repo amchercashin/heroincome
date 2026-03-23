@@ -2,12 +2,13 @@ import { useState, useRef, useEffect } from 'react';
 
 interface InlineCellProps {
   value: string;
+  displayValue?: string;
   onSave: (value: string) => void;
   className?: string;
   type?: 'text' | 'number';
 }
 
-export function InlineCell({ value, onSave, className = '', type = 'text' }: InlineCellProps) {
+export function InlineCell({ value, displayValue, onSave, className = '', type = 'text' }: InlineCellProps) {
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState(value);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -43,7 +44,8 @@ export function InlineCell({ value, onSave, className = '', type = 'text' }: Inl
         onChange={(e) => setEditValue(e.target.value)}
         onBlur={handleSave}
         onKeyDown={handleKeyDown}
-        className={`bg-[var(--way-void)] border border-[var(--way-gold)] rounded px-1.5 py-0.5 !text-base text-[var(--way-text)] outline-none ${className}`}
+        style={{ width: `${Math.max(editValue.length + 2, 6)}ch` }}
+        className={`max-w-full bg-[var(--way-void)] border border-[var(--way-gold)] rounded px-1.5 py-0.5 !text-base text-[var(--way-text)] outline-none ${className}`}
         inputMode={type === 'number' ? 'decimal' : 'text'}
       />
     );
@@ -55,9 +57,9 @@ export function InlineCell({ value, onSave, className = '', type = 'text' }: Inl
         setEditValue(value);
         setEditing(true);
       }}
-      className={`cursor-pointer hover:bg-[var(--way-stone)] rounded px-1 -mx-1 transition-colors ${className}`}
+      className={`cursor-pointer border-b border-dashed border-[var(--way-shadow)] hover:border-[var(--way-gold)] transition-colors ${className}`}
     >
-      {value || '\u2014'}
+      {(displayValue ?? value) || '\u2014'}
     </span>
   );
 }

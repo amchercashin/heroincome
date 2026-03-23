@@ -95,15 +95,11 @@ export async function computeImportDiff(
   };
 }
 
-function compareFields(row: ImportAssetRow, asset: Asset, holding: Holding): DiffChange[] {
+function compareFields(row: ImportAssetRow, _asset: Asset, holding: Holding): DiffChange[] {
   const changes: DiffChange[] = [];
   if (row.quantity !== holding.quantity)
     changes.push({ field: 'quantity', oldValue: holding.quantity, newValue: row.quantity });
   if (row.averagePrice != null && row.averagePrice !== holding.averagePrice)
     changes.push({ field: 'averagePrice', oldValue: holding.averagePrice, newValue: row.averagePrice });
-  if (row.currentPrice != null && row.currentPrice !== asset.currentPrice)
-    changes.push({ field: 'currentPrice', oldValue: asset.currentPrice, newValue: row.currentPrice });
-  if (row.name !== asset.name)
-    changes.push({ field: 'name', oldValue: asset.name, newValue: row.name });
   return changes;
 }

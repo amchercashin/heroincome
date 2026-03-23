@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 
-export function useCountUp(target: number | null, duration = 1200): number | null {
+export function useCountUp(target: number | null, animate = true, duration = 1200): number | null {
   const [current, setCurrent] = useState<number | null>(null);
   const prevTarget = useRef<number | null>(null);
 
@@ -13,6 +13,11 @@ export function useCountUp(target: number | null, duration = 1200): number | nul
 
     if (target === prevTarget.current) return;
     prevTarget.current = target;
+
+    if (!animate) {
+      setCurrent(target);
+      return;
+    }
 
     const start = performance.now();
     let raf: number;

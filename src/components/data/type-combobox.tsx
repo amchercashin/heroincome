@@ -70,7 +70,7 @@ export function TypeCombobox({ value, existingTypes, onSave, className = '' }: T
     return (
       <span
         onClick={() => { setEditValue(value); setEditing(true); }}
-        className={`cursor-pointer hover:bg-[var(--way-stone)] rounded px-1 -mx-1 transition-colors ${className}`}
+        className={`cursor-pointer border-b border-dashed border-[var(--way-shadow)] hover:border-[var(--way-gold)] transition-colors ${className}`}
       >
         {value || '\u2014'}
       </span>
@@ -78,17 +78,18 @@ export function TypeCombobox({ value, existingTypes, onSave, className = '' }: T
   }
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className="relative inline-block">
       <input
         ref={inputRef}
         type="text"
         value={editValue}
         onChange={(e) => { setEditValue(e.target.value); setShowDropdown(true); }}
         onKeyDown={handleKeyDown}
-        className={`bg-[var(--way-void)] border border-[var(--way-gold)] rounded px-1.5 py-0.5 !text-base text-[var(--way-text)] outline-none w-full ${className}`}
+        style={{ width: `${Math.max(editValue.length + 2, 4)}ch` }}
+        className={`max-w-full bg-[var(--way-void)] border border-[var(--way-gold)] rounded px-1.5 py-0.5 !text-base text-[var(--way-text)] outline-none ${className}`}
       />
       {showDropdown && suggestions.length > 0 && (
-        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-[var(--way-stone)] border border-[var(--way-shadow)] rounded-md shadow-lg max-h-48 overflow-y-auto">
+        <div className="absolute z-50 top-full left-0 mt-1 min-w-full w-max bg-[var(--way-stone)] border border-[var(--way-shadow)] rounded-md shadow-lg max-h-48 overflow-y-auto">
           {suggestions.map(s => (
             <button
               key={s}

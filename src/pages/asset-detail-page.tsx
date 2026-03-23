@@ -132,7 +132,7 @@ export function AssetDetailPage() {
             onClick={() => withViewTransition(() => navigate('/payments', { state: { highlightAssetId: assetId } }))}
             className="text-[var(--way-gold)] hover:underline"
           >
-            {asset.paymentPerUnitSource === 'fact' ? 'расчёт из истории выплат →' : 'история выплат →'}
+            {'история выплат →'}
           </button>
         }
         onSave={handleSavePaymentPerUnit}
