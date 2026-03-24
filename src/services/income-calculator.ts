@@ -1,24 +1,21 @@
 export function calcAssetIncomePerYear(
   quantity: number,
-  paymentAmount: number,
-  frequencyPerYear: number,
+  annualIncomePerUnit: number,
 ): number {
-  const result = quantity * paymentAmount * frequencyPerYear;
+  const result = quantity * annualIncomePerUnit;
   return isFinite(result) ? result : 0;
 }
 
 export function calcAssetIncomePerMonth(
   quantity: number,
-  paymentAmount: number,
-  frequencyPerYear: number,
+  annualIncomePerUnit: number,
 ): number {
-  return calcAssetIncomePerYear(quantity, paymentAmount, frequencyPerYear) / 12;
+  return calcAssetIncomePerYear(quantity, annualIncomePerUnit) / 12;
 }
 
 interface IncomeItem {
   quantity: number;
-  paymentAmount: number;
-  frequencyPerYear: number;
+  annualIncome: number;
 }
 
 export function calcPortfolioIncome(items: IncomeItem[]): {
@@ -27,7 +24,7 @@ export function calcPortfolioIncome(items: IncomeItem[]): {
 } {
   const perYear = items.reduce(
     (sum, item) =>
-      sum + calcAssetIncomePerYear(item.quantity, item.paymentAmount, item.frequencyPerYear),
+      sum + calcAssetIncomePerYear(item.quantity, item.annualIncome),
     0,
   );
   return { perYear, perMonth: perYear / 12 };
@@ -41,6 +38,32 @@ export function calcYieldPercent(annualIncome: number, portfolioValue: number): 
 export interface PaymentRecord {
   amount: number;
   date: Date;
+}
+
+export interface AnnualIncomeResult {
+  annualIncome: number;
+  usedPayments: PaymentRecord[];
+}
+
+export function calcAnnualIncomePerUnit(
+  history: PaymentRecord[],
+  frequencyPerYear: number,
+  now: Date = new Date(),
+): AnnualIncomeResult {
+  const empty = { annualIncome: 0, usedPayments: [] as PaymentRecord[] };
+  if (history.length === 0 || frequencyPerYear <= 0) return empty;
+
+  const sorted = [...history].sort((a, b) => b.date.getTime() - a.date.getTime());
+
+  const eighteenMonthsAgo = new Date(now);
+  eighteenMonthsAgo.setMonth(eighteenMonthsAgo.getMonth() - 18);
+  if (sorted[0].date < eighteenMonthsAgo) return empty;
+
+  const n = Math.min(frequencyPerYear, sorted.length);
+  const usedPayments = sorted.slice(0, n);
+  const annualIncome = usedPayments.reduce((sum, p) => sum + p.amount, 0);
+
+  return { annualIncome, usedPayments };
 }
 
 export function calcCAGR(
@@ -65,34 +88,4 @@ export function calcCAGR(
   if (incomeFirst <= 0 || incomeLast <= 0) return null;
   const span = lastYear - firstYear;
   return (Math.pow(incomeLast / incomeFirst, 1 / span) - 1) * 100;
-}
-
-/**
- * Calculates per-unit payment amount from payment history.
- * For monthly payers (freq >= 12): returns the most recent payment.
- * For less frequent payers: returns sum of last 12 months / frequencyPerYear.
- */
-export function calcFactPaymentPerUnit(
-  history: PaymentRecord[],
-  frequencyPerYear: number,
-  now: Date = new Date(),
-): number {
-  if (history.length === 0) return 0;
-
-  const twelveMonthsAgo = new Date(now);
-  twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
-
-  if (frequencyPerYear >= 12) {
-    const recent = history
-      .filter((p) => p.date > twelveMonthsAgo && p.date <= now)
-      .sort((a, b) => b.date.getTime() - a.date.getTime());
-    return recent.length > 0 ? recent[0].amount : 0;
-  }
-
-  const sum = history
-    .filter((p) => p.date > twelveMonthsAgo && p.date <= now)
-    .reduce((acc, p) => acc + p.amount, 0);
-  if (sum === 0) return 0;
-  if (frequencyPerYear <= 0) return 0;
-  return sum / frequencyPerYear;
 }
