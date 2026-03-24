@@ -1,7 +1,7 @@
 import { TransitionLink } from '@/components/ui/transition-link';
 import type { Asset } from '@/models/types';
-import { formatCurrency } from '@/lib/utils';
-import { calcAssetIncomePerMonth } from '@/services/income-calculator';
+import { formatCurrency, formatPercent } from '@/lib/utils';
+import { calcAssetIncomePerMonth, calcYieldPercent } from '@/services/income-calculator';
 
 interface AssetRowProps {
   asset: Asset;
@@ -13,6 +13,11 @@ export function AssetRow({ asset, annualIncome, totalQuantity }: AssetRowProps) 
   const incomePerMonth = calcAssetIncomePerMonth(totalQuantity, annualIncome);
   const value = asset.currentPrice != null
     ? asset.currentPrice * totalQuantity
+    : null;
+
+  const totalAnnualIncome = annualIncome * totalQuantity;
+  const yieldPercent = value != null && value > 0
+    ? calcYieldPercent(totalAnnualIncome, value)
     : null;
 
   const isManual = asset.paymentPerUnitSource === 'manual';
@@ -31,15 +36,22 @@ export function AssetRow({ asset, annualIncome, totalQuantity }: AssetRowProps) 
             </div>
           )}
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="font-mono text-[length:var(--way-text-body)] font-medium text-[var(--way-gold)]">{formatCurrency(incomePerMonth)}</span>
-          <span className={`font-mono text-[length:var(--way-text-caption)] px-1.5 py-0.5 rounded ${
-            isManual
-              ? 'bg-[rgba(90,85,72,0.15)] text-[var(--way-ash)]'
-              : 'bg-[rgba(200,180,140,0.1)] text-[var(--way-gold)]'
-          }`}>
-            {isManual ? 'ручной' : 'факт'}
-          </span>
+        <div>
+          <div className="flex items-center gap-1.5 justify-end">
+            <span className="font-mono text-[length:var(--way-text-body)] font-medium text-[var(--way-gold)]">{formatCurrency(incomePerMonth)}</span>
+            <span className={`font-mono text-[length:var(--way-text-caption)] px-1.5 py-0.5 rounded min-w-[52px] text-center ${
+              isManual
+                ? 'bg-[rgba(90,85,72,0.15)] text-[var(--way-ash)]'
+                : 'bg-[rgba(200,180,140,0.1)] text-[var(--way-gold)]'
+            }`}>
+              {isManual ? 'ручной' : 'факт'}
+            </span>
+          </div>
+          {yieldPercent != null && (
+            <div className="font-mono text-[length:var(--way-text-caption)] text-[var(--way-muted)] text-right mt-0.5">
+              {formatPercent(yieldPercent)} годовых
+            </div>
+          )}
         </div>
       </div>
       <div className="font-mono text-[length:var(--way-text-caption)] text-[var(--way-muted)] mt-1">
