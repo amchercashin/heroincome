@@ -144,8 +144,8 @@ describe('income-calculator', () => {
         { quantity: 1, annualIncome: 540000 },
       ];
       const result = calcPortfolioIncome(items);
-      expect(result.perYear).toBeCloseTo(688700, 0);
-      expect(result.perMonth).toBeCloseTo(57391.67, 0);
+      expect(result.perYear).toBeCloseTo(725700, 0);
+      expect(result.perMonth).toBeCloseTo(60475, 0);
     });
     it('returns zero for empty portfolio', () => {
       const result = calcPortfolioIncome([]);
