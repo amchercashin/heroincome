@@ -11,6 +11,7 @@ import { Landmark, Bot, ArrowLeft, Copy, Check } from 'lucide-react';
 import { useSyncContext } from '@/contexts/sync-context';
 import { syncSingleAsset, isSyncable } from '@/services/moex-sync';
 import { db } from '@/db/database';
+import { enrichFromMoex } from '@/services/moex-enrich';
 
 interface ImportFlowProps {
   open: boolean;
@@ -76,6 +77,7 @@ export function ImportFlow({ open, onClose, accountId, accountName }: ImportFlow
   const [importSource, setImportSource] = useState<ImportRecord['source']>('sber_html');
   const [aiText, setAiText] = useState('');
   const [copied, setCopied] = useState(false);
+  const [enriching, setEnriching] = useState(false);
   const sberFileRef = useRef<HTMLInputElement>(null);
   const { triggerSync } = useSyncContext();
 
@@ -89,6 +91,7 @@ export function ImportFlow({ open, onClose, accountId, accountName }: ImportFlow
     setImportSource('sber_html');
     setAiText('');
     setCopied(false);
+    setEnriching(false);
   }, []);
 
   const handleClose = () => {
@@ -130,7 +133,15 @@ export function ImportFlow({ open, onClose, accountId, accountName }: ImportFlow
       }
 
       setImportSource('sber_html');
-      await goToPreview(rows);
+      setEnriching(true);
+      try {
+        const enriched = await enrichFromMoex(rows);
+        await goToPreview(enriched);
+      } catch {
+        await goToPreview(rows);
+      } finally {
+        setEnriching(false);
+      }
     } catch {
       setError('Ошибка при разборе файла');
     }
@@ -149,7 +160,15 @@ export function ImportFlow({ open, onClose, accountId, accountName }: ImportFlow
       }
       setDefaultName('Новый счёт');
       setImportSource('ai_import');
-      await goToPreview(rows);
+      setEnriching(true);
+      try {
+        const enriched = await enrichFromMoex(rows);
+        await goToPreview(enriched);
+      } catch {
+        await goToPreview(rows);
+      } finally {
+        setEnriching(false);
+      }
     } catch {
       setError('Ошибка при разборе текста');
     }
@@ -214,6 +233,12 @@ export function ImportFlow({ open, onClose, accountId, accountName }: ImportFlow
                 desc="Промт для ChatGPT/Claude → вставьте таблицу"
                 onClick={() => setStep('ai')}
               />
+              {enriching && (
+                <div className="flex items-center justify-center gap-2 py-8 text-[var(--way-ash)] text-[length:var(--way-text-body)]">
+                  <span className="inline-block animate-spin">⟳</span>
+                  Определяю бумаги на MOEX...
+                </div>
+              )}
             </div>
           )}
           {step === 'method' && error && (
@@ -260,6 +285,13 @@ export function ImportFlow({ open, onClose, accountId, accountName }: ImportFlow
               >
                 Распознать
               </button>
+
+              {enriching && (
+                <div className="flex items-center justify-center gap-2 py-4 text-[var(--way-ash)] text-[length:var(--way-text-body)]">
+                  <span className="inline-block animate-spin">⟳</span>
+                  Определяю бумаги на MOEX...
+                </div>
+              )}
 
               {error && (
                 <p className="text-[length:var(--way-text-body)] text-red-400">{error}</p>
