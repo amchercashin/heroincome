@@ -96,6 +96,29 @@ class CashFlowDB extends Dexie {
         await tx.table('paymentHistory').clear();
         await tx.table('importRecords').clear();
       });
+    this.version(6)
+      .stores({
+        accounts: '++id',
+        assets: '++id, type, ticker, isin',
+        holdings: '++id, accountId, assetId, &[accountId+assetId]',
+        paymentHistory: '++id, [assetId+date]',
+        importRecords: '++id, date',
+        settings: 'key',
+      })
+      .upgrade(async (tx) => {
+        // paymentPerUnit semantics change: per-payment → annual
+        // Multiply manual values by frequencyPerYear
+        await tx.table('assets').toCollection().modify((asset: Record<string, unknown>) => {
+          if (
+            asset.paymentPerUnitSource === 'manual' &&
+            asset.paymentPerUnit != null &&
+            typeof asset.frequencyPerYear === 'number' &&
+            asset.frequencyPerYear > 0
+          ) {
+            asset.paymentPerUnit = (asset.paymentPerUnit as number) * (asset.frequencyPerYear as number);
+          }
+        });
+      });
   }
 }
 
