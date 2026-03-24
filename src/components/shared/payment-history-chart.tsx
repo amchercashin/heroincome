@@ -10,17 +10,11 @@ export interface ChartPaymentRecord extends PaymentRecord {
 interface PaymentHistoryChartProps {
   history: ChartPaymentRecord[];
   paymentPerUnit?: number;
-  frequencyPerYear?: number;
-}
-
-function frequencyLabel(freq: number): string {
-  return `${freq}/год`;
 }
 
 export function PaymentHistoryChart({
   history,
   paymentPerUnit,
-  frequencyPerYear,
 }: PaymentHistoryChartProps) {
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -64,8 +58,8 @@ export function PaymentHistoryChart({
   // No-history fallback: single bar with calculated annual
   const isNoHistory = history.length === 0;
   const fallbackAnnual =
-    isNoHistory && paymentPerUnit != null && frequencyPerYear != null
-      ? paymentPerUnit * frequencyPerYear
+    isNoHistory && paymentPerUnit != null
+      ? paymentPerUnit
       : null;
 
   // Nothing to show at all
@@ -132,7 +126,7 @@ export function PaymentHistoryChart({
     const isCurrentYear = selectedYear === currentYear;
 
     // No-history fallback panel
-    if (isNoHistory && paymentPerUnit != null && frequencyPerYear != null) {
+    if (isNoHistory && paymentPerUnit != null) {
       return (
         <div className="bg-[#252220] border border-[rgba(200,180,140,0.1)] rounded-lg px-3 py-2.5 mt-2.5 animate-[way-panel-in_0.2s_ease]">
           <div className="flex justify-between items-baseline mb-1.5">
@@ -140,7 +134,7 @@ export function PaymentHistoryChart({
             <span className="font-mono text-[length:var(--way-text-caption)] text-[#b0a898]">{formatCompact(fallbackAnnual!)} ₽ / ед.</span>
           </div>
           <div className="font-mono text-[length:var(--way-text-micro)] text-[#3a3530] italic">
-            Расчётно: {paymentPerUnit} ₽ × {frequencyLabel(frequencyPerYear)}
+            Расчётно: {formatCompact(paymentPerUnit)} ₽ / год
           </div>
         </div>
       );

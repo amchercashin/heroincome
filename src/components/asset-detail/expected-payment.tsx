@@ -1,13 +1,17 @@
 interface ExpectedPaymentProps {
-  paymentPerUnit: number;
+  annualIncomePerUnit: number;
+  frequencyPerYear: number;
   nextExpectedDate?: Date;
 }
 
 export function ExpectedPayment({
-  paymentPerUnit,
+  annualIncomePerUnit,
+  frequencyPerYear,
   nextExpectedDate,
 }: ExpectedPaymentProps) {
-  if (!nextExpectedDate) return null;
+  if (!nextExpectedDate || frequencyPerYear <= 0) return null;
+
+  const perPayment = annualIncomePerUnit / frequencyPerYear;
 
   const formatDate = (date: Date) =>
     new Date(date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -19,7 +23,7 @@ export function ExpectedPayment({
         <div className="flex justify-between">
           <span className="font-mono text-[length:var(--way-text-caption)] text-[var(--way-muted)]">Выплата на единицу</span>
           <span className="font-mono text-[length:var(--way-text-body)] text-[var(--way-text)]">
-            {paymentPerUnit.toLocaleString('ru-RU')} ₽
+            {perPayment.toLocaleString('ru-RU', { maximumFractionDigits: 2 })} ₽
           </span>
         </div>
         <div className="flex justify-between">
