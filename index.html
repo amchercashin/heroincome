@@ -10,6 +10,10 @@
   <link rel="icon" href="/favicon-16.png" sizes="16x16" type="image/png" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   <title>HeroIncome</title>
+  <style>
+    .s-fill { display:inline-block; width:0; overflow:hidden; opacity:0; }
+    #s-bang { transition: opacity 0.3s ease; }
+  </style>
   <!-- SPA redirect restore (works with 404.html for GitHub Pages) -->
   <script>
     (function(l) {
@@ -32,12 +36,9 @@
     font-weight:700; font-size:min(15vw,64px); color:#0c0b09;
     transition: opacity 0.5s ease;
   ">
-    <span id="s-H">H</span><span id="s-e" class="s-fill">e</span><span id="s-r" class="s-fill">r</span><span id="s-o1" class="s-fill">o</span><span id="s-I">I</span><span id="s-n" class="s-fill">n</span><span id="s-c" class="s-fill">c</span><span id="s-o2" class="s-fill">o</span><span id="s-m" class="s-fill">m</span><span id="s-e2" class="s-fill">e</span><span id="s-bang">!</span>
+    <span id="s-H">H</span><span class="s-fill" style="display:inline-block;width:0;overflow:hidden;opacity:0">e</span><span class="s-fill" style="display:inline-block;width:0;overflow:hidden;opacity:0">r</span><span class="s-fill" style="display:inline-block;width:0;overflow:hidden;opacity:0">o</span><span id="s-I">I</span><span class="s-fill" style="display:inline-block;width:0;overflow:hidden;opacity:0">n</span><span class="s-fill" style="display:inline-block;width:0;overflow:hidden;opacity:0">c</span><span class="s-fill" style="display:inline-block;width:0;overflow:hidden;opacity:0">o</span><span class="s-fill" style="display:inline-block;width:0;overflow:hidden;opacity:0">m</span><span class="s-fill" style="display:inline-block;width:0;overflow:hidden;opacity:0">e</span><span id="s-bang">!</span>
   </div>
-  <style>
-    .s-fill { display:inline-block; width:0; overflow:hidden; opacity:0; }
-    #s-bang { transition: opacity 0.3s ease; }
-  </style>
+  <script>if(localStorage.getItem('hi-splash-seen'))document.getElementById('splash').style.display='none'</script>
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
 </body>

@@ -18,33 +18,38 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// Splash screen: show only on first launch
+// Splash screen: show on first launch and after version updates
+let splashStarted = false;
 function runSplash(): void {
   const splash = document.getElementById('splash');
-  if (!splash) return;
+  if (!splash || splashStarted) return;
 
-  if (localStorage.getItem('hi-splash-seen')) {
+  const seenVersion = localStorage.getItem('hi-splash-seen');
+  if (seenVersion === __APP_VERSION__) {
     splash.remove();
     return;
   }
 
-  localStorage.setItem('hi-splash-seen', '1');
+  // First visit or new version — show animation
+  splashStarted = true;
+  splash.style.display = 'flex'; // unhide if hidden by inline script
+  localStorage.setItem('hi-splash-seen', __APP_VERSION__);
 
   const fills = splash.querySelectorAll<HTMLElement>('.s-fill');
   const bang = document.getElementById('s-bang');
 
-  // Measure natural widths
+  // Measure natural widths (visibility:hidden prevents flash)
   const widths: number[] = [];
   fills.forEach((f) => {
-    f.style.cssText = 'width:auto;opacity:1;position:absolute;visibility:hidden;';
+    f.style.cssText = 'display:inline-block;width:auto;opacity:1;position:absolute;visibility:hidden;';
     widths.push(f.getBoundingClientRect().width);
-    f.style.cssText = 'width:0;overflow:hidden;opacity:0;';
+    f.style.cssText = 'display:inline-block;width:0;overflow:hidden;opacity:0;';
   });
 
   // Hero fills: indices 0,1,2 (e,r,o). Income fills: indices 3,4,5,6,7 (n,c,o,m,e)
   const heroFills = [0, 1, 2];
   const incomeFills = [3, 4, 5, 6, 7];
-  const revealDuration = 600; // ms for both groups
+  const revealDuration = 600;
   const startAt = 800; // hold HI! for 800ms
 
   // Reveal hero group (3 letters over revealDuration)
