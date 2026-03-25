@@ -23,6 +23,21 @@
   </script>
 </head>
 <body class="bg-[#0c0b09]">
+  <!-- First-launch splash screen (removed by JS after animation) -->
+  <div id="splash" style="
+    position:fixed; inset:0; z-index:9999;
+    display:flex; align-items:center; justify-content:center;
+    background:#c8b48c;
+    font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;
+    font-weight:700; font-size:min(15vw,64px); color:#0c0b09;
+    transition: opacity 0.5s ease;
+  ">
+    <span id="s-H">H</span><span id="s-e" class="s-fill">e</span><span id="s-r" class="s-fill">r</span><span id="s-o1" class="s-fill">o</span><span id="s-I">I</span><span id="s-n" class="s-fill">n</span><span id="s-c" class="s-fill">c</span><span id="s-o2" class="s-fill">o</span><span id="s-m" class="s-fill">m</span><span id="s-e2" class="s-fill">e</span><span id="s-bang">!</span>
+  </div>
+  <style>
+    .s-fill { display:inline-block; width:0; overflow:hidden; opacity:0; }
+    #s-bang { transition: opacity 0.3s ease; }
+  </style>
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
 </body>
