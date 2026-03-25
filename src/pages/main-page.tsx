@@ -40,17 +40,17 @@ export function MainPage() {
       />
 
       {error && (
-        <div className="text-center text-[var(--destructive)] text-[length:var(--way-text-micro)] mb-2">{error}</div>
+        <div className="text-center text-[var(--destructive)] text-[length:var(--hi-text-micro)] mb-2">{error}</div>
       )}
 
       <div className="mt-4">
         {categories.length === 0 && (
-          <div className="text-center text-[var(--way-muted)] text-[length:var(--way-text-body)] py-12">
+          <div className="text-center text-[var(--hi-muted)] text-[length:var(--hi-text-body)] py-12">
             Пока нет активов. Добавьте первый актив через меню ☰
           </div>
         )}
         {categories.map((cat, i) => (
-          <div key={cat.type} style={animate ? { animation: `way-fade-slide-right 0.5s ease-out ${0.7 + i * 0.15}s both` } : undefined}>
+          <div key={cat.type} style={animate ? { animation: `hi-fade-slide-right 0.5s ease-out ${0.7 + i * 0.15}s both` } : undefined}>
             <CategoryCard
               type={cat.type}
               assetCount={cat.assetCount}

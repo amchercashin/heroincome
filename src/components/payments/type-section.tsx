@@ -53,16 +53,16 @@ export function TypeSection({ type, assets, paymentsByAsset, highlightAssetId }:
   };
 
   return (
-    <div className="border border-[var(--way-shadow)]/50 rounded-xl overflow-hidden">
+    <div className="border border-[var(--hi-shadow)]/50 rounded-xl overflow-hidden">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full bg-[var(--way-stone)] px-3 py-3 flex items-center justify-between"
+        className="w-full bg-[var(--hi-stone)] px-3 py-3 flex items-center justify-between"
       >
         <div className="flex items-center gap-2">
-          <span className="text-[var(--way-text)] text-[length:var(--way-text-body)]">{expanded ? '▾' : '▸'}</span>
-          <span className="font-semibold text-[length:var(--way-text-heading)] text-[var(--way-text)]">{type}</span>
+          <span className="text-[var(--hi-text)] text-[length:var(--hi-text-body)]">{expanded ? '▾' : '▸'}</span>
+          <span className="font-semibold text-[length:var(--hi-text-heading)] text-[var(--hi-text)]">{type}</span>
           {showSync && allPayments.length > 0 && (
-            <span className={`text-[length:var(--way-text-micro)] px-1 py-0.5 rounded ${
+            <span className={`text-[length:var(--hi-text-micro)] px-1 py-0.5 rounded ${
               allMoex
                 ? 'bg-[#2d5a2d] text-[#6bba6b]'
                 : 'bg-[#5a5a2d] text-[#baba6b]'
@@ -74,14 +74,14 @@ export function TypeSection({ type, assets, paymentsByAsset, highlightAssetId }:
             <span
               role="button"
               onClick={handleSync}
-              className={`text-[var(--way-ash)] text-[length:var(--way-text-title)] hover:text-[var(--way-gold)] transition-colors ml-1.5 ${syncing ? 'opacity-50' : ''}`}
+              className={`text-[var(--hi-ash)] text-[length:var(--hi-text-title)] hover:text-[var(--hi-gold)] transition-colors ml-1.5 ${syncing ? 'opacity-50' : ''}`}
               title="Синхронизировать выплаты категории с MOEX"
             >
               <span className={syncing ? 'inline-block animate-spin' : ''}>⟳</span>
             </span>
           )}
         </div>
-        <span className="text-[var(--way-ash)] text-[length:var(--way-text-body)]">
+        <span className="text-[var(--hi-ash)] text-[length:var(--hi-text-body)]">
           {assets.length} {assets.length === 1 ? 'актив' : 'активов'} · {totalPayments} выплат
         </span>
       </button>

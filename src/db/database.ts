@@ -10,7 +10,7 @@ const FREQUENCY_DEFAULTS: Record<string, number> = {
   stock: 1, bond: 2, fund: 12, realestate: 12, deposit: 12, other: 12,
 };
 
-class CashFlowDB extends Dexie {
+class HeroIncomeDB extends Dexie {
   accounts!: EntityTable<Account, 'id'>;
   assets!: EntityTable<Asset, 'id'>;
   holdings!: EntityTable<Holding, 'id'>;
@@ -18,7 +18,7 @@ class CashFlowDB extends Dexie {
   importRecords!: EntityTable<ImportRecord, 'id'>;
 
   constructor() {
-    super('CashFlowDB');
+    super('HeroIncomeDB');
     this.version(1).stores({
       assets: '++id, type, ticker',
       paymentSchedules: '++id, assetId',
@@ -122,4 +122,4 @@ class CashFlowDB extends Dexie {
   }
 }
 
-export const db = new CashFlowDB();
+export const db = new HeroIncomeDB();

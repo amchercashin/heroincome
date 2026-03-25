@@ -28,12 +28,12 @@ export function AddPaymentForm({ assetId, paymentType, onAdd, onCancel }: AddPay
   };
 
   return (
-    <div className="flex items-center gap-2 px-3 py-2 bg-[var(--way-void)] border-t border-[var(--way-shadow)]/30">
+    <div className="flex items-center gap-2 px-3 py-2 bg-[var(--hi-void)] border-t border-[var(--hi-shadow)]/30">
       <input
         type="date"
         value={dateStr}
         onChange={(e) => setDateStr(e.target.value)}
-        className="bg-transparent border border-[var(--way-shadow)] rounded px-2 py-1 text-base text-[var(--way-text)] font-mono w-[130px]"
+        className="bg-transparent border border-[var(--hi-shadow)] rounded px-2 py-1 text-base text-[var(--hi-text)] font-mono w-[130px]"
       />
       <input
         type="text"
@@ -41,18 +41,18 @@ export function AddPaymentForm({ assetId, paymentType, onAdd, onCancel }: AddPay
         value={amountStr}
         onChange={(e) => setAmountStr(e.target.value)}
         placeholder="Сумма ₽"
-        className="bg-transparent border border-[var(--way-shadow)] rounded px-2 py-1 text-base text-[var(--way-text)] font-mono w-[90px]"
+        className="bg-transparent border border-[var(--hi-shadow)] rounded px-2 py-1 text-base text-[var(--hi-text)] font-mono w-[90px]"
         onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
       />
       <button
         onClick={handleSubmit}
-        className="text-[#6bba6b] text-[length:var(--way-text-body)] hover:text-green-300 transition-colors"
+        className="text-[#6bba6b] text-[length:var(--hi-text-body)] hover:text-green-300 transition-colors"
       >
         ✓
       </button>
       <button
         onClick={onCancel}
-        className="text-[var(--way-muted)] text-[length:var(--way-text-body)] hover:text-[var(--way-ash)] transition-colors"
+        className="text-[var(--hi-muted)] text-[length:var(--hi-text-body)] hover:text-[var(--hi-ash)] transition-colors"
       >
         ×
       </button>

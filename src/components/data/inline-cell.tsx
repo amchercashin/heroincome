@@ -45,7 +45,7 @@ export function InlineCell({ value, displayValue, onSave, className = '', type =
         onBlur={handleSave}
         onKeyDown={handleKeyDown}
         style={{ width: `${Math.max(editValue.length + 2, 6)}ch` }}
-        className={`max-w-full bg-[var(--way-void)] border border-[var(--way-gold)] rounded px-1.5 py-0.5 !text-base text-[var(--way-text)] outline-none ${className}`}
+        className={`max-w-full bg-[var(--hi-void)] border border-[var(--hi-gold)] rounded px-1.5 py-0.5 !text-base text-[var(--hi-text)] outline-none ${className}`}
         inputMode={type === 'number' ? 'decimal' : 'text'}
       />
     );
@@ -57,7 +57,7 @@ export function InlineCell({ value, displayValue, onSave, className = '', type =
         setEditValue(value);
         setEditing(true);
       }}
-      className={`cursor-pointer border-b border-dashed border-[var(--way-shadow)] hover:border-[var(--way-gold)] transition-colors ${className}`}
+      className={`cursor-pointer border-b border-dashed border-[var(--hi-shadow)] hover:border-[var(--hi-gold)] transition-colors ${className}`}
     >
       {(displayValue ?? value) || '\u2014'}
     </span>

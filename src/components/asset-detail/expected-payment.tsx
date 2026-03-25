@@ -18,17 +18,17 @@ export function ExpectedPayment({
 
   return (
     <div className="border border-[rgba(200,180,140,0.08)] rounded-lg p-3.5 mt-3">
-      <div className="font-mono text-[length:var(--way-text-caption)] uppercase tracking-wider text-[var(--way-gold)] mb-2">Ожидаемая выплата</div>
+      <div className="font-mono text-[length:var(--hi-text-caption)] uppercase tracking-wider text-[var(--hi-gold)] mb-2">Ожидаемая выплата</div>
       <div className="space-y-1">
         <div className="flex justify-between">
-          <span className="font-mono text-[length:var(--way-text-caption)] text-[var(--way-muted)]">Выплата на единицу</span>
-          <span className="font-mono text-[length:var(--way-text-body)] text-[var(--way-text)]">
+          <span className="font-mono text-[length:var(--hi-text-caption)] text-[var(--hi-muted)]">Выплата на единицу</span>
+          <span className="font-mono text-[length:var(--hi-text-body)] text-[var(--hi-text)]">
             {perPayment.toLocaleString('ru-RU', { maximumFractionDigits: 2 })} ₽
           </span>
         </div>
         <div className="flex justify-between">
-          <span className="font-mono text-[length:var(--way-text-caption)] text-[var(--way-muted)]">Дата (ожид.)</span>
-          <span className="font-mono text-[length:var(--way-text-body)] text-[var(--way-text)]">{formatDate(nextExpectedDate)}</span>
+          <span className="font-mono text-[length:var(--hi-text-caption)] text-[var(--hi-muted)]">Дата (ожид.)</span>
+          <span className="font-mono text-[length:var(--hi-text-body)] text-[var(--hi-text)]">{formatDate(nextExpectedDate)}</span>
         </div>
       </div>
     </div>

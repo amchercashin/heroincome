@@ -35,7 +35,7 @@ export function SettingsPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `cashflow-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `heroincome-backup-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
     setStatus('Бэкап сохранён');
@@ -57,7 +57,7 @@ export function SettingsPage() {
   };
 
   const backButton = (
-    <button onClick={() => withViewTransition(() => navigate(-1))} className="text-[var(--way-ash)] text-[length:var(--way-text-nav)]" aria-label="Назад">‹</button>
+    <button onClick={() => withViewTransition(() => navigate(-1))} className="text-[var(--hi-ash)] text-[length:var(--hi-text-nav)]" aria-label="Назад">‹</button>
   );
 
   if (!settings) return <AppShell leftAction={backButton} title="Настройки"><div /></AppShell>;
@@ -72,28 +72,28 @@ export function SettingsPage() {
         />
 
         <div>
-          <div className="text-[var(--way-ash)] text-[length:var(--way-text-body)] mb-2">Экспорт</div>
-          <Button onClick={handleExport} className="w-full border border-[rgba(200,180,140,0.2)] text-[var(--way-gold)] bg-transparent hover:bg-[rgba(200,180,140,0.06)] font-semibold">
+          <div className="text-[var(--hi-ash)] text-[length:var(--hi-text-body)] mb-2">Экспорт</div>
+          <Button onClick={handleExport} className="w-full border border-[rgba(200,180,140,0.2)] text-[var(--hi-gold)] bg-transparent hover:bg-[rgba(200,180,140,0.06)] font-semibold">
             Скачать бэкап (JSON)
           </Button>
         </div>
 
         <div>
-          <div className="text-[var(--way-ash)] text-[length:var(--way-text-body)] mb-2">Восстановление</div>
+          <div className="text-[var(--hi-ash)] text-[length:var(--hi-text-body)] mb-2">Восстановление</div>
           <input ref={fileRef} type="file" accept=".json" onChange={handleImport} className="hidden" />
-          <Button variant="outline" onClick={() => fileRef.current?.click()} className="w-full border-[rgba(200,180,140,0.08)] text-[var(--way-text)]">
+          <Button variant="outline" onClick={() => fileRef.current?.click()} className="w-full border-[rgba(200,180,140,0.08)] text-[var(--hi-text)]">
             Загрузить бэкап
           </Button>
         </div>
 
-        {status && <div className="text-[var(--way-gold)] text-[length:var(--way-text-body)] text-center">{status}</div>}
-        {backupError && <div className="text-[var(--destructive)] text-[length:var(--way-text-body)] text-center">{backupError}</div>}
+        {status && <div className="text-[var(--hi-gold)] text-[length:var(--hi-text-body)] text-center">{status}</div>}
+        {backupError && <div className="text-[var(--destructive)] text-[length:var(--hi-text-body)] text-center">{backupError}</div>}
 
         <div className="border-t border-[rgba(200,180,140,0.08)] pt-6 mt-8">
-          <div className="text-[var(--destructive)] text-[length:var(--way-text-body)] uppercase tracking-widest mb-3">Опасная зона</div>
+          <div className="text-[var(--destructive)] text-[length:var(--hi-text-body)] uppercase tracking-widest mb-3">Опасная зона</div>
           <button
             onClick={handleClear}
-            className="w-full py-3 rounded-lg border border-red-900 text-[var(--destructive)] text-[length:var(--way-text-body)] hover:bg-red-900/20 transition-colors"
+            className="w-full py-3 rounded-lg border border-red-900 text-[var(--destructive)] text-[length:var(--hi-text-body)] hover:bg-red-900/20 transition-colors"
           >
             Удалить все данные
           </button>
@@ -108,8 +108,8 @@ function SettingRow({ label, value, onToggle }: {
 }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-[var(--way-text)] text-[length:var(--way-text-heading)]">{label}</span>
-      <button onClick={onToggle} className="bg-[var(--way-stone)] text-[var(--way-gold)] text-[length:var(--way-text-body)] px-3 py-1.5 rounded-lg">
+      <span className="text-[var(--hi-text)] text-[length:var(--hi-text-heading)]">{label}</span>
+      <button onClick={onToggle} className="bg-[var(--hi-stone)] text-[var(--hi-gold)] text-[length:var(--hi-text-body)] px-3 py-1.5 rounded-lg">
         {value}
       </button>
     </div>

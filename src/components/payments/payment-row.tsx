@@ -14,16 +14,16 @@ export function PaymentRow({ payment, onToggleExcluded, onDelete }: PaymentRowPr
 
   return (
     <div
-      className={`grid grid-cols-[1fr_auto_auto_auto] gap-x-3 items-center pl-7 pr-3 py-0.5 text-[length:var(--way-text-body)] border-t border-[var(--way-void)] transition-opacity${isExcluded ? ' opacity-50' : ''}`}
-      style={isExcluded ? { borderLeftWidth: 2, borderLeftColor: 'var(--way-gold)' } : undefined}
+      className={`grid grid-cols-[1fr_auto_auto_auto] gap-x-3 items-center pl-7 pr-3 py-0.5 text-[length:var(--hi-text-body)] border-t border-[var(--hi-void)] transition-opacity${isExcluded ? ' opacity-50' : ''}`}
+      style={isExcluded ? { borderLeftWidth: 2, borderLeftColor: 'var(--hi-gold)' } : undefined}
     >
       {/* Date */}
-      <span className={`font-mono tabular-nums text-[var(--way-text)]${isExcluded ? ' line-through' : ''}`}>
+      <span className={`font-mono tabular-nums text-[var(--hi-text)]${isExcluded ? ' line-through' : ''}`}>
         {formatDate(payment.date)}
       </span>
 
       {/* Amount */}
-      <span className={`font-mono tabular-nums text-right text-[var(--way-ash)]${isExcluded ? ' line-through' : ''}`}>
+      <span className={`font-mono tabular-nums text-right text-[var(--hi-ash)]${isExcluded ? ' line-through' : ''}`}>
         {payment.amount.toFixed(2)} ₽
       </span>
 
@@ -42,14 +42,14 @@ export function PaymentRow({ payment, onToggleExcluded, onDelete }: PaymentRowPr
           <>
             <button
               onClick={() => onToggleExcluded(payment.id!)}
-              className="text-[#6bba6b] hover:text-green-300 text-[length:var(--way-text-heading)] min-w-[32px] min-h-[28px] flex items-center justify-center transition-colors"
+              className="text-[#6bba6b] hover:text-green-300 text-[length:var(--hi-text-heading)] min-w-[32px] min-h-[28px] flex items-center justify-center transition-colors"
               title="Восстановить"
             >
               ↩
             </button>
             <button
               onClick={() => onDelete(payment.id!)}
-              className="text-red-400 hover:text-red-300 text-[length:var(--way-text-title)] min-w-[32px] min-h-[28px] flex items-center justify-center transition-colors"
+              className="text-red-400 hover:text-red-300 text-[length:var(--hi-text-title)] min-w-[32px] min-h-[28px] flex items-center justify-center transition-colors"
               title="Удалить навсегда"
             >
               ×
@@ -58,7 +58,7 @@ export function PaymentRow({ payment, onToggleExcluded, onDelete }: PaymentRowPr
         ) : (
           <button
             onClick={() => onToggleExcluded(payment.id!)}
-            className="text-[var(--way-gold)] hover:text-yellow-300 text-[length:var(--way-text-heading)] min-w-[32px] min-h-[28px] flex items-center justify-center transition-colors"
+            className="text-[var(--hi-gold)] hover:text-yellow-300 text-[length:var(--hi-text-heading)] min-w-[32px] min-h-[28px] flex items-center justify-center transition-colors"
             title="Исключить из расчётов"
           >
             ⊘

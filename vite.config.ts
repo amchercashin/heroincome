@@ -15,8 +15,8 @@ export default defineConfig({
     VitePWA({
       registerType: 'prompt',
       manifest: {
-        name: 'CashFlow Tracker',
-        short_name: 'CashFlow',
+        name: 'HeroIncome',
+        short_name: 'HI!',
         description: 'Трекер пассивного дохода',
         theme_color: '#c8b48c',
         background_color: '#0c0b09',

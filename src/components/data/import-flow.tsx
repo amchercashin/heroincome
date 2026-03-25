@@ -44,12 +44,12 @@ function MethodButton({ icon: Icon, label, desc, onClick }: {
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-3 bg-[var(--way-stone)] border border-[var(--way-shadow)] rounded-lg p-4 text-left hover:border-[var(--way-gold)] transition-colors"
+      className="w-full flex items-center gap-3 bg-[var(--hi-stone)] border border-[var(--hi-shadow)] rounded-lg p-4 text-left hover:border-[var(--hi-gold)] transition-colors"
     >
-      <Icon className="w-5 h-5 text-[var(--way-ash)] shrink-0" />
+      <Icon className="w-5 h-5 text-[var(--hi-ash)] shrink-0" />
       <div>
-        <div className="text-[length:var(--way-text-heading)] font-medium text-[var(--way-text)]">{label}</div>
-        <div className="text-[length:var(--way-text-body)] text-[var(--way-ash)]">{desc}</div>
+        <div className="text-[length:var(--hi-text-heading)] font-medium text-[var(--hi-text)]">{label}</div>
+        <div className="text-[length:var(--hi-text-body)] text-[var(--hi-ash)]">{desc}</div>
       </div>
     </button>
   );
@@ -59,7 +59,7 @@ function BackButton({ onClick }: { onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-1 text-[length:var(--way-text-body)] text-[var(--way-ash)] hover:text-[var(--way-text)] transition-colors mb-3"
+      className="flex items-center gap-1 text-[length:var(--hi-text-body)] text-[var(--hi-ash)] hover:text-[var(--hi-text)] transition-colors mb-3"
     >
       <ArrowLeft className="w-3.5 h-3.5" />
       Назад
@@ -207,9 +207,9 @@ export function ImportFlow({ open, onClose, accountId, accountName }: ImportFlow
 
   return (
     <Sheet open={open} onOpenChange={(v) => !v && handleClose()}>
-      <SheetContent side="bottom" className="bg-[var(--way-void)] border-t-[var(--way-shadow)] max-h-[85vh] overflow-y-auto">
+      <SheetContent side="bottom" className="bg-[var(--hi-void)] border-t-[var(--hi-shadow)] max-h-[85vh] overflow-y-auto">
         <SheetHeader>
-          <SheetTitle className="text-[var(--way-text)]">
+          <SheetTitle className="text-[var(--hi-text)]">
             {accountId !== null ? `Импорт: ${accountName}` : 'Импорт в новый счёт'}
           </SheetTitle>
           <SheetDescription className="sr-only">
@@ -234,7 +234,7 @@ export function ImportFlow({ open, onClose, accountId, accountName }: ImportFlow
                 onClick={() => setStep('ai')}
               />
               {enriching && (
-                <div className="flex items-center justify-center gap-2 py-8 text-[var(--way-ash)] text-[length:var(--way-text-body)]">
+                <div className="flex items-center justify-center gap-2 py-8 text-[var(--hi-ash)] text-[length:var(--hi-text-body)]">
                   <span className="inline-block animate-spin">⟳</span>
                   Определяю бумаги на MOEX...
                 </div>
@@ -242,30 +242,30 @@ export function ImportFlow({ open, onClose, accountId, accountName }: ImportFlow
             </div>
           )}
           {step === 'method' && error && (
-            <p className="text-[length:var(--way-text-body)] text-red-400 mt-2">{error}</p>
+            <p className="text-[length:var(--hi-text-body)] text-red-400 mt-2">{error}</p>
           )}
 
           {/* Step: AI import */}
           {step === 'ai' && (
             <div className="space-y-3">
               <BackButton onClick={() => { setStep('method'); setError(null); }} />
-              <p className="text-[length:var(--way-text-body)] text-[var(--way-ash)]">
+              <p className="text-[length:var(--hi-text-body)] text-[var(--hi-ash)]">
                 Скопируйте промт, отправьте в ChatGPT или Claude вместе с отчётом, затем вставьте ответ
               </p>
 
               {/* AI prompt with copy button */}
               <div className="relative">
-                <pre className="bg-[var(--way-stone)] border border-[var(--way-shadow)] rounded-lg p-3 pr-10 text-xs text-[var(--way-ash)] whitespace-pre-wrap overflow-x-auto max-h-40 overflow-y-auto max-w-full">
+                <pre className="bg-[var(--hi-stone)] border border-[var(--hi-shadow)] rounded-lg p-3 pr-10 text-xs text-[var(--hi-ash)] whitespace-pre-wrap overflow-x-auto max-h-40 overflow-y-auto max-w-full">
                   {AI_PROMPT}
                 </pre>
                 <button
                   onClick={handleCopyPrompt}
-                  className="absolute top-2 right-2 p-1.5 rounded-md bg-[var(--way-void)] hover:bg-[var(--way-shadow)] transition-colors"
+                  className="absolute top-2 right-2 p-1.5 rounded-md bg-[var(--hi-void)] hover:bg-[var(--hi-shadow)] transition-colors"
                   title="Скопировать промт"
                 >
                   {copied
                     ? <Check className="w-3.5 h-3.5 text-green-400" />
-                    : <Copy className="w-3.5 h-3.5 text-[var(--way-ash)]" />
+                    : <Copy className="w-3.5 h-3.5 text-[var(--hi-ash)]" />
                   }
                 </button>
               </div>
@@ -275,26 +275,26 @@ export function ImportFlow({ open, onClose, accountId, accountName }: ImportFlow
                 value={aiText}
                 onChange={(e) => setAiText(e.target.value)}
                 placeholder="Вставьте Markdown-таблицу из ответа AI..."
-                className="w-full bg-[var(--way-stone)] border border-[var(--way-shadow)] rounded-lg px-3 py-2 text-base text-[var(--way-text)] placeholder:text-[var(--way-shadow)] outline-none focus:border-[var(--way-gold)] min-h-[120px] resize-y font-mono"
+                className="w-full bg-[var(--hi-stone)] border border-[var(--hi-shadow)] rounded-lg px-3 py-2 text-base text-[var(--hi-text)] placeholder:text-[var(--hi-shadow)] outline-none focus:border-[var(--hi-gold)] min-h-[120px] resize-y font-mono"
               />
 
               <button
                 onClick={handleAiParse}
                 disabled={!aiText.trim()}
-                className="w-full bg-[var(--way-stone)] text-[var(--way-text)] py-2.5 rounded-lg text-[length:var(--way-text-body)] font-medium disabled:opacity-40 hover:border-[var(--way-gold)] border border-[var(--way-shadow)] transition-colors"
+                className="w-full bg-[var(--hi-stone)] text-[var(--hi-text)] py-2.5 rounded-lg text-[length:var(--hi-text-body)] font-medium disabled:opacity-40 hover:border-[var(--hi-gold)] border border-[var(--hi-shadow)] transition-colors"
               >
                 Распознать
               </button>
 
               {enriching && (
-                <div className="flex items-center justify-center gap-2 py-4 text-[var(--way-ash)] text-[length:var(--way-text-body)]">
+                <div className="flex items-center justify-center gap-2 py-4 text-[var(--hi-ash)] text-[length:var(--hi-text-body)]">
                   <span className="inline-block animate-spin">⟳</span>
                   Определяю бумаги на MOEX...
                 </div>
               )}
 
               {error && (
-                <p className="text-[length:var(--way-text-body)] text-red-400">{error}</p>
+                <p className="text-[length:var(--hi-text-body)] text-red-400">{error}</p>
               )}
             </div>
           )}
@@ -305,31 +305,31 @@ export function ImportFlow({ open, onClose, accountId, accountName }: ImportFlow
               {/* Editable name for new accounts */}
               {accountId === null && (
                 <div>
-                  <label className="text-[length:var(--way-text-body)] text-[var(--way-ash)] block mb-1">Название счёта</label>
+                  <label className="text-[length:var(--hi-text-body)] text-[var(--hi-ash)] block mb-1">Название счёта</label>
                   <input
                     type="text"
                     value={editableName}
                     onChange={(e) => setEditableName(e.target.value)}
-                    className="w-full bg-[var(--way-stone)] border border-[var(--way-shadow)] rounded-lg px-3 py-2 text-base text-[var(--way-text)] outline-none focus:border-[var(--way-gold)]"
+                    className="w-full bg-[var(--hi-stone)] border border-[var(--hi-shadow)] rounded-lg px-3 py-2 text-base text-[var(--hi-text)] outline-none focus:border-[var(--hi-gold)]"
                   />
                 </div>
               )}
 
               <ImportPreview diff={diff} />
 
-              {error && <p className="text-[length:var(--way-text-body)] text-red-400">{error}</p>}
+              {error && <p className="text-[length:var(--hi-text-body)] text-red-400">{error}</p>}
 
               <div className="flex gap-2">
                 <button
                   onClick={handleClose}
-                  className="flex-1 bg-[var(--way-stone)] text-[var(--way-ash)] py-2.5 rounded-lg text-[length:var(--way-text-body)]"
+                  className="flex-1 bg-[var(--hi-stone)] text-[var(--hi-ash)] py-2.5 rounded-lg text-[length:var(--hi-text-body)]"
                 >
                   Отмена
                 </button>
                 <button
                   onClick={handleApply}
                   disabled={applying}
-                  className="flex-[2] bg-[#2d5a2d] text-[#6be06b] py-2.5 rounded-lg text-[length:var(--way-text-body)] font-medium disabled:opacity-50"
+                  className="flex-[2] bg-[#2d5a2d] text-[#6be06b] py-2.5 rounded-lg text-[length:var(--hi-text-body)] font-medium disabled:opacity-50"
                 >
                   {applying ? 'Применяю...' : 'Применить'}
                 </button>

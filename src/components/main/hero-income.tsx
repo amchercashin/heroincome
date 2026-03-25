@@ -25,44 +25,44 @@ export function HeroIncome({ income, yieldPercent, totalValue, mode, onToggle, o
   const a = (value: string) => animate ? { style: { animation: value } } : {};
 
   return (
-    <div className="text-center mb-4" {...a('way-fade-slide-up 0.7s ease-out 0.2s both')}>
-      <div className="font-serif text-[length:var(--way-text-display)] font-light text-[var(--way-gold)] tracking-tight"
-           {...a('way-fade-scale-in 0.8s ease-out 0.3s both')}>
+    <div className="text-center mb-4" {...a('hi-fade-slide-up 0.7s ease-out 0.2s both')}>
+      <div className="font-serif text-[length:var(--hi-text-display)] font-light text-[var(--hi-gold)] tracking-tight"
+           {...a('hi-fade-scale-in 0.8s ease-out 0.3s both')}>
         {formatCurrencyFull(animatedIncome)}
       </div>
-      <div className="font-mono text-[length:var(--way-text-caption)] uppercase tracking-[0.3em] text-[var(--way-ash)] mt-1"
-           {...a('way-fade-in 0.5s ease-out 0.4s both')}>
+      <div className="font-mono text-[length:var(--hi-text-caption)] uppercase tracking-[0.3em] text-[var(--hi-ash)] mt-1"
+           {...a('hi-fade-in 0.5s ease-out 0.4s both')}>
         расчётный пассивный доход
       </div>
-      <div className="font-mono text-[length:var(--way-text-caption)] text-[var(--way-muted)] mt-0.5 flex items-center justify-center gap-1.5"
-           {...a('way-fade-in 0.5s ease-out 0.6s both')}>
+      <div className="font-mono text-[length:var(--hi-text-caption)] text-[var(--hi-muted)] mt-0.5 flex items-center justify-center gap-1.5"
+           {...a('hi-fade-in 0.5s ease-out 0.6s both')}>
         <span>доходность {formatPercent(yieldPercent)} · портфель {formatCurrency(totalValue)}</span>
         <button
           onClick={onSync}
           disabled={syncing}
-          className="text-[var(--way-ash)] text-[length:var(--way-text-caption)] hover:text-[var(--way-gold)] transition-colors disabled:opacity-50"
+          className="text-[var(--hi-ash)] text-[length:var(--hi-text-caption)] hover:text-[var(--hi-gold)] transition-colors disabled:opacity-50"
           aria-label="Обновить цены MOEX"
           title={lastSyncAt ? `MOEX: ${formatSyncTime(lastSyncAt)}` : 'Синхронизировать цены'}
         >
           <span className={syncing ? 'inline-block animate-spin' : ''}>⟳</span>
         </button>
       </div>
-      <div {...a('way-fade-in 0.5s ease-out 0.7s both')}>
+      <div {...a('hi-fade-in 0.5s ease-out 0.7s both')}>
         <button
           onClick={onToggle}
           className="mt-3 inline-flex border border-[rgba(200,180,140,0.12)] rounded overflow-hidden"
         >
-          <span className={`px-4 py-2 font-mono text-[length:var(--way-text-caption)] tracking-[0.15em] transition-colors ${
+          <span className={`px-4 py-2 font-mono text-[length:var(--hi-text-caption)] tracking-[0.15em] transition-colors ${
             mode === 'month'
-              ? 'bg-[rgba(200,180,140,0.08)] text-[var(--way-gold)]'
-              : 'text-[var(--way-ash)]'
+              ? 'bg-[rgba(200,180,140,0.08)] text-[var(--hi-gold)]'
+              : 'text-[var(--hi-ash)]'
           }`}>
             МЕС
           </span>
-          <span className={`px-4 py-2 font-mono text-[length:var(--way-text-caption)] tracking-[0.15em] transition-colors ${
+          <span className={`px-4 py-2 font-mono text-[length:var(--hi-text-caption)] tracking-[0.15em] transition-colors ${
             mode === 'year'
-              ? 'bg-[rgba(200,180,140,0.08)] text-[var(--way-gold)]'
-              : 'text-[var(--way-ash)]'
+              ? 'bg-[rgba(200,180,140,0.08)] text-[var(--hi-gold)]'
+              : 'text-[var(--hi-ash)]'
           }`}>
             ГОД
           </span>

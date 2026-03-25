@@ -76,18 +76,18 @@ export function AddAssetSheet({ open, onClose, accountId, existingTypes }: AddAs
   };
 
   const inputCls =
-    'w-full bg-[var(--way-stone)] border border-[var(--way-shadow)] rounded-lg px-3 py-2 text-base text-[var(--way-text)] placeholder:text-[var(--way-muted)] outline-none focus:border-[var(--way-gold)]';
+    'w-full bg-[var(--hi-stone)] border border-[var(--hi-shadow)] rounded-lg px-3 py-2 text-base text-[var(--hi-text)] placeholder:text-[var(--hi-muted)] outline-none focus:border-[var(--hi-gold)]';
 
   return (
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
-      <SheetContent side="bottom" className="bg-[var(--way-void)] border-t-[var(--way-shadow)]">
+      <SheetContent side="bottom" className="bg-[var(--hi-void)] border-t-[var(--hi-shadow)]">
         <SheetHeader>
-          <SheetTitle className="text-[var(--way-text)]">Добавить актив</SheetTitle>
+          <SheetTitle className="text-[var(--hi-text)]">Добавить актив</SheetTitle>
           <SheetDescription className="sr-only">Добавление нового актива в счёт</SheetDescription>
         </SheetHeader>
         <div className="mt-4 space-y-3">
           <div>
-            <label className="text-[length:var(--way-text-body)] text-[var(--way-ash)] block mb-1">Название *</label>
+            <label className="text-[length:var(--hi-text-body)] text-[var(--hi-ash)] block mb-1">Название *</label>
             <input
               type="text"
               value={name}
@@ -98,7 +98,7 @@ export function AddAssetSheet({ open, onClose, accountId, existingTypes }: AddAs
             />
           </div>
           <div>
-            <label className="text-[length:var(--way-text-body)] text-[var(--way-ash)] block mb-1">Тип</label>
+            <label className="text-[length:var(--hi-text-body)] text-[var(--hi-ash)] block mb-1">Тип</label>
             <select value={type} onChange={(e) => setType(e.target.value)} className={inputCls}>
               {suggestions.map((s) => (
                 <option key={s} value={s}>
@@ -110,7 +110,7 @@ export function AddAssetSheet({ open, onClose, accountId, existingTypes }: AddAs
           <div className={`grid ${isExchangeType ? 'grid-cols-3' : 'grid-cols-2'} gap-2`}>
             {isExchangeType && (
               <div>
-                <label className="text-[length:var(--way-text-body)] text-[var(--way-ash)] block mb-1">Тикер *</label>
+                <label className="text-[length:var(--hi-text-body)] text-[var(--hi-ash)] block mb-1">Тикер *</label>
                 <input
                   type="text"
                   value={ticker}
@@ -121,7 +121,7 @@ export function AddAssetSheet({ open, onClose, accountId, existingTypes }: AddAs
               </div>
             )}
             <div>
-              <label className="text-[length:var(--way-text-body)] text-[var(--way-ash)] block mb-1">Кол-во</label>
+              <label className="text-[length:var(--hi-text-body)] text-[var(--hi-ash)] block mb-1">Кол-во</label>
               <input
                 type="text"
                 inputMode="decimal"
@@ -132,7 +132,7 @@ export function AddAssetSheet({ open, onClose, accountId, existingTypes }: AddAs
               />
             </div>
             <div>
-              <label className="text-[length:var(--way-text-body)] text-[var(--way-ash)] block mb-1">Цена покупки</label>
+              <label className="text-[length:var(--hi-text-body)] text-[var(--hi-ash)] block mb-1">Цена покупки</label>
               <input
                 type="text"
                 inputMode="decimal"
@@ -146,7 +146,7 @@ export function AddAssetSheet({ open, onClose, accountId, existingTypes }: AddAs
           <button
             onClick={handleAdd}
             disabled={!name.trim() || (isExchangeType && !ticker.trim())}
-            className="w-full bg-[var(--way-stone)] text-[var(--way-text)] py-2.5 rounded-lg text-[length:var(--way-text-body)] font-medium hover:bg-[var(--way-shadow)] transition-colors disabled:opacity-40"
+            className="w-full bg-[var(--hi-stone)] text-[var(--hi-text)] py-2.5 rounded-lg text-[length:var(--hi-text-body)] font-medium hover:bg-[var(--hi-shadow)] transition-colors disabled:opacity-40"
           >
             Добавить
           </button>

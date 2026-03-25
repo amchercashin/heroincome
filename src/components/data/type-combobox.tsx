@@ -70,7 +70,7 @@ export function TypeCombobox({ value, existingTypes, onSave, className = '' }: T
     return (
       <span
         onClick={() => { setEditValue(value); setEditing(true); }}
-        className={`cursor-pointer border-b border-dashed border-[var(--way-shadow)] hover:border-[var(--way-gold)] transition-colors ${className}`}
+        className={`cursor-pointer border-b border-dashed border-[var(--hi-shadow)] hover:border-[var(--hi-gold)] transition-colors ${className}`}
       >
         {value || '\u2014'}
       </span>
@@ -86,15 +86,15 @@ export function TypeCombobox({ value, existingTypes, onSave, className = '' }: T
         onChange={(e) => { setEditValue(e.target.value); setShowDropdown(true); }}
         onKeyDown={handleKeyDown}
         style={{ width: `${Math.max(editValue.length + 2, 4)}ch` }}
-        className={`max-w-full bg-[var(--way-void)] border border-[var(--way-gold)] rounded px-1.5 py-0.5 !text-base text-[var(--way-text)] outline-none ${className}`}
+        className={`max-w-full bg-[var(--hi-void)] border border-[var(--hi-gold)] rounded px-1.5 py-0.5 !text-base text-[var(--hi-text)] outline-none ${className}`}
       />
       {showDropdown && suggestions.length > 0 && (
-        <div className="absolute z-50 top-full left-0 mt-1 min-w-full w-max bg-[var(--way-stone)] border border-[var(--way-shadow)] rounded-md shadow-lg max-h-48 overflow-y-auto">
+        <div className="absolute z-50 top-full left-0 mt-1 min-w-full w-max bg-[var(--hi-stone)] border border-[var(--hi-shadow)] rounded-md shadow-lg max-h-48 overflow-y-auto">
           {suggestions.map(s => (
             <button
               key={s}
               onMouseDown={(e) => { e.preventDefault(); handleSelect(s); }}
-              className="w-full text-left px-2 py-1.5 text-[length:var(--way-text-heading)] text-[var(--way-text)] hover:bg-[var(--way-void)] transition-colors"
+              className="w-full text-left px-2 py-1.5 text-[length:var(--hi-text-heading)] text-[var(--hi-text)] hover:bg-[var(--hi-void)] transition-colors"
             >
               {s}
             </button>

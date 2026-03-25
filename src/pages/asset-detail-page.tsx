@@ -76,7 +76,7 @@ export function AssetDetailPage() {
   const title = asset.ticker ? `${asset.ticker} · ${asset.name}` : asset.name;
 
   const backButton = (
-    <button onClick={() => withViewTransition(() => navigate(-1))} className="text-[var(--way-ash)] text-[length:var(--way-text-nav)] min-w-[44px] min-h-[44px] flex items-center justify-center" aria-label="Назад">‹</button>
+    <button onClick={() => withViewTransition(() => navigate(-1))} className="text-[var(--hi-ash)] text-[length:var(--hi-text-nav)] min-w-[44px] min-h-[44px] flex items-center justify-center" aria-label="Назад">‹</button>
   );
 
   return (
@@ -90,15 +90,15 @@ export function AssetDetailPage() {
       />
 
       <div
-        className="bg-[var(--way-stone)] rounded-lg p-3 mb-2 cursor-pointer hover:border-[var(--way-gold)] border border-transparent transition-colors"
+        className="bg-[var(--hi-stone)] rounded-lg p-3 mb-2 cursor-pointer hover:border-[var(--hi-gold)] border border-transparent transition-colors"
         onClick={() => withViewTransition(() => navigate('/data', {
           state: holdings.length > 0
             ? { highlightAccountId: holdings[0].accountId, highlightAssetId: assetId }
             : undefined
         }))}
       >
-        <div className="font-mono text-[length:var(--way-text-caption)] text-[var(--way-ash)] mb-1">Количество</div>
-        <div className="font-mono text-[length:var(--way-text-heading)] text-[var(--way-text)]">
+        <div className="font-mono text-[length:var(--hi-text-caption)] text-[var(--hi-ash)] mb-1">Количество</div>
+        <div className="font-mono text-[length:var(--hi-text-heading)] text-[var(--hi-text)]">
           {totalQuantity} шт.
         </div>
         {holdings.length > 1 && (
@@ -106,9 +106,9 @@ export function AssetDetailPage() {
             {holdings.map((h) => {
               const account = accounts.find(a => a.id === h.accountId);
               return (
-                <div key={h.id} className="flex justify-between text-[length:var(--way-text-body)]">
-                  <span className="text-[var(--way-muted)]">{account?.name ?? 'Счёт'}</span>
-                  <span className="text-[var(--way-ash)] tabular-nums">{h.quantity} шт.</span>
+                <div key={h.id} className="flex justify-between text-[length:var(--hi-text-body)]">
+                  <span className="text-[var(--hi-muted)]">{account?.name ?? 'Счёт'}</span>
+                  <span className="text-[var(--hi-ash)] tabular-nums">{h.quantity} шт.</span>
                 </div>
               );
             })}
@@ -128,12 +128,12 @@ export function AssetDetailPage() {
                 <button
                   key={i}
                   onClick={() => withViewTransition(() => navigate('/payments', { state: { highlightAssetId: assetId } }))}
-                  className="flex justify-between w-full text-[length:var(--way-text-caption)] text-[var(--way-muted)] hover:text-[var(--way-gold)] transition-colors"
+                  className="flex justify-between w-full text-[length:var(--hi-text-caption)] text-[var(--hi-muted)] hover:text-[var(--hi-gold)] transition-colors"
                 >
                   <span>{p.date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
                   <span className="flex items-center gap-1">
                     {p.amount.toLocaleString('ru-RU')} ₽
-                    <span className="text-[var(--way-ash)]">›</span>
+                    <span className="text-[var(--hi-ash)]">›</span>
                   </span>
                 </button>
               ))}

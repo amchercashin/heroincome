@@ -25,36 +25,36 @@ export function AssetRow({ asset, annualIncome, totalQuantity }: AssetRowProps) 
   return (
     <TransitionLink
       to={`/asset/${asset.id}`}
-      className="block py-3 border-b border-[rgba(200,180,140,0.04)] transition-colors active:bg-[var(--way-stone)]"
+      className="block py-3 border-b border-[rgba(200,180,140,0.04)] transition-colors active:bg-[var(--hi-stone)]"
     >
       <div className="flex justify-between items-start">
         <div>
-          <div className="text-[length:var(--way-text-body)] font-medium text-[var(--way-text)]">{asset.name}</div>
+          <div className="text-[length:var(--hi-text-body)] font-medium text-[var(--hi-text)]">{asset.name}</div>
           {(asset.ticker || asset.isin) && (
-            <div className="text-[length:var(--way-text-caption)] text-[var(--way-muted)] mt-0.5">
+            <div className="text-[length:var(--hi-text-caption)] text-[var(--hi-muted)] mt-0.5">
               {[asset.ticker, asset.isin].filter(Boolean).join(' · ')}
             </div>
           )}
         </div>
         <div>
           <div className="flex items-center gap-1.5 justify-end">
-            <span className="font-mono text-[length:var(--way-text-body)] font-medium text-[var(--way-gold)]">{formatCurrency(incomePerMonth)}</span>
-            <span className={`font-mono text-[length:var(--way-text-caption)] px-1.5 py-0.5 rounded min-w-[52px] text-center ${
+            <span className="font-mono text-[length:var(--hi-text-body)] font-medium text-[var(--hi-gold)]">{formatCurrency(incomePerMonth)}</span>
+            <span className={`font-mono text-[length:var(--hi-text-caption)] px-1.5 py-0.5 rounded min-w-[52px] text-center ${
               isManual
-                ? 'bg-[rgba(90,85,72,0.15)] text-[var(--way-ash)]'
-                : 'bg-[rgba(200,180,140,0.1)] text-[var(--way-gold)]'
+                ? 'bg-[rgba(90,85,72,0.15)] text-[var(--hi-ash)]'
+                : 'bg-[rgba(200,180,140,0.1)] text-[var(--hi-gold)]'
             }`}>
               {isManual ? 'ручной' : 'факт'}
             </span>
           </div>
           {yieldPercent != null && (
-            <div className="font-mono text-[length:var(--way-text-caption)] text-[var(--way-muted)] text-right mt-0.5">
+            <div className="font-mono text-[length:var(--hi-text-caption)] text-[var(--hi-muted)] text-right mt-0.5">
               {formatPercent(yieldPercent)} годовых
             </div>
           )}
         </div>
       </div>
-      <div className="font-mono text-[length:var(--way-text-caption)] text-[var(--way-muted)] mt-1">
+      <div className="font-mono text-[length:var(--hi-text-caption)] text-[var(--hi-muted)] mt-1">
         {totalQuantity} шт · {formatCurrency(value)}
       </div>
     </TransitionLink>

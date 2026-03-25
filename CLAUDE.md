@@ -52,27 +52,27 @@ Page navigation uses the View Transitions API for smooth crossfades. `src/lib/vi
 - **Vitest** — config embedded in `vite.config.ts`. Environment: `happy-dom`, globals enabled. Setup file `tests/setup.ts` imports `fake-indexeddb/auto` and `@testing-library/jest-dom/vitest`.
 - **TypeScript** — strict mode with `noUnusedLocals` and `noUnusedParameters`.
 - **PWA** — `vite-plugin-pwa` with `generateSW` strategy. Auto-reload on new deploy.
-- **Deploy** — GitHub Pages at subpath `/way/`. CI sets `BASE_URL=/way/` env var; `vite.config.ts` reads it for `base`. Workflow in `.github/workflows/deploy.yml`.
+- **Deploy** — GitHub Pages at subpath `/heroincome/`. CI sets `BASE_URL=/heroincome/` env var; `vite.config.ts` reads it for `base`. Workflow in `.github/workflows/deploy.yml`.
 
-### Design system (Wabi-Sabi)
+### Design system (HeroIncome)
 
-**Colors** defined as CSS variables `--way-*` in `src/index.css`. Key tokens: `--way-void` (darkest bg), `--way-stone` (cards), `--way-gold` (accents), `--way-text` (foreground).
+**Colors** defined as CSS variables `--hi-*` in `src/index.css`. Key tokens: `--hi-void` (darkest bg), `--hi-stone` (cards), `--hi-gold` (accents), `--hi-text` (foreground).
 
-**Fonts:** DM Sans (sans), Cormorant Garamond (serif), IBM Plex Mono (mono). Custom keyframes prefixed `way-`.
+**Fonts:** DM Sans (sans), Cormorant Garamond (serif), IBM Plex Mono (mono). Custom keyframes prefixed `hi-`.
 
 **Fluid typography** — 7 responsive tokens using `clamp()` in `src/index.css`, scaling between 320px and 430px viewports:
 
 | Token | Range | Usage |
 |-------|-------|-------|
-| `--way-text-display` | 40–56px | Hero income sum |
-| `--way-text-nav` | 20–24px | Nav icons ☰ ‹ ⟳ |
-| `--way-text-title` | 16–20px | Page titles |
-| `--way-text-heading` | 14–16px | Values, tickers, category names |
-| `--way-text-body` | 12–14px | Income amounts, buttons, secondary data |
-| `--way-text-caption` | 11–13px | Labels, badges, meta-info |
-| `--way-text-micro` | 10–11px | Chart annotations, sync time |
+| `--hi-text-display` | 40–56px | Hero income sum |
+| `--hi-text-nav` | 20–24px | Nav icons ☰ ‹ ⟳ |
+| `--hi-text-title` | 16–20px | Page titles |
+| `--hi-text-heading` | 14–16px | Values, tickers, category names |
+| `--hi-text-body` | 12–14px | Income amounts, buttons, secondary data |
+| `--hi-text-caption` | 11–13px | Labels, badges, meta-info |
+| `--hi-text-micro` | 10–11px | Chart annotations, sync time |
 
-Apply via `text-[length:var(--way-text-heading)]`. Do not use hardcoded `text-[Xpx]` for font sizes — always use a token. Exception: `text-base` (16px) on inputs must stay for iOS zoom prevention.
+Apply via `text-[length:var(--hi-text-heading)]`. Do not use hardcoded `text-[Xpx]` for font sizes — always use a token. Exception: `text-base` (16px) on inputs must stay for iOS zoom prevention.
 
 ## Conventions
 
