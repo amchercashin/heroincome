@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { withViewTransition } from '@/lib/view-transition';
 import { AppShell } from '@/components/layout/app-shell';
@@ -6,6 +6,7 @@ import { StatBlocks } from '@/components/shared/stat-blocks';
 import { PaymentHistoryChart } from '@/components/shared/payment-history-chart';
 import { AssetField } from '@/components/asset-detail/asset-field';
 import { ExpectedPayment } from '@/components/asset-detail/expected-payment';
+import { PageTip } from '@/components/onboarding/PageTip';
 import { useAsset, updateAsset } from '@/hooks/use-assets';
 import { usePortfolioStats } from '@/hooks/use-portfolio-stats';
 import { usePaymentHistory } from '@/hooks/use-payment-history';
@@ -17,6 +18,7 @@ export function AssetDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const assetId = Number(id);
+  const paymentFieldRef = useRef<HTMLDivElement>(null);
   const asset = useAsset(assetId);
   const { portfolio } = usePortfolioStats();
   const history = usePaymentHistory(assetId);
@@ -82,6 +84,7 @@ export function AssetDetailPage() {
 
   return (
     <AppShell leftAction={backButton} title={title}>
+      <PageTip storageKey="hi-tip-asset" targetRef={paymentFieldRef} text="Для биржевых активов годовой доход рассчитан по последним выплатам. Но можно указать и вручную — полезно если знаете точнее" />
       <StatBlocks
         incomePerMonth={incomePerMonth}
         totalValue={value}
@@ -117,6 +120,7 @@ export function AssetDetailPage() {
         )}
       </div>
 
+      <div ref={paymentFieldRef}>
       <AssetField
         label="Выплата на шт. / год"
         value={annualIncome > 0 ? `₽ ${annualIncome.toLocaleString('ru-RU')}` : '— Укажите'}
@@ -148,6 +152,7 @@ export function AssetDetailPage() {
           paymentPerUnit: undefined,
         }) : undefined}
       />
+      </div>
 
       <PaymentHistoryChart
         history={allHistoryRecords}

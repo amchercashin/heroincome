@@ -1,10 +1,11 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { withViewTransition } from '@/lib/view-transition';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { AppShell } from '@/components/layout/app-shell';
 import { StatBlocks } from '@/components/shared/stat-blocks';
 import { AssetRow } from '@/components/category/asset-row';
+import { PageTip } from '@/components/onboarding/PageTip';
 import { useAssetsByType } from '@/hooks/use-assets';
 import { usePortfolioStats } from '@/hooks/use-portfolio-stats';
 import { useAllPaymentHistory } from '@/hooks/use-payment-history';
@@ -16,6 +17,7 @@ export function CategoryPage() {
   const navigate = useNavigate();
   const decodedType = decodeURIComponent(type ?? '');
   const assets = useAssetsByType(decodedType);
+  const firstAssetRef = useRef<HTMLDivElement>(null);
   const { categories } = usePortfolioStats();
   const allHistory = useAllPaymentHistory();
   const holdings = useLiveQuery(() => db.holdings.toArray(), [], []);
@@ -50,6 +52,7 @@ export function CategoryPage() {
 
   return (
     <AppShell leftAction={backButton} title={decodedType}>
+      <PageTip storageKey="hi-tip-category" targetRef={firstAssetRef} text="Доход и доходность — по каждому активу отдельно. Нажмите для подробностей" />
       {catStats && (
         <StatBlocks
           incomePerMonth={catStats.totalIncomePerMonth}
@@ -59,7 +62,7 @@ export function CategoryPage() {
         />
       )}
 
-      {assets.map((asset) => {
+      {assets.map((asset, index) => {
         let annualIncome: number;
         if (asset.paymentPerUnitSource === 'manual' && asset.paymentPerUnit != null) {
           annualIncome = asset.paymentPerUnit;
@@ -67,7 +70,11 @@ export function CategoryPage() {
           const history = historyByAsset.get(asset.id!) ?? [];
           annualIncome = calcAnnualIncomePerUnit(history, asset.frequencyPerYear, now).annualIncome;
         }
-        return <AssetRow key={asset.id} asset={asset} annualIncome={annualIncome} totalQuantity={quantityByAsset.get(asset.id!) ?? 0} />;
+        return (
+          <div key={asset.id} ref={index === 0 ? firstAssetRef : undefined}>
+            <AssetRow asset={asset} annualIncome={annualIncome} totalQuantity={quantityByAsset.get(asset.id!) ?? 0} />
+          </div>
+        );
       })}
     </AppShell>
   );

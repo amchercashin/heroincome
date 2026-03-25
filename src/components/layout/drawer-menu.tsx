@@ -49,6 +49,7 @@ export function DrawerMenu({ onClose }: DrawerMenuProps) {
                 key={item.path}
                 to={item.path}
                 onClick={onClose}
+                data-onboarding={item.path === '/data' ? 'menu-data' : undefined}
                 className="flex items-center gap-3 px-2 py-2 text-[length:var(--hi-text-heading)] text-[var(--hi-text)] hover:bg-[var(--hi-stone)] transition-colors rounded-lg min-h-[44px]"
               >
                 <item.icon size={16} strokeWidth={1.2} className="text-[var(--hi-ash)]" />

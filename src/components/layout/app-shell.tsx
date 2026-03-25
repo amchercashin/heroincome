@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { Sheet, SheetTrigger } from '@/components/ui/sheet';
 import { DrawerMenu } from './drawer-menu';
+import { useOnboarding } from '@/contexts/onboarding-context';
 
 interface AppShellProps {
   title?: string;
@@ -10,10 +11,14 @@ interface AppShellProps {
 }
 
 export function AppShell({ title, leftAction, rightAction, children }: AppShellProps) {
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const { active: onboardingActive, drawerOpen: obDrawerOpen, setDrawerOpen: obSetDrawerOpen } = useOnboarding();
+  const [localDrawerOpen, setLocalDrawerOpen] = useState(false);
+  const drawerOpen = onboardingActive ? obDrawerOpen : localDrawerOpen;
+  const setDrawerOpen = onboardingActive ? obSetDrawerOpen : setLocalDrawerOpen;
 
   const defaultLeft = (
     <button
+      data-onboarding="hamburger"
       onClick={() => setDrawerOpen(true)}
       className="text-[var(--hi-ash)] text-[length:var(--hi-text-nav)] min-w-[44px] min-h-[44px] flex items-center justify-center"
       aria-label="Открыть меню"

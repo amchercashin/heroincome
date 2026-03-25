@@ -89,6 +89,22 @@ export function SettingsPage() {
         {status && <div className="text-[var(--hi-gold)] text-[length:var(--hi-text-body)] text-center">{status}</div>}
         {backupError && <div className="text-[var(--destructive)] text-[length:var(--hi-text-body)] text-center">{backupError}</div>}
 
+        <div>
+          <div className="text-[var(--hi-ash)] text-[length:var(--hi-text-body)] mb-2">Подсказки</div>
+          <button
+            onClick={() => {
+              localStorage.removeItem('hi-onboarding-done');
+              localStorage.removeItem('hi-tip-payments');
+              localStorage.removeItem('hi-tip-category');
+              localStorage.removeItem('hi-tip-asset');
+            }}
+            className="w-full py-3 rounded-lg border border-[rgba(200,180,140,0.08)] text-[var(--hi-ash)] transition-colors hover:text-[var(--hi-gold)] hover:border-[rgba(200,180,140,0.15)]"
+            style={{ fontSize: 'var(--hi-text-body)' }}
+          >
+            Сбросить подсказки
+          </button>
+        </div>
+
         <div className="border-t border-[rgba(200,180,140,0.08)] pt-6 mt-8">
           <div className="text-[var(--destructive)] text-[length:var(--hi-text-body)] uppercase tracking-widest mb-3">Опасная зона</div>
           <button

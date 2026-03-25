@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { PwaUpdatePrompt } from '@/components/pwa-update-prompt';
 import { SyncProvider } from '@/contexts/sync-context';
+import { OnboardingProvider } from '@/contexts/onboarding-context';
+import { FirstLaunchTour } from '@/components/onboarding/FirstLaunchTour';
 import { MainPage } from '@/pages/main-page';
 import { CategoryPage } from '@/pages/category-page';
 import { AssetDetailPage } from '@/pages/asset-detail-page';
@@ -14,16 +16,19 @@ export default function App() {
     <ErrorBoundary>
       <PwaUpdatePrompt />
       <BrowserRouter basename={import.meta.env.BASE_URL}>
-        <SyncProvider>
-          <Routes>
-            <Route path="/" element={<MainPage />} />
-            <Route path="/category/:type" element={<CategoryPage />} />
-            <Route path="/asset/:id" element={<AssetDetailPage />} />
-            <Route path="/data" element={<DataPage />} />
-            <Route path="/payments" element={<PaymentsPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-          </Routes>
-        </SyncProvider>
+        <OnboardingProvider>
+          <SyncProvider>
+            <Routes>
+              <Route path="/" element={<MainPage />} />
+              <Route path="/category/:type" element={<CategoryPage />} />
+              <Route path="/asset/:id" element={<AssetDetailPage />} />
+              <Route path="/data" element={<DataPage />} />
+              <Route path="/payments" element={<PaymentsPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+            </Routes>
+            <FirstLaunchTour />
+          </SyncProvider>
+        </OnboardingProvider>
       </BrowserRouter>
     </ErrorBoundary>
   );
