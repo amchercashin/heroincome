@@ -12,10 +12,6 @@ import { MockMainPage } from './MockMainPage';
 
 const STORAGE_KEY = 'hi-onboarding-done';
 const TOTAL_STEPS = 7;
-const TEST_TICKER = 'MOEX';
-const TEST_ASSET_NAME = 'МосБиржа';
-const TEST_ACCOUNT_NAME = '__onboarding__';
-const TEST_QUANTITY = 10;
 
 export function FirstLaunchTour() {
   const [step, setStep] = useState(0);
@@ -24,15 +20,14 @@ export function FirstLaunchTour() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Refs that persist across renders without causing re-renders
   const testAssetIdRef = useRef<number | null>(null);
   const testAccountIdRef = useRef<number | null>(null);
-  const syncSucceededRef = useRef(false);
+  const syncSucceededRef = useRef(true);
   const endingRef = useRef(false);
   const [spotlightRect, setSpotlightRect] = useState<DOMRect | null>(null);
   const spotlightTargetRef = useRef<HTMLElement | null>(null);
 
-  // ---- Boot: check localStorage, start after delay ----
+  // ---- Boot: check localStorage, start after splash delay ----
   useEffect(() => {
     if (localStorage.getItem(STORAGE_KEY)) return;
     const timer = setTimeout(() => {
@@ -42,10 +37,9 @@ export function FirstLaunchTour() {
     return () => clearTimeout(timer);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ---- Route guard: end tour if user navigates unexpectedly ----
+  // ---- Route guard ----
   useEffect(() => {
     if (step === 0) return;
-    // Allow / and /data during tour
     const allowed = ['/', '/data'];
     const base = import.meta.env.BASE_URL.replace(/\/$/, '');
     const path = location.pathname.replace(base, '') || '/';
@@ -54,36 +48,26 @@ export function FirstLaunchTour() {
     }
   }, [location.pathname, step]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ---- End tour: cleanup + navigate home ----
+  // ---- End tour: cleanup ----
   const endTour = useCallback(async () => {
     if (endingRef.current) return;
     endingRef.current = true;
 
-    // Delete test asset if created
     if (testAssetIdRef.current) {
-      try {
-        await deleteAsset(testAssetIdRef.current);
-      } catch {
-        // ignore
-      }
+      try { await deleteAsset(testAssetIdRef.current); } catch { /* ignore */ }
     }
-    // Delete test account if created
     if (testAccountIdRef.current) {
       try {
-        await db.accounts.delete(testAccountIdRef.current);
-      } catch {
-        // ignore
-      }
+        const count = await db.holdings.where('accountId').equals(testAccountIdRef.current).count();
+        if (count === 0) await db.accounts.delete(testAccountIdRef.current);
+      } catch { /* ignore */ }
     }
 
     setDrawerOpen(false);
     setActive(false);
     setStep(0);
     localStorage.setItem(STORAGE_KEY, '1');
-
-    withViewTransition(() => {
-      navigate('/');
-    });
+    withViewTransition(() => navigate('/'));
   }, [navigate, setActive, setDrawerOpen]);
 
   // ---- Step 3: spotlight on hamburger ----
@@ -91,59 +75,52 @@ export function FirstLaunchTour() {
     if (step !== 3) return;
     const el = document.querySelector<HTMLElement>('[data-onboarding="hamburger"]');
     if (!el) return;
-
-    const rect = el.getBoundingClientRect();
-    setSpotlightRect(rect);
+    setSpotlightRect(el.getBoundingClientRect());
     spotlightTargetRef.current = el;
 
     const handleClick = () => {
       setDrawerOpen(true);
-      // Small delay for drawer animation
-      setTimeout(() => setStep(4), 300);
+      setTimeout(() => setStep(4), 350);
     };
     el.addEventListener('click', handleClick, { once: true });
     return () => el.removeEventListener('click', handleClick);
   }, [step, setDrawerOpen]);
 
-  // ---- Step 4: spotlight on "Данные" menu item ----
+  // ---- Step 4: spotlight on "Данные" in drawer ----
   useEffect(() => {
     if (step !== 4) return;
-    // Wait a tick for drawer to render
     const timer = setTimeout(() => {
       const el = document.querySelector<HTMLElement>('[data-onboarding="menu-data"]');
       if (!el) return;
-
-      const rect = el.getBoundingClientRect();
-      setSpotlightRect(rect);
+      setSpotlightRect(el.getBoundingClientRect());
       spotlightTargetRef.current = el;
 
-      const handleClick = () => {
+      const handleClick = (e: Event) => {
+        e.preventDefault();
         setDrawerOpen(false);
-        withViewTransition(() => {
-          navigate('/data');
-        });
+        setSpotlightRect(null);
+        withViewTransition(() => navigate('/data'));
         setTimeout(() => setStep(5), 400);
       };
       el.addEventListener('click', handleClick, { once: true });
-      return () => el.removeEventListener('click', handleClick);
-    }, 200);
+    }, 400);
     return () => clearTimeout(timer);
   }, [step, navigate, setDrawerOpen]);
 
-  // ---- Step 5 tap handler ----
+  // ---- Step 5 tap ----
   const handleStep5Tap = useCallback(() => {
-    // If user already has assets, skip step 6-7
     if (assets.length > 0) {
-      endTour();
-    } else {
-      setStep(6);
+      localStorage.setItem(STORAGE_KEY, '1');
+      setActive(false);
+      setStep(0);
+      return;
     }
-  }, [assets.length, endTour]);
+    setStep(6);
+  }, [assets.length, setActive]);
 
   // ---- Step 6: create test asset ----
   const handleCreateTestAsset = useCallback(async () => {
     try {
-      // Create account if needed
       const now = new Date();
       const existingAccounts = await db.accounts.toArray();
       let accountId: number;
@@ -151,18 +128,17 @@ export function FirstLaunchTour() {
         accountId = existingAccounts[0].id!;
       } else {
         accountId = (await db.accounts.add({
-          name: TEST_ACCOUNT_NAME,
+          name: 'Основной',
           createdAt: now,
           updatedAt: now,
         })) as number;
         testAccountIdRef.current = accountId;
       }
 
-      // Create asset
       const assetId = await addAsset({
         type: 'Акции',
-        name: TEST_ASSET_NAME,
-        ticker: TEST_TICKER,
+        name: 'Мосбиржа',
+        ticker: 'MOEX',
         dataSource: 'manual',
         paymentPerUnitSource: 'fact',
         frequencyPerYear: 1,
@@ -170,42 +146,57 @@ export function FirstLaunchTour() {
       });
       testAssetIdRef.current = assetId;
 
-      // Create holding
       await db.holdings.add({
         accountId,
         assetId,
-        quantity: TEST_QUANTITY,
+        quantity: 1000,
         quantitySource: 'manual',
         createdAt: now,
         updatedAt: now,
       });
 
-      // Try to sync from MOEX
-      const result = await syncSingleAsset(assetId);
-      syncSucceededRef.current = result.success;
+      // Sync from MOEX (track success for step 7 text)
+      syncSingleAsset(assetId)
+        .then((r) => { syncSucceededRef.current = r.success; })
+        .catch(() => { syncSucceededRef.current = false; });
+
+      // Navigate to main page to show calculated income
+      withViewTransition(() => navigate('/'));
+      setTimeout(() => setStep(7), 2000);
     } catch {
       syncSucceededRef.current = false;
+      setStep(7);
     }
-    setStep(7);
-  }, []);
+  }, [navigate]);
 
-  // ---- Step 7: delete test asset and finish ----
+  // ---- Step 7: delete and finish ----
   const handleDeleteAndFinish = useCallback(async () => {
-    await endTour();
-  }, [endTour]);
+    if (testAssetIdRef.current) {
+      try { await deleteAsset(testAssetIdRef.current); } catch { /* ignore */ }
+      testAssetIdRef.current = null;
+    }
+    if (testAccountIdRef.current) {
+      try {
+        const count = await db.holdings.where('accountId').equals(testAccountIdRef.current).count();
+        if (count === 0) {
+          await db.accounts.delete(testAccountIdRef.current);
+          testAccountIdRef.current = null;
+        }
+      } catch { /* ignore */ }
+    }
+    localStorage.setItem(STORAGE_KEY, '1');
+    setActive(false);
+    setStep(0);
+  }, [setActive]);
 
-  // ---- Render nothing if inactive ----
   if (step === 0) return null;
 
-  // ---- Build step content ----
-  let content: React.ReactNode = null;
-
-  // Helper for skip button
+  // Skip button — pointer-events-auto so it's clickable even when overlay has passThrough
   const skipButton = (
     <button
       onClick={endTour}
-      className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[9003] font-mono text-[var(--hi-muted)] underline underline-offset-4"
-      style={{ fontSize: 'var(--hi-text-caption)' }}
+      className="fixed bottom-10 right-5 z-[9003] pointer-events-auto font-mono text-[var(--hi-ash)]"
+      style={{ fontSize: 'var(--hi-text-micro)' }}
     >
       пропустить
     </button>
@@ -213,27 +204,27 @@ export function FirstLaunchTour() {
 
   const tapHint = (
     <div
-      className="fixed bottom-16 left-1/2 -translate-x-1/2 z-[9003] font-mono text-[var(--hi-ash)] animate-pulse"
-      style={{ fontSize: 'var(--hi-text-micro)' }}
+      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9003] font-mono text-[var(--hi-ash)]"
+      style={{ fontSize: 'var(--hi-text-micro)', letterSpacing: '0.05em' }}
     >
       нажмите для продолжения
     </div>
   );
 
+  let content: React.ReactNode = null;
+
   switch (step) {
-    // Step 1: Mockup overlay
     case 1:
       content = (
         <>
-          {/* Mockup page behind overlay */}
           <div className="fixed inset-0 z-[8999]">
             <MockMainPage />
           </div>
           <CoachOverlay targetRect={null} onClick={() => setStep(2)}>
+            <div className="absolute inset-0 bg-black/40" />
             <CoachTooltip
               targetRef={null}
-              text="Это HeroIncome - приложение для учёта пассивного дохода от инвестиций"
-              subtitle="Акции, облигации, фонды, вклады, недвижимость"
+              text="Так выглядит приложение с данными"
               stepIndex={1}
               totalSteps={TOTAL_STEPS}
             />
@@ -244,17 +235,14 @@ export function FirstLaunchTour() {
       );
       break;
 
-    // Step 2: Empty state tooltip
     case 2:
+      // Real empty page is visible behind the overlay (no MockMainPage)
       content = (
         <>
-          <div className="fixed inset-0 z-[8999]">
-            <MockMainPage />
-          </div>
           <CoachOverlay targetRect={null} onClick={() => setStep(3)}>
             <CoachTooltip
               targetRef={null}
-              text="Здесь будет ваш расчётный годовой доход. Давайте настроим!"
+              text="А пока здесь пусто. Давайте это исправим!"
               stepIndex={2}
               totalSteps={TOTAL_STEPS}
             />
@@ -265,14 +253,13 @@ export function FirstLaunchTour() {
       );
       break;
 
-    // Step 3: Spotlight on hamburger menu
     case 3:
       content = (
         <>
           <CoachOverlay targetRect={spotlightRect} passThrough>
             <CoachTooltip
-              targetRef={spotlightTargetRef as React.RefObject<HTMLElement | null>}
-              text="Нажмите на меню"
+              targetRef={spotlightTargetRef}
+              text="Нажмите для доступа к меню"
               stepIndex={3}
               totalSteps={TOTAL_STEPS}
             />
@@ -282,14 +269,13 @@ export function FirstLaunchTour() {
       );
       break;
 
-    // Step 4: Spotlight on "Данные" drawer item
     case 4:
       content = (
         <>
           <CoachOverlay targetRect={spotlightRect} passThrough>
             <CoachTooltip
-              targetRef={spotlightTargetRef as React.RefObject<HTMLElement | null>}
-              text='Откройте раздел "Данные"'
+              targetRef={spotlightTargetRef}
+              text="Управление портфелем — здесь"
               stepIndex={4}
               totalSteps={TOTAL_STEPS}
             />
@@ -299,14 +285,14 @@ export function FirstLaunchTour() {
       );
       break;
 
-    // Step 5: Tooltip on /data page
     case 5:
       content = (
         <>
           <CoachOverlay targetRect={null} onClick={handleStep5Tap}>
             <CoachTooltip
               targetRef={null}
-              text="Здесь вы импортируете данные из брокерских отчётов или добавляете активы вручную"
+              text="Импортируйте брокерский отчёт или добавьте активы вручную"
+              subtitle="Для биржевых активов выплаты подтянутся автоматически"
               stepIndex={5}
               totalSteps={TOTAL_STEPS}
             />
@@ -317,45 +303,37 @@ export function FirstLaunchTour() {
       );
       break;
 
-    // Step 6: Add test asset card
     case 6:
       content = (
         <>
           <CoachOverlay targetRect={null}>
-            <div
-              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9003] w-[280px] rounded-xl p-5"
-              style={{
-                backgroundColor: 'var(--hi-stone)',
-                border: '1px solid rgba(200,180,140,0.12)',
-              }}
-            >
-              <div
-                className="text-[var(--hi-text)] font-sans leading-relaxed mb-1"
-                style={{ fontSize: 'var(--hi-text-body)' }}
-              >
-                Добавить {TEST_QUANTITY} акций {TEST_TICKER} для примера?
-              </div>
-              <div
-                className="text-[var(--hi-muted)] mb-4"
-                style={{ fontSize: 'var(--hi-text-caption)' }}
-              >
-                Загрузим данные с Московской биржи
-              </div>
-              <button
-                onClick={handleCreateTestAsset}
-                className="w-full py-2.5 rounded-lg font-mono text-[var(--hi-void)] transition-colors"
-                style={{
-                  fontSize: 'var(--hi-text-body)',
-                  backgroundColor: 'var(--hi-gold)',
-                }}
-              >
-                Добавить
-              </button>
-              <div
-                className="font-mono text-[var(--hi-muted)] mt-3 text-center"
-                style={{ fontSize: 'var(--hi-text-micro)' }}
-              >
-                6 / {TOTAL_STEPS}
+            <div className="fixed inset-0 z-[9001] flex items-center justify-center">
+              <div className="w-[280px] bg-[var(--hi-stone)] rounded-lg p-5 border border-[rgba(200,180,140,0.12)]">
+                <div
+                  className="text-[var(--hi-text)] font-sans leading-relaxed"
+                  style={{ fontSize: 'var(--hi-text-body)' }}
+                >
+                  Добавим 1000 акций Мосбиржи (MOEX) для примера?
+                </div>
+                <div
+                  className="mt-1 text-[var(--hi-muted)] italic"
+                  style={{ fontSize: 'var(--hi-text-caption)' }}
+                >
+                  Удалить можно в любой момент
+                </div>
+                <button
+                  onClick={handleCreateTestAsset}
+                  className="mt-4 w-full py-2.5 rounded-lg bg-[rgba(200,180,140,0.1)] text-[var(--hi-gold)] font-sans border border-[rgba(200,180,140,0.12)] transition-colors hover:bg-[rgba(200,180,140,0.15)]"
+                  style={{ fontSize: 'var(--hi-text-body)' }}
+                >
+                  Добавить
+                </button>
+                <div
+                  className="mt-2 text-center font-mono text-[var(--hi-muted)]"
+                  style={{ fontSize: 'var(--hi-text-micro)' }}
+                >
+                  6 / {TOTAL_STEPS}
+                </div>
               </div>
             </div>
           </CoachOverlay>
@@ -364,49 +342,33 @@ export function FirstLaunchTour() {
       );
       break;
 
-    // Step 7: Delete test asset card
     case 7:
       content = (
         <>
           <CoachOverlay targetRect={null}>
-            <div
-              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9003] w-[280px] rounded-xl p-5"
-              style={{
-                backgroundColor: 'var(--hi-stone)',
-                border: '1px solid rgba(200,180,140,0.12)',
-              }}
-            >
-              <div
-                className="text-[var(--hi-text)] font-sans leading-relaxed mb-1"
-                style={{ fontSize: 'var(--hi-text-body)' }}
-              >
-                {syncSucceededRef.current
-                  ? 'Данные загружены! Удалить тестовый актив и начать с чистого листа?'
-                  : 'Актив создан, но синхронизация не удалась. Удалить тестовый актив?'}
-              </div>
-              <div
-                className="text-[var(--hi-muted)] mb-4"
-                style={{ fontSize: 'var(--hi-text-caption)' }}
-              >
-                Импортируйте свой реальный портфель в разделе "Данные"
-              </div>
-              <button
-                onClick={handleDeleteAndFinish}
-                className="w-full py-2.5 rounded-lg font-mono transition-colors border"
-                style={{
-                  fontSize: 'var(--hi-text-body)',
-                  color: 'var(--hi-text)',
-                  borderColor: 'rgba(200,180,140,0.18)',
-                  backgroundColor: 'transparent',
-                }}
-              >
-                Удалить и завершить
-              </button>
-              <div
-                className="font-mono text-[var(--hi-muted)] mt-3 text-center"
-                style={{ fontSize: 'var(--hi-text-micro)' }}
-              >
-                7 / {TOTAL_STEPS}
+            <div className="fixed inset-0 z-[9001] flex items-center justify-center">
+              <div className="w-[280px] bg-[var(--hi-stone)] rounded-lg p-5 border border-[rgba(200,180,140,0.12)]">
+                <div
+                  className="text-[var(--hi-text)] font-sans leading-relaxed"
+                  style={{ fontSize: 'var(--hi-text-body)' }}
+                >
+                  {syncSucceededRef.current
+                    ? 'Вот как выглядит расчёт дохода. Удаляем тестовый актив — начните со своих данных!'
+                    : 'Данные с биржи загрузятся позже. Пока доход не рассчитан — это нормально. Удаляем тестовый актив — начните со своих данных!'}
+                </div>
+                <button
+                  onClick={handleDeleteAndFinish}
+                  className="mt-4 w-full py-2.5 rounded-lg bg-[rgba(200,180,140,0.1)] text-[var(--hi-gold)] font-sans border border-[rgba(200,180,140,0.12)] transition-colors hover:bg-[rgba(200,180,140,0.15)]"
+                  style={{ fontSize: 'var(--hi-text-body)' }}
+                >
+                  Удалить и начать
+                </button>
+                <div
+                  className="mt-2 text-center font-mono text-[var(--hi-muted)]"
+                  style={{ fontSize: 'var(--hi-text-micro)' }}
+                >
+                  7 / {TOTAL_STEPS}
+                </div>
               </div>
             </div>
           </CoachOverlay>

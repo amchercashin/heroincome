@@ -24,11 +24,11 @@ export function CoachOverlay({
   const ry = targetRect ? targetRect.height / 2 + padding : 0;
 
   const shadowGradient = targetRect
-    ? `radial-gradient(ellipse ${rx}px ${ry}px at ${cx}px ${cy}px, transparent 0%, transparent 20%, rgba(0,0,0,0.15) 40%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.82) 80%, rgba(0,0,0,0.88) 100%)`
+    ? `radial-gradient(ellipse ${rx}px ${ry}px at ${cx}px ${cy}px, transparent 0%, transparent 15%, rgba(0,0,0,0.2) 38%, rgba(0,0,0,0.6) 58%, rgba(0,0,0,0.85) 78%, rgba(0,0,0,0.9) 100%)`
     : 'rgba(0,0,0,0.82)';
 
   const warmGradient = targetRect
-    ? `radial-gradient(ellipse ${rx * 0.75}px ${ry * 0.75}px at ${cx}px ${cy}px, rgba(255,248,230,0.07) 0%, rgba(255,240,210,0.03) 40%, transparent 65%)`
+    ? `radial-gradient(ellipse ${rx * 0.8}px ${ry * 0.8}px at ${cx}px ${cy}px, rgba(255,248,230,0.12) 0%, rgba(255,245,220,0.06) 35%, rgba(255,240,210,0.02) 55%, transparent 70%)`
     : 'none';
 
   return (
