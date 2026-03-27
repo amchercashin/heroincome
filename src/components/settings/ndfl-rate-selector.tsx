@@ -35,9 +35,7 @@ export function NdflRateSelector({ category, color, rate, onChange }: NdflRateSe
     if (isFinite(parsed) && parsed >= 0 && parsed <= 100) {
       onChange(parsed);
     }
-    if (!customValue) {
-      setEditing(false);
-    }
+    setEditing(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -83,8 +81,7 @@ export function NdflRateSelector({ category, color, rate, onChange }: NdflRateSe
             }}
             onBlur={commitCustom}
             onKeyDown={handleKeyDown}
-            className="w-10 px-1 py-1 font-mono text-[length:var(--hi-text-micro)] text-[var(--hi-gold)] bg-[rgba(200,180,140,0.08)] border-l border-[rgba(200,180,140,0.08)] text-center outline-none"
-            style={{ fontSize: 'var(--hi-text-micro)' }}
+            className="w-12 px-1 py-1 font-mono text-base text-[var(--hi-gold)] bg-[rgba(200,180,140,0.08)] border-l border-[rgba(200,180,140,0.08)] text-center outline-none"
           />
         ) : (
           <button
