@@ -40,7 +40,7 @@ export function CoachTooltip({
         {subtitle && (
           <div
             className="mt-1 text-[#a09080] italic"
-            style={{ fontSize: 'var(--hi-text-caption)' }}
+            style={{ fontSize: 'var(--hi-text-caption)', whiteSpace: 'pre-line' }}
           >
             {subtitle}
           </div>
