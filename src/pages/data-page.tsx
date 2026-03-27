@@ -44,6 +44,7 @@ export function DataPage() {
 
         <button
           onClick={() => setAddAccountOpen(true)}
+          data-onboarding="add-account-btn"
           className="w-full border border-dashed border-[var(--hi-shadow)] text-[var(--hi-text)] py-3 rounded-xl text-[length:var(--hi-text-body)] hover:bg-[var(--hi-stone)] transition-colors"
         >
           + Добавить счёт
