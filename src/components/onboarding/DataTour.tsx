@@ -179,9 +179,6 @@ export function DataTour() {
     }
 
     case 4: {
-      const top4 = spotlightRect
-        ? spotlightRect.bottom + 20
-        : undefined;
       content = (
         <CoachOverlay targetRect={spotlightRect} onClick={handleStep4}>
           <CoachTooltip
@@ -189,7 +186,6 @@ export function DataTour() {
             subtitle={"Или создав новый\n(там же можно добавить счёт вручную)"}
             stepIndex={4}
             totalSteps={TOTAL_STEPS}
-            top={top4}
           />
           {tapHint}
           {skipButton}

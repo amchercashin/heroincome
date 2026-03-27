@@ -1,3 +1,5 @@
+import { useRef, useLayoutEffect } from 'react';
+
 interface CoachTooltipProps {
   text: string;
   /** Optional secondary line (smaller text) */
@@ -18,9 +20,23 @@ export function CoachTooltip({
   top,
   left,
 }: CoachTooltipProps) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Clamp top so the tooltip never overflows the viewport
+  useLayoutEffect(() => {
+    if (top == null || !ref.current) return;
+    const h = ref.current.offsetHeight;
+    const maxTop = window.innerHeight - h - 60; // 60px for tap-hint + skip button
+    const clamped = Math.max(16, Math.min(top, maxTop));
+    if (clamped !== top) {
+      ref.current.style.top = `${clamped}px`;
+    }
+  }, [top]);
+
   const centered = left == null;
   return (
     <div
+      ref={ref}
       className={`fixed z-[9002] animate-[hi-fade-scale-in_0.2s_ease-out_both] rounded-lg bg-[#2a2520] border border-[rgba(200,180,140,0.25)] pointer-events-none shadow-[0_0_24px_rgba(200,180,140,0.12)] ${centered ? 'inset-x-0 mx-auto' : ''}`}
       style={{
         width: 'min(280px, calc(100vw - 32px))',
