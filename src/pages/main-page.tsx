@@ -4,6 +4,8 @@ import { HeroIncome } from '@/components/main/hero-income';
 import { CategoryCard } from '@/components/main/category-card';
 import { usePortfolioStats } from '@/hooks/use-portfolio-stats';
 import { useSyncContext } from '@/contexts/sync-context';
+import { useInstallPrompt } from '@/hooks/use-install-prompt';
+import { InstallButton } from '@/components/install-button';
 
 let hasVisitedMainPage = false;
 
@@ -12,6 +14,7 @@ export function MainPage() {
   const { portfolio, categories } = usePortfolioStats();
   const { syncing, lastSyncAt, error, triggerSync } = useSyncContext();
   const animate = useRef(!hasVisitedMainPage).current;
+  const install = useInstallPrompt();
 
   useEffect(() => { hasVisitedMainPage = true; }, []);
 
@@ -56,6 +59,15 @@ export function MainPage() {
         ))}
       </div>
 
+      {install.showButton && (
+        <InstallButton
+          platform={install.platform}
+          autoLaunchGuide={install.autoLaunchGuide}
+          onInstall={install.promptInstall}
+          onDismiss={install.dismiss}
+          onIosSeen={install.markIosSeen}
+        />
+      )}
     </AppShell>
   );
 }
