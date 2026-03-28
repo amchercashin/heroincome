@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Platform } from '@/hooks/use-install-prompt';
 import { IosInstallGuide } from '@/components/ios-install-guide';
 
@@ -18,6 +18,10 @@ export function InstallButton({
   onIosSeen,
 }: InstallButtonProps) {
   const [guideOpen, setGuideOpen] = useState(autoLaunchGuide);
+
+  useEffect(() => {
+    if (autoLaunchGuide) setGuideOpen(true);
+  }, [autoLaunchGuide]);
 
   function handleClick() {
     if (platform === 'android') {

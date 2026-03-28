@@ -46,6 +46,9 @@ export function CategoryPage() {
     return { historyByAsset, now };
   }, [allHistory]);
 
+  const ndflRate = ndflRates.get(decodedType) ?? 0;
+  const taxMultiplier = 1 - ndflRate / 100;
+
   const backButton = (
     <button onClick={() => withViewTransition(() => navigate(-1))} className="text-[var(--hi-ash)] text-[length:var(--hi-text-nav)] min-w-[44px] min-h-[44px] flex items-center justify-center" aria-label="Назад">
       ‹
@@ -72,8 +75,7 @@ export function CategoryPage() {
           const history = historyByAsset.get(asset.id!) ?? [];
           annualIncome = calcAnnualIncomePerUnit(history, asset.frequencyPerYear, now).annualIncome;
         }
-        const ndflRate = ndflRates.get(decodedType) ?? 0;
-        annualIncome = annualIncome * (1 - ndflRate / 100);
+        annualIncome = annualIncome * taxMultiplier;
         return (
           <div key={asset.id} ref={index === 0 ? firstAssetRef : undefined}>
             <AssetRow asset={asset} annualIncome={annualIncome} totalQuantity={quantityByAsset.get(asset.id!) ?? 0} />
