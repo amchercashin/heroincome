@@ -177,7 +177,7 @@ export function AccountSection({ account, holdings, assets, onImport, highlightA
                 <div className="grid grid-cols-[1fr_5rem_4rem_4rem_1.5rem] gap-x-2 px-3 text-[length:var(--hi-text-caption)] text-[var(--hi-muted)]">
                   <span>Бумага</span>
                   <span className="text-right">Кол-во</span>
-                  <span className="text-right">Цена пок.</span>
+                  <span className="text-right">Стоим. пок.</span>
                   <span className="text-right">Стоимость</span>
                   <span></span>
                 </div>
@@ -221,13 +221,18 @@ export function AccountSection({ account, holdings, assets, onImport, highlightA
                       </span>
                       <span className="text-right text-[var(--hi-ash)] tabular-nums">
                         <InlineCell
-                          value={holding.averagePrice != null ? holding.averagePrice.toFixed(0) : ''}
-                          displayValue={holding.averagePrice != null ? `${Number(holding.averagePrice).toLocaleString('ru-RU', { maximumFractionDigits: 0 })} ₽` : ''}
+                          value={holding.averagePrice != null ? Math.round(holding.averagePrice * holding.quantity).toString() : ''}
+                          displayValue={holding.averagePrice != null ? `${Math.round(holding.averagePrice * holding.quantity).toLocaleString('ru-RU')} ₽` : ''}
                           type="number"
                           onSave={(v) => {
-                            const num = parseFloat(v);
+                            const totalCost = parseFloat(v);
                             if (holding.id != null) {
-                              updateHolding(holding.id, { averagePrice: v === '' ? undefined : (isNaN(num) ? undefined : num) });
+                              if (v === '' || isNaN(totalCost)) {
+                                updateHolding(holding.id, { averagePrice: undefined });
+                              } else {
+                                const perUnit = holding.quantity > 0 ? totalCost / holding.quantity : totalCost;
+                                updateHolding(holding.id, { averagePrice: perUnit });
+                              }
                             }
                           }}
                         />
