@@ -238,7 +238,22 @@ export function AccountSection({ account, holdings, assets, onImport, highlightA
                         />
                       </span>
                       <span className="text-right text-[var(--hi-ash)] tabular-nums">
-                        {formatCurrency(rowValue)}
+                        <InlineCell
+                          value={asset.currentPrice != null ? Math.round(asset.currentPrice * holding.quantity).toString() : ''}
+                          displayValue={formatCurrency(rowValue)}
+                          type="number"
+                          onSave={(v) => {
+                            const totalValue = parseFloat(v);
+                            if (asset.id != null) {
+                              if (v === '' || isNaN(totalValue)) {
+                                updateAsset(asset.id, { currentPrice: undefined });
+                              } else {
+                                const perUnit = holding.quantity > 0 ? totalValue / holding.quantity : totalValue;
+                                updateAsset(asset.id, { currentPrice: perUnit });
+                              }
+                            }
+                          }}
+                        />
                       </span>
                       <button
                         {...(isFirstHolding && { 'data-onboarding': 'holding-delete' })}

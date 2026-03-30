@@ -14,7 +14,6 @@ import { useHoldingsByAsset } from '@/hooks/use-holdings';
 import { useAccounts } from '@/hooks/use-accounts';
 import { calcAnnualIncomePerUnit, calcAssetIncomePerMonth, calcYieldPercent } from '@/services/income-calculator';
 import { useNdflRates } from '@/hooks/use-ndfl-rates';
-import { isSyncable } from '@/services/moex-sync';
 
 export function AssetDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -75,11 +74,7 @@ export function AssetDetailPage() {
     updateAsset(assetId, { paymentPerUnit: num, paymentPerUnitSource: 'manual' });
   }, [assetId]);
 
-  const handleSaveCurrentPrice = useCallback((v: string) => {
-    const num = parseFloat(v.replace(',', '.').replace(/[^\d.]/g, ''));
-    if (isNaN(num) || num <= 0) return;
-    updateAsset(assetId, { currentPrice: num });
-  }, [assetId]);
+
 
   if (!asset || !computed) {
     return <AppShell title="Загрузка..."><div /></AppShell>;
@@ -87,7 +82,6 @@ export function AssetDetailPage() {
 
   const { annualIncome, usedPayments, incomePerMonth, value, yieldPct, sharePercent, isManual, allHistoryRecords, totalQuantity } = computed;
 
-  const syncable = isSyncable(asset);
 
   const title = asset.ticker ? `${asset.ticker} · ${asset.name}` : asset.name;
 
@@ -133,13 +127,19 @@ export function AssetDetailPage() {
         )}
       </div>
 
-      <AssetField
-        label="Текущая цена"
-        value={asset.currentPrice != null ? `₽ ${asset.currentPrice.toLocaleString('ru-RU')}` : '— Укажите'}
-        sourceLabel={syncable ? 'биржа' : 'ручной'}
-        isManualSource={!syncable}
-        onSave={handleSaveCurrentPrice}
-      />
+      <div
+        className="bg-[var(--hi-stone)] rounded-lg p-3 mb-2 cursor-pointer hover:border-[var(--hi-gold)] border border-transparent transition-colors"
+        onClick={() => withViewTransition(() => navigate('/data', {
+          state: holdings.length > 0
+            ? { highlightAccountId: holdings[0].accountId, highlightAssetId: assetId }
+            : undefined
+        }))}
+      >
+        <div className="font-mono text-[length:var(--hi-text-caption)] text-[var(--hi-ash)] mb-1">Текущая цена</div>
+        <div className="font-mono text-[length:var(--hi-text-heading)] text-[var(--hi-text)]">
+          {asset.currentPrice != null ? `₽ ${asset.currentPrice.toLocaleString('ru-RU')}` : '—'}
+        </div>
+      </div>
 
       <div ref={paymentFieldRef}>
       <AssetField
