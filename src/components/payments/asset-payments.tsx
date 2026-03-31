@@ -26,6 +26,7 @@ export function AssetPayments({ asset, payments, isHighlighted }: AssetPaymentsP
   const [addFormOpen, setAddFormOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(!isHighlighted);
   const [syncing, setSyncing] = useState(false);
+  const [syncFailed, setSyncFailed] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -55,8 +56,14 @@ export function AssetPayments({ asset, payments, isHighlighted }: AssetPaymentsP
     }
 
     setSyncing(true);
+    setSyncFailed(false);
     try {
-      await syncAssetPayments(asset.id!);
+      const result = await syncAssetPayments(asset.id!);
+      if (!result.success) {
+        setSyncFailed(true);
+      }
+    } catch {
+      setSyncFailed(true);
     } finally {
       setSyncing(false);
     }
@@ -86,11 +93,13 @@ export function AssetPayments({ asset, payments, isHighlighted }: AssetPaymentsP
               )}
               {syncable && payments.length > 0 && (
                 <span className={`text-[length:var(--hi-text-micro)] px-1 py-0.5 rounded flex-shrink-0 ${
-                  allMoex
-                    ? 'bg-[#2d5a2d] text-[#6bba6b]'
-                    : 'bg-[#5a5a2d] text-[#baba6b]'
+                  syncFailed
+                    ? 'bg-[#5a4a2d] text-[#d4a846]'
+                    : allMoex
+                      ? 'bg-[#2d5a2d] text-[#6bba6b]'
+                      : 'bg-[#5a5a2d] text-[#baba6b]'
                 }`}>
-                  {allMoex ? 'moex' : 'ручной'}
+                  {syncFailed ? 'moex ⚠' : allMoex ? 'moex' : 'ручной'}
                 </span>
               )}
               {syncable && (

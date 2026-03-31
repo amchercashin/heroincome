@@ -16,6 +16,7 @@ export function TypeSection({ type, assets, paymentsByAsset, highlightAssetId }:
   const hasHighlight = highlightAssetId != null && assets.some(a => a.id === highlightAssetId);
   const [expanded, setExpanded] = useState(hasHighlight);
   const [syncing, setSyncing] = useState(false);
+  const [syncFailed, setSyncFailed] = useState(false);
 
   useEffect(() => {
     if (hasHighlight) setExpanded(true);
@@ -41,12 +42,18 @@ export function TypeSection({ type, assets, paymentsByAsset, highlightAssetId }:
     }
 
     setSyncing(true);
+    setSyncFailed(false);
     try {
       const syncableAssets = assets.filter(isSyncable);
+      let anyFailed = false;
       for (const asset of syncableAssets) {
         if (hasManual) await deleteManualPayments(asset.id!);
-        await syncAssetPayments(asset.id!);
+        const result = await syncAssetPayments(asset.id!);
+        if (!result.success) anyFailed = true;
       }
+      if (anyFailed) setSyncFailed(true);
+    } catch {
+      setSyncFailed(true);
     } finally {
       setSyncing(false);
     }
@@ -65,11 +72,13 @@ export function TypeSection({ type, assets, paymentsByAsset, highlightAssetId }:
           <span className="font-semibold text-[length:var(--hi-text-heading)] text-[var(--hi-text)]">{type}</span>
           {showSync && allPayments.length > 0 && (
             <span className={`text-[length:var(--hi-text-micro)] px-1 py-0.5 rounded ${
-              allMoex
-                ? 'bg-[#2d5a2d] text-[#6bba6b]'
-                : 'bg-[#5a5a2d] text-[#baba6b]'
+              syncFailed
+                ? 'bg-[#5a4a2d] text-[#d4a846]'
+                : allMoex
+                  ? 'bg-[#2d5a2d] text-[#6bba6b]'
+                  : 'bg-[#5a5a2d] text-[#baba6b]'
             }`}>
-              {allMoex ? 'moex' : 'ручной'}
+              {syncFailed ? 'moex ⚠' : allMoex ? 'moex' : 'ручной'}
             </span>
           )}
           {showSync && (
