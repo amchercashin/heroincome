@@ -5,6 +5,7 @@ interface SyncContextValue {
   syncing: boolean;
   lastSyncAt: Date | null;
   error: string | null;
+  warning: string | null;
   triggerSync: () => Promise<SyncResult | null>;
   syncAsset: (assetId: number) => Promise<void>;
 }
@@ -15,6 +16,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   const [syncing, setSyncing] = useState(false);
   const [lastSyncAt, setLastSyncAt] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
   const syncingRef = useRef(false);
 
   const triggerSync = useCallback(async (): Promise<SyncResult | null> => {
@@ -22,13 +24,17 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     syncingRef.current = true;
     setSyncing(true);
     setError(null);
+    setWarning(null);
     try {
-      const result = await syncAllAssets({ pricesOnly: true });
+      const result = await syncAllAssets();
       if (result.synced > 0) {
         setLastSyncAt(new Date());
       }
       if (result.failed > 0) {
         setError(`Ошибки: ${result.errors.join(', ')}`);
+      }
+      if (result.warnings.length > 0) {
+        setWarning(result.warnings.join(', '));
       }
       return result;
     } catch (e) {
@@ -53,7 +59,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
   }, [triggerSync]);
 
   return (
-    <SyncContext.Provider value={{ syncing, lastSyncAt, error, triggerSync, syncAsset }}>
+    <SyncContext.Provider value={{ syncing, lastSyncAt, error, warning, triggerSync, syncAsset }}>
       {children}
     </SyncContext.Provider>
   );
