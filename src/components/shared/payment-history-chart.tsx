@@ -204,8 +204,6 @@ export function PaymentHistoryChart({
         }}
       >
         {displayYears.map((year, i) => {
-          const value = displayValues[i];
-          const heightPx = Math.max(Math.round((value / maxValue) * 100), 3);
           const isCurrentYr = year === currentYear;
           const isSelected = year === selectedYear;
 
