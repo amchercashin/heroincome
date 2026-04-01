@@ -17,13 +17,6 @@ export function useAllPaymentHistory() {
   return useLiveQuery(() => db.paymentHistory.toArray(), [], []);
 }
 
-export async function toggleExcluded(id: number): Promise<void> {
-  const record = await db.paymentHistory.get(id);
-  if (record) {
-    await db.paymentHistory.update(id, { excluded: !record.excluded });
-  }
-}
-
 export async function deletePayment(id: number): Promise<void> {
   await db.paymentHistory.delete(id);
 }

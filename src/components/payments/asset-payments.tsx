@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import type { Asset, PaymentHistory } from '@/models/types';
 import { PaymentRow } from './payment-row';
 import { AddPaymentForm } from './add-payment-form';
-import { toggleExcluded, deletePayment, addPayment } from '@/hooks/use-payment-history';
+import { deletePayment, addPayment } from '@/hooks/use-payment-history';
 import { isSyncable, syncAssetPayments, deleteManualPayments } from '@/services/moex-sync';
 
 const PAYMENT_TYPE_MAP: Record<string, PaymentHistory['type']> = {
@@ -150,7 +150,6 @@ export function AssetPayments({ asset, payments, isHighlighted }: AssetPaymentsP
               <PaymentRow
                 key={p.id}
                 payment={p}
-                onToggleExcluded={toggleExcluded}
                 onDelete={deletePayment}
               />
             ))

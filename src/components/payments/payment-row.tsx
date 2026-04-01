@@ -2,7 +2,6 @@ import type { PaymentHistory } from '@/models/types';
 
 interface PaymentRowProps {
   payment: PaymentHistory;
-  onToggleExcluded: (id: number) => void;
   onDelete: (id: number) => void;
 }
 
@@ -16,23 +15,22 @@ const SOURCE_BADGE: Record<string, { label: string; bg: string; text: string }> 
   import: { label: 'импорт', bg: 'bg-[#3a3a3a]', text: 'text-[#9a9a9a]' },
 };
 
-export function PaymentRow({ payment, onToggleExcluded, onDelete }: PaymentRowProps) {
-  const isExcluded = payment.excluded;
+export function PaymentRow({ payment, onDelete }: PaymentRowProps) {
   const isForecast = payment.isForecast;
+  const isManual = payment.dataSource === 'manual';
   const badge = SOURCE_BADGE[payment.dataSource] ?? SOURCE_BADGE.manual;
 
   return (
     <div
-      className={`grid grid-cols-[1fr_auto_auto_auto] gap-x-3 items-center pl-7 pr-3 py-0.5 text-[length:var(--hi-text-body)] border-t border-[var(--hi-void)] transition-opacity${isExcluded ? ' opacity-50' : isForecast ? ' opacity-60' : ''}`}
-      style={isExcluded ? { borderLeftWidth: 2, borderLeftColor: 'var(--hi-gold)' } : undefined}
+      className={`grid grid-cols-[1fr_auto_auto_auto] gap-x-3 items-center pl-7 pr-3 py-0.5 text-[length:var(--hi-text-body)] border-t border-[var(--hi-void)]${isForecast ? ' opacity-60' : ''}`}
     >
       {/* Date */}
-      <span className={`font-mono tabular-nums text-[var(--hi-text)]${isExcluded ? ' line-through' : ''}`}>
+      <span className="font-mono tabular-nums text-[var(--hi-text)]">
         {formatDate(payment.date)}
       </span>
 
       {/* Amount */}
-      <span className={`font-mono tabular-nums text-right text-[var(--hi-ash)]${isExcluded ? ' line-through' : ''}`}>
+      <span className="font-mono tabular-nums text-right text-[var(--hi-ash)]">
         {payment.amount.toFixed(2)} ₽
       </span>
 
@@ -48,36 +46,18 @@ export function PaymentRow({ payment, onToggleExcluded, onDelete }: PaymentRowPr
         )}
       </span>
 
-      {/* Actions — no exclude button for forecasts */}
+      {/* Actions: delete for manual only */}
       <div className="flex gap-1 ml-1">
-        {isForecast ? (
-          <div className="min-w-[32px] min-h-[28px]" />
-        ) : isExcluded ? (
-          <>
-            <button
-              onClick={() => onToggleExcluded(payment.id!)}
-              className="text-[#6bba6b] hover:text-green-300 text-[length:var(--hi-text-heading)] min-w-[32px] min-h-[28px] flex items-center justify-center transition-colors"
-              title="Восстановить"
-            >
-              ↩
-            </button>
-            <button
-              onClick={() => onDelete(payment.id!)}
-              className="text-red-400 hover:text-red-300 text-[length:var(--hi-text-title)] min-w-[32px] min-h-[28px] flex items-center justify-center transition-colors"
-              title="Удалить навсегда"
-            >
-              ×
-            </button>
-          </>
-        ) : (
+        {isManual ? (
           <button
-            onClick={() => onToggleExcluded(payment.id!)}
-            data-onboarding="exclude-btn"
-            className="text-[var(--hi-gold)] hover:text-yellow-300 text-[length:var(--hi-text-heading)] min-w-[32px] min-h-[28px] flex items-center justify-center transition-colors"
-            title="Исключить из расчётов"
+            onClick={() => onDelete(payment.id!)}
+            className="text-red-400 hover:text-red-300 text-[length:var(--hi-text-title)] min-w-[32px] min-h-[28px] flex items-center justify-center transition-colors"
+            title="Удалить"
           >
-            ⊘
+            ×
           </button>
+        ) : (
+          <div className="min-w-[32px] min-h-[28px]" />
         )}
       </div>
     </div>
