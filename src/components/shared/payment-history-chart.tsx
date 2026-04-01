@@ -5,6 +5,7 @@ import { calcCAGR } from '@/services/income-calculator';
 
 export interface ChartPaymentRecord extends PaymentRecord {
   excluded?: boolean;
+  isForecast?: boolean;
 }
 
 interface PaymentHistoryChartProps {
@@ -23,15 +24,18 @@ export function PaymentHistoryChart({
 
   // Group history by year (per-unit amounts — no quantity multiplication)
   const byYear = useMemo(() => {
-    const map = new Map<number, { total: number; payments: { date: Date; amount: number; excluded?: boolean }[] }>();
+    const map = new Map<number, { total: number; forecastTotal: number; payments: { date: Date; amount: number; excluded?: boolean; isForecast?: boolean }[] }>();
     for (const p of history) {
       const year = p.date.getFullYear();
-      const entry = map.get(year) ?? { total: 0, payments: [] };
-      if (!p.excluded) entry.total += p.amount;
-      entry.payments.push({ date: p.date, amount: p.amount, excluded: p.excluded });
+      const entry = map.get(year) ?? { total: 0, forecastTotal: 0, payments: [] };
+      if (p.isForecast) {
+        entry.forecastTotal += p.amount;
+      } else if (!p.excluded) {
+        entry.total += p.amount;
+      }
+      entry.payments.push({ date: p.date, amount: p.amount, excluded: p.excluded, isForecast: p.isForecast });
       map.set(year, entry);
     }
-    // Sort payments within each year by date
     for (const entry of map.values()) {
       entry.payments.sort((a, b) => a.date.getTime() - b.date.getTime());
     }
@@ -49,7 +53,7 @@ export function PaymentHistoryChart({
       range.push(y);
       // Ensure every year has an entry in byYear (even if zero)
       if (!byYear.has(y)) {
-        byYear.set(y, { total: 0, payments: [] });
+        byYear.set(y, { total: 0, forecastTotal: 0, payments: [] });
       }
     }
     return range;
@@ -75,11 +79,11 @@ export function PaymentHistoryChart({
   const displayYears = isNoHistory ? [currentYear] : years;
   const displayValues = isNoHistory
     ? [fallbackAnnual!]
-    : displayYears.map((y) => byYear.get(y)!.total);
+    : displayYears.map((y) => byYear.get(y)!.total + (byYear.get(y)!.forecastTotal ?? 0));
   const maxValue = Math.max(...displayValues, 1);
 
   // CAGR from per-unit history (excludes current year, needs >=2 full years)
-  const activeHistory = useMemo(() => history.filter(p => !p.excluded), [history]);
+  const activeHistory = useMemo(() => history.filter(p => !p.excluded && !p.isForecast), [history]);
   const cagr = useMemo(
     () => (isNoHistory ? null : calcCAGR(activeHistory, new Date())),
     [activeHistory, isNoHistory],
@@ -157,8 +161,11 @@ export function PaymentHistoryChart({
           </span>
         </div>
         {yearData.payments.map((p, i) => (
-          <div key={i} className={`flex justify-between font-mono text-[length:var(--hi-text-caption)] mb-0.5${p.excluded ? ' opacity-40 line-through' : ''}`}>
-            <span className="text-[#4a4540]">{formatShortDate(p.date)}</span>
+          <div key={i} className={`flex justify-between font-mono text-[length:var(--hi-text-caption)] mb-0.5${p.excluded ? ' opacity-40 line-through' : p.isForecast ? ' opacity-60' : ''}`}>
+            <span className="text-[#4a4540]">
+              {formatShortDate(p.date)}
+              {p.isForecast && <span className="text-[length:var(--hi-text-micro)] text-[var(--hi-muted)] italic ml-1">прогноз</span>}
+            </span>
             <span className="text-[#b0a898]">{formatCompact(p.amount)} ₽</span>
           </div>
         ))}
@@ -215,30 +222,56 @@ export function PaymentHistoryChart({
               }}
               onClick={() => handleBarClick(year)}
             >
-              {/* Value label */}
+              {/* Value label — facts only */}
               <span
                 className="font-mono text-[length:var(--hi-text-micro)] mb-[3px] whitespace-nowrap shrink-0"
                 style={{ color: isCurrentYr ? '#4a4540' : '#b0a898' }}
               >
-                {formatCompact(value)}
+                {formatCompact(byYear.get(year)?.total ?? 0)}
               </span>
 
-              {/* Bar */}
-              <div
-                className="w-full rounded-t"
-                style={{
-                  height: heightPx,
-                  minWidth: 6,
-                  background: isCurrentYr
-                    ? 'rgba(200,180,140,0.05)'
-                    : `rgba(200,180,140,${barOpacity(i)})`,
-                  border: isCurrentYr ? '1px dashed rgba(200,180,140,0.3)' : 'none',
-                  outline: isSelected ? '1px solid rgba(200,180,140,0.5)' : 'none',
-                  outlineOffset: isSelected ? 1 : 0,
-                  transformOrigin: 'bottom',
-                  animation: `hi-bar-grow 0.8s ease-out ${1.2 + i * 0.1}s both`,
-                }}
-              />
+              {/* Bar — stacked: fact + forecast */}
+              {(() => {
+                const yearData = byYear.get(year);
+                const forecastValue = yearData?.forecastTotal ?? 0;
+                const factValue = yearData?.total ?? 0;
+                const factHeightPx = Math.max(Math.round((factValue / maxValue) * 100), factValue > 0 ? 3 : 0);
+                const forecastHeightPx = forecastValue > 0
+                  ? Math.max(Math.round((forecastValue / maxValue) * 100), 3)
+                  : 0;
+
+                return (
+                  <div className="w-full flex flex-col items-stretch" style={{ minWidth: 6 }}>
+                    {forecastHeightPx > 0 && (
+                      <div
+                        className="w-full rounded-t"
+                        style={{
+                          height: forecastHeightPx,
+                          background: 'rgba(200,180,140,0.12)',
+                          border: '1px dashed rgba(200,180,140,0.25)',
+                          borderBottom: 'none',
+                          transformOrigin: 'bottom',
+                          animation: `hi-bar-grow 0.8s ease-out ${1.2 + i * 0.1}s both`,
+                        }}
+                      />
+                    )}
+                    <div
+                      className={`w-full ${forecastHeightPx > 0 ? '' : 'rounded-t'}`}
+                      style={{
+                        height: factHeightPx || 3,
+                        background: isCurrentYr
+                          ? 'rgba(200,180,140,0.05)'
+                          : `rgba(200,180,140,${barOpacity(i)})`,
+                        border: isCurrentYr ? '1px dashed rgba(200,180,140,0.3)' : 'none',
+                        outline: isSelected ? '1px solid rgba(200,180,140,0.5)' : 'none',
+                        outlineOffset: isSelected ? 1 : 0,
+                        transformOrigin: 'bottom',
+                        animation: `hi-bar-grow 0.8s ease-out ${1.2 + i * 0.1}s both`,
+                      }}
+                    />
+                  </div>
+                );
+              })()}
 
               {/* Year label */}
               <span
