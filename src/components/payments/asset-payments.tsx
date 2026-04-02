@@ -43,7 +43,9 @@ export function AssetPayments({ asset, payments, isHighlighted }: AssetPaymentsP
   const syncable = isSyncable(asset);
   const manualCount = payments.filter(p => p.dataSource === 'manual').length;
   const hasManual = manualCount > 0;
-  const allMoex = payments.length > 0 && !hasManual;
+  const autoSource = !hasManual && payments.length > 0
+    ? payments[0].dataSource
+    : null;
 
   const handleSync = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -95,11 +97,13 @@ export function AssetPayments({ asset, payments, isHighlighted }: AssetPaymentsP
                 <span className={`text-[length:var(--hi-text-micro)] px-1 py-0.5 rounded flex-shrink-0 ${
                   syncFailed
                     ? 'bg-[#5a4a2d] text-[#d4a846]'
-                    : allMoex
-                      ? 'bg-[#2d5a2d] text-[#6bba6b]'
-                      : 'bg-[#5a5a2d] text-[#baba6b]'
+                    : hasManual
+                      ? 'bg-[#5a5a2d] text-[#baba6b]'
+                      : autoSource === 'dohod'
+                        ? 'bg-[#2d3d5a] text-[#6b9eba]'
+                        : 'bg-[#2d5a2d] text-[#6bba6b]'
                 }`}>
-                  {syncFailed ? 'moex ⚠' : allMoex ? 'moex' : 'ручной'}
+                  {syncFailed ? 'moex ⚠' : hasManual ? 'ручной' : autoSource ?? 'moex'}
                 </span>
               )}
               {syncable && (

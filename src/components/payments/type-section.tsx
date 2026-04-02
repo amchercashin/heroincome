@@ -30,7 +30,6 @@ export function TypeSection({ type, assets, paymentsByAsset, highlightAssetId }:
     : [];
   const manualCount = allPayments.filter(p => p.dataSource === 'manual').length;
   const hasManual = manualCount > 0;
-  const allMoex = allPayments.length > 0 && !hasManual;
 
   const handleSync = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -70,15 +69,9 @@ export function TypeSection({ type, assets, paymentsByAsset, highlightAssetId }:
         <div className="flex items-center gap-2">
           <span className="text-[var(--hi-text)] text-[length:var(--hi-text-body)]">{expanded ? '▾' : '▸'}</span>
           <span className="font-semibold text-[length:var(--hi-text-heading)] text-[var(--hi-text)]">{type}</span>
-          {showSync && allPayments.length > 0 && (
-            <span className={`text-[length:var(--hi-text-micro)] px-1 py-0.5 rounded ${
-              syncFailed
-                ? 'bg-[#5a4a2d] text-[#d4a846]'
-                : allMoex
-                  ? 'bg-[#2d5a2d] text-[#6bba6b]'
-                  : 'bg-[#5a5a2d] text-[#baba6b]'
-            }`}>
-              {syncFailed ? 'moex ⚠' : allMoex ? 'moex' : 'ручной'}
+          {syncFailed && (
+            <span className="text-[length:var(--hi-text-micro)] px-1 py-0.5 rounded bg-[#5a4a2d] text-[#d4a846]">
+              ⚠
             </span>
           )}
           {showSync && (
