@@ -119,6 +119,24 @@ class HeroIncomeDB extends Dexie {
           }
         });
       });
+    this.version(7)
+      .stores({
+        accounts: '++id',
+        assets: '++id, type, ticker, isin',
+        holdings: '++id, accountId, assetId, &[accountId+assetId]',
+        paymentHistory: '++id, [assetId+date]',
+        importRecords: '++id, date',
+        settings: 'key',
+      })
+      .upgrade(async (tx) => {
+        // Fund distributions from heroincome-data come from Parus, not dohod.ru.
+        // Rebrand dataSource for existing records: distribution + dohod → parus.
+        await tx.table('paymentHistory').toCollection().modify((p: Record<string, unknown>) => {
+          if (p.type === 'distribution' && p.dataSource === 'dohod') {
+            p.dataSource = 'parus';
+          }
+        });
+      });
   }
 }
 

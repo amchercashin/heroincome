@@ -101,7 +101,9 @@ export function AssetPayments({ asset, payments, isHighlighted }: AssetPaymentsP
                       ? 'bg-[#5a5a2d] text-[#baba6b]'
                       : autoSource === 'dohod'
                         ? 'bg-[#2d3d5a] text-[#6b9eba]'
-                        : 'bg-[#2d5a2d] text-[#6bba6b]'
+                        : autoSource === 'parus'
+                          ? 'bg-[#4a2d5a] text-[#ba8bd4]'
+                          : 'bg-[#2d5a2d] text-[#6bba6b]'
                 }`}>
                   {syncFailed ? 'moex ⚠' : hasManual ? 'ручной' : autoSource ?? 'moex'}
                 </span>

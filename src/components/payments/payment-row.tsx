@@ -11,6 +11,7 @@ const formatDate = (date: Date) =>
 const SOURCE_BADGE: Record<string, { label: string; bg: string; text: string }> = {
   moex:   { label: 'moex',   bg: 'bg-[#2d5a2d]', text: 'text-[#6bba6b]' },
   dohod:  { label: 'dohod',  bg: 'bg-[#2d3d5a]', text: 'text-[#6b9eba]' },
+  parus:  { label: 'parus',  bg: 'bg-[#4a2d5a]', text: 'text-[#ba8bd4]' },
   manual: { label: 'ручной', bg: 'bg-[#5a5a2d]', text: 'text-[#baba6b]' },
   import: { label: 'импорт', bg: 'bg-[#3a3a3a]', text: 'text-[#9a9a9a]' },
 };

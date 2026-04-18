@@ -1,4 +1,4 @@
-export type DataSource = 'moex' | 'dohod' | 'import' | 'manual';
+export type DataSource = 'moex' | 'dohod' | 'parus' | 'import' | 'manual';
 
 export interface Asset {
   id?: number;

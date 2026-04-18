@@ -293,7 +293,7 @@ async function enrichStock(
     }
 
     if (fundRows && fundRows.length > 0) {
-      // heroincome-data covers this fund — remove old moex distribution records
+      // heroincome-data (Parus) covers this fund — remove old moex distribution records
       const oldMoex = await db.paymentHistory
         .where('assetId').equals(ra.asset.id!)
         .filter(r => r.dataSource === 'moex' && r.type === 'distribution')
@@ -301,7 +301,7 @@ async function enrichStock(
       if (oldMoex.length > 0) {
         await db.paymentHistory.bulkDelete(oldMoex.map(r => r.id!));
       }
-      await writePaymentHistory(ra.asset.id!, fundRows, 'distribution', 'dohod');
+      await writePaymentHistory(ra.asset.id!, fundRows, 'distribution', 'parus');
     } else {
       // Fallback to MOEX
       const divInfo = await fetchDividends(ra.secid);
@@ -537,7 +537,7 @@ export async function syncAssetPayments(assetId: number): Promise<{ success: boo
         if (oldMoex.length > 0) {
           await db.paymentHistory.bulkDelete(oldMoex.map(r => r.id!));
         }
-        await writePaymentHistory(ra.asset.id!, fundRows, 'distribution', 'dohod');
+        await writePaymentHistory(ra.asset.id!, fundRows, 'distribution', 'parus');
       } else {
         const divInfo = await fetchDividends(ra.secid);
         if (divInfo) {

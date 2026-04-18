@@ -637,7 +637,7 @@ describe('syncAllAssets', () => {
     const records = await db.paymentHistory.where('assetId').equals(assetId).toArray();
     expect(records).toHaveLength(2);
     expect(records.every(r => r.type === 'distribution')).toBe(true);
-    expect(records.every(r => r.dataSource === 'dohod')).toBe(true);
+    expect(records.every(r => r.dataSource === 'parus')).toBe(true);
     expect(records.every(r => !r.isForecast)).toBe(true);
     expect(fetchDividends).not.toHaveBeenCalled();
     expect(isDohodAvailable).not.toHaveBeenCalled();
@@ -693,9 +693,9 @@ describe('syncAllAssets', () => {
     await syncAllAssets();
 
     const records = await db.paymentHistory.where('assetId').equals(assetId).toArray();
-    // Old moex record deleted, only dohod record remains
+    // Old moex record deleted, only parus record remains
     expect(records).toHaveLength(1);
-    expect(records[0].dataSource).toBe('dohod');
+    expect(records[0].dataSource).toBe('parus');
     expect(records[0].amount).toBe(72.45);
   });
 
