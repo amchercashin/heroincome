@@ -1,34 +1,47 @@
-import { useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { withViewTransition } from '@/lib/view-transition';
+import { useMemo } from 'react';
+import { useParams } from 'react-router-dom';
 import { AppShell } from '@/components/layout/app-shell';
-import { StatBlocks } from '@/components/shared/stat-blocks';
+import { SummaryCard } from '@/components/shared/summary-card';
 import { AssetRow } from '@/components/category/asset-row';
-import { PageTip } from '@/components/onboarding/PageTip';
-import { useAssetsByType } from '@/hooks/use-assets';
+import { Card, CategoryDot, Section, EmptyState } from '@/components/ds/surface';
+import { Hint } from '@/components/ds/hint';
 import { usePortfolioStats } from '@/hooks/use-portfolio-stats';
+import { getTypeColor } from '@/models/account';
+import { formatPercent, plural } from '@/lib/utils';
 
 export function CategoryPage() {
   const { type } = useParams<{ type: string }>();
-  const navigate = useNavigate();
   const decodedType = decodeURIComponent(type ?? '');
-  const assets = useAssetsByType(decodedType);
-  const firstAssetRef = useRef<HTMLDivElement>(null);
-  const { categories, assetsById } = usePortfolioStats();
+  const { categories, assetsById, assets, isLoading } = usePortfolioStats();
 
   const catStats = categories.find((c) => c.type === decodedType);
-
-  const backButton = (
-    <button onClick={() => withViewTransition(() => navigate(-1))} className="text-[var(--hi-ash)] text-[length:var(--hi-text-nav)] min-w-[44px] min-h-[44px] flex items-center justify-center" aria-label="Назад">
-      ‹
-    </button>
+  const rows = useMemo(
+    () =>
+      assets
+        .filter((a) => a.type === decodedType && a.id != null)
+        .map((asset) => ({ asset, stats: assetsById.get(asset.id!)! }))
+        .filter((r) => r.stats)
+        .sort((a, b) => b.stats.incomePerMonth - a.stats.incomePerMonth || b.stats.value - a.stats.value),
+    [assets, assetsById, decodedType],
   );
 
   return (
-    <AppShell leftAction={backButton} title={decodedType}>
-      <PageTip storageKey="hi-tip-category" targetRef={firstAssetRef} text="Доход и доходность — по каждому активу отдельно. Нажмите для подробностей" />
+    <AppShell
+      back="/"
+      title={
+        <span className="inline-flex items-center gap-3">
+          <CategoryDot color={getTypeColor(decodedType)} className="size-3" />
+          {decodedType}
+        </span>
+      }
+      compactTitle={decodedType}
+      subtitle={
+        catStats &&
+        `${catStats.assetCount} ${plural(catStats.assetCount, ['позиция', 'позиции', 'позиций'])} · ${formatPercent(catStats.yieldPercent)} годовых`
+      }
+    >
       {catStats && (
-        <StatBlocks
+        <SummaryCard
           incomePerMonth={catStats.totalIncomePerMonth}
           totalValue={catStats.totalValue}
           yieldPercent={catStats.yieldPercent}
@@ -36,15 +49,21 @@ export function CategoryPage() {
         />
       )}
 
-      {assets.map((asset, index) => {
-        const stats = asset.id != null ? assetsById.get(asset.id) : undefined;
-        if (!stats) return null;
-        return (
-          <div key={asset.id} ref={index === 0 ? firstAssetRef : undefined}>
-            <AssetRow asset={asset} stats={stats} />
-          </div>
-        );
-      })}
+      <Hint id="category-rows" className="mt-4">
+        Доход и доходность — по каждому активу. Нажмите на актив, чтобы увидеть историю выплат и указать доход вручную.
+      </Hint>
+
+      <Section title="Активы" className="mt-8" action={<span className="hi-eyebrow normal-case tracking-normal">доход в мес · годовых</span>}>
+        {rows.length > 0 ? (
+          <Card className="overflow-hidden">
+            {rows.map(({ asset, stats }) => (
+              <AssetRow key={asset.id} asset={asset} stats={stats} />
+            ))}
+          </Card>
+        ) : (
+          !isLoading && <EmptyState title="Здесь пусто" description="В этой категории больше нет активов." />
+        )}
+      </Section>
     </AppShell>
   );
 }

@@ -1,14 +1,18 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ChevronDown, FileUp, MoreHorizontal, PencilLine, Plus, Trash2, Wallet } from 'lucide-react';
 import type { Account, Holding } from '@/models/account';
 import type { Asset } from '@/models/types';
-import { formatCurrency, formatMoney } from '@/lib/utils';
-import { updateHolding, deleteHolding } from '@/hooks/use-holdings';
-import { updateAsset } from '@/hooks/use-assets';
+import { getTypeColor } from '@/models/account';
+import { cn, formatCurrency, formatMoney, formatNumber, plural } from '@/lib/utils';
 import { updateAccount, deleteAccount } from '@/hooks/use-accounts';
 import { useExchangeRateMap } from '@/hooks/use-exchange-rates';
 import { getRateToRub } from '@/services/exchange-rates';
-import { InlineCell } from './inline-cell';
-import { TypeCombobox } from './type-combobox';
+import { Card, AssetAvatar, CategoryDot } from '@/components/ds/surface';
+import { Badge } from '@/components/ds/badge';
+import { BottomSheet } from '@/components/ds/bottom-sheet';
+import { useFeedback } from '@/components/ds/feedback';
+import { EditTextSheet } from './edit-text-sheet';
+import { HoldingSheet } from './holding-sheet';
 import { AddAssetSheet } from './add-asset-sheet';
 
 interface AccountSectionProps {
@@ -17,293 +21,221 @@ interface AccountSectionProps {
   assets: Asset[];
   onImport: () => void;
   highlightAssetId?: number;
+  isDemo?: boolean;
 }
 
-export function AccountSection({ account, holdings, assets, onImport, highlightAssetId }: AccountSectionProps) {
-  const [expanded, setExpanded] = useState(false);
-  const [addAssetOpen, setAddAssetOpen] = useState(false);
+export function AccountSection({ account, holdings, assets, onImport, highlightAssetId, isDemo }: AccountSectionProps) {
+  const [expanded, setExpanded] = useState(highlightAssetId != null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const highlightRowRef = useRef<HTMLDivElement>(null);
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [addAssetOpen, setAddAssetOpen] = useState(false);
+  const [editing, setEditing] = useState<{ asset: Asset; holding: Holding } | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const highlightRowRef = useRef<HTMLButtonElement>(null);
   const exchangeRates = useExchangeRateMap();
+  const { confirm, toast } = useFeedback();
 
-  // Auto-expand and scroll to highlighted row
   useEffect(() => {
-    if (highlightAssetId != null) {
-      setExpanded(true);
-      // Wait for DOM to update after expanding
-      requestAnimationFrame(() => {
-        highlightRowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      });
-    }
+    if (highlightAssetId == null) return;
+    setExpanded(true);
+    const t = setTimeout(() => highlightRowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 120);
+    return () => clearTimeout(t);
   }, [highlightAssetId]);
 
-  const closeMenu = useCallback(() => setMenuOpen(false), []);
+  const assetById = useMemo(() => new Map(assets.map((a) => [a.id!, a])), [assets]);
+  const allTypes = useMemo(() => [...new Set(assets.map((a) => a.type))], [assets]);
 
-  useEffect(() => {
-    if (!menuOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        closeMenu();
-      }
-    };
-    document.addEventListener('click', handler, true);
-    return () => document.removeEventListener('click', handler, true);
-  }, [menuOpen, closeMenu]);
+  const rows = useMemo(() => {
+    return holdings
+      .map((holding) => {
+        const asset = assetById.get(holding.assetId);
+        if (!asset) return null;
+        const price = asset.currentPrice ?? holding.averagePrice ?? 0;
+        const valueOwn = price * holding.quantity;
+        const valueRub = valueOwn * getRateToRub(asset.currency, exchangeRates);
+        return { asset, holding, valueOwn, valueRub };
+      })
+      .filter((r): r is NonNullable<typeof r> => r != null);
+  }, [holdings, assetById, exchangeRates]);
 
-  // Compute total value
-  const totalValue = holdings.reduce((sum, h) => {
-    const asset = assets.find(a => a.id === h.assetId);
-    const price = asset?.currentPrice ?? h.averagePrice ?? 0;
-    const rate = getRateToRub(asset?.currency, exchangeRates);
-    return sum + price * h.quantity * rate;
-  }, 0);
+  const totalValue = rows.reduce((sum, r) => sum + r.valueRub, 0);
+  const groups = useMemo(() => {
+    const map = new Map<string, typeof rows>();
+    for (const r of rows) {
+      const arr = map.get(r.asset.type) ?? [];
+      arr.push(r);
+      map.set(r.asset.type, arr);
+    }
+    return [...map.entries()]
+      .map(([type, items]) => ({ type, items: items.sort((a, b) => b.valueRub - a.valueRub), value: items.reduce((s, r) => s + r.valueRub, 0) }))
+      .sort((a, b) => b.value - a.value);
+  }, [rows]);
+  const fromImport = holdings.length > 0 && holdings.every((h) => h.quantitySource === 'import');
 
-  // Derive status: "импорт" if all holdings from import, "ручной" if any manual
-  const hasManual = holdings.some(h => h.quantitySource === 'manual');
-  const statusLabel = holdings.length === 0 ? null : hasManual ? 'ручной' : 'импорт';
-  const statusColor = hasManual
-    ? 'bg-[#5a5a2d] text-[#baba6b]'
-    : 'bg-[#2d5a2d] text-[#6bba6b]';
-
-  // Collect all unique types for combobox suggestions
-  const allTypes = [...new Set(assets.map(a => a.type))];
-
-  // Group holdings by asset type
-  const typeGroups = new Map<string, { asset: Asset; holding: Holding }[]>();
-  for (const h of holdings) {
-    const asset = assets.find(a => a.id === h.assetId);
-    if (!asset) continue;
-    const group = typeGroups.get(asset.type) ?? [];
-    group.push({ asset, holding: h });
-    typeGroups.set(asset.type, group);
-  }
+  const removeAccount = async () => {
+    setMenuOpen(false);
+    const ok = await confirm({
+      title: `Удалить счёт «${account.name}»?`,
+      description: 'Все позиции счёта будут удалены. Бумаги, которых нет в других счетах, исчезнут вместе с историей выплат.',
+      confirmLabel: 'Удалить счёт',
+      destructive: true,
+    });
+    if (!ok || account.id == null) return;
+    await deleteAccount(account.id);
+    toast('Счёт удалён');
+  };
 
   return (
-    <div className="border border-[var(--hi-shadow)]/50 rounded-xl" data-onboarding="account-section">
-      {/* Header */}
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={() => setExpanded(!expanded)}
-        onKeyDown={(e) => e.key === 'Enter' && setExpanded(!expanded)}
-        className={`w-full bg-[var(--hi-stone)] px-3 py-3 flex items-center justify-between cursor-pointer rounded-t-xl ${!expanded ? 'rounded-b-xl' : ''}`}
-        data-onboarding="account-header"
-        data-expanded={String(expanded)}
-      >
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="text-[var(--hi-text)] text-[length:var(--hi-text-caption)] flex-shrink-0">{expanded ? '▾' : '▸'}</span>
-          <span
-            className="font-semibold text-[length:var(--hi-text-heading)] text-[var(--hi-text)] truncate min-w-0"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <InlineCell
-              value={account.name}
-              onSave={(v) => account.id != null && updateAccount(account.id, { name: v })}
-            />
-          </span>
-          {statusLabel && (
-            <span className={`${statusColor} px-1 py-0.5 rounded text-[length:var(--hi-text-micro)] flex-shrink-0`}>
-              {statusLabel}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-          <span className="text-[var(--hi-ash)] text-[length:var(--hi-text-body)]">{formatCurrency(totalValue)}</span>
-          <div className="relative" ref={menuRef}>
-            <button
-              onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }}
-              className="border border-[var(--hi-shadow)] text-[var(--hi-ash)] px-2 py-0.5 rounded text-[length:var(--hi-text-body)] min-h-[36px] flex items-center justify-center"
-              data-onboarding="account-menu-btn"
-            >
-              ⋯
-            </button>
-            {menuOpen && (
-              <div className="absolute right-0 top-full mt-1 bg-[var(--hi-stone)] border border-[var(--hi-shadow)] rounded-md shadow-lg z-50 min-w-[140px]">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setMenuOpen(false);
-                    onImport();
-                  }}
-                  className="w-full text-left px-3 py-2 text-sm text-[var(--hi-text)] hover:bg-[var(--hi-void)] transition-colors rounded-t-md"
-                >
-                  Импорт
-                </button>
-                <button
-                  onClick={async (e) => {
-                    e.stopPropagation();
-                    setMenuOpen(false);
-                    if (window.confirm(`Удалить счёт "${account.name}" и все его позиции?`)) {
-                      await deleteAccount(account.id!);
-                    }
-                  }}
-                  className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-[var(--hi-void)] transition-colors rounded-b-md"
-                >
-                  Удалить счёт
-                </button>
+    <Card className="overflow-hidden" data-account-id={account.id}>
+      <div className="flex items-center">
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          className="hi-pressable flex min-w-0 flex-1 items-center gap-3 py-4 pl-4 pr-2 text-left active:bg-[var(--hi-raised)]"
+        >
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl border border-[var(--hi-line-strong)] bg-[var(--hi-raised)] text-[var(--hi-gold)]">
+            <Wallet className="size-[18px]" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <span className="truncate text-[length:var(--hi-text-heading)] font-semibold text-[var(--hi-text)]">{account.name}</span>
+              {isDemo ? <Badge tone="info">демо</Badge> : fromImport && <Badge tone="neutral">импорт</Badge>}
+            </div>
+            <div className="mt-0.5 text-[length:var(--hi-text-caption)] text-[var(--hi-text-3)]">
+              {holdings.length} {plural(holdings.length, ['позиция', 'позиции', 'позиций'])} · {formatCurrency(totalValue)}
+            </div>
+          </div>
+          <ChevronDown className={cn('size-4 shrink-0 text-[var(--hi-text-3)] transition-transform duration-300', expanded && 'rotate-180')} />
+        </button>
+        <button
+          type="button"
+          onClick={() => setMenuOpen(true)}
+          aria-label={`Действия со счётом ${account.name}`}
+          className="hi-pressable mr-2 inline-flex size-10 shrink-0 items-center justify-center rounded-full text-[var(--hi-text-2)] active:bg-[var(--hi-raised)]"
+        >
+          <MoreHorizontal className="size-5" />
+        </button>
+      </div>
+
+      <div className={cn('grid transition-[grid-template-rows] duration-300 ease-[var(--hi-ease-out)]', expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]')}>
+        <div className="min-h-0 overflow-hidden">
+          <div className="border-t border-[var(--hi-line)]">
+            {groups.length === 0 && (
+              <div className="px-4 py-5 text-center text-[length:var(--hi-text-caption)] text-[var(--hi-text-3)]">
+                В счёте пока нет активов
               </div>
             )}
+            {groups.map((group) => (
+              <div key={group.type}>
+                <div className="flex items-center justify-between bg-[color-mix(in_srgb,var(--hi-void)_45%,transparent)] px-4 pb-2 pt-3">
+                  <span className="inline-flex items-center gap-2 hi-eyebrow">
+                    <CategoryDot color={getTypeColor(group.type)} className="size-2" />
+                    {group.type}
+                  </span>
+                  <span className="text-[length:var(--hi-text-micro)] font-semibold text-[var(--hi-text-3)]">{formatCurrency(group.value)}</span>
+                </div>
+                {group.items.map(({ asset, holding, valueOwn }) => {
+                  const highlighted = highlightAssetId === asset.id;
+                  const cost = holding.averagePrice != null ? holding.averagePrice * holding.quantity : null;
+                  return (
+                    <button
+                      key={holding.id}
+                      ref={highlighted ? highlightRowRef : undefined}
+                      type="button"
+                      onClick={() => { setEditing({ asset, holding }); setEditOpen(true); }}
+                      className={cn(
+                        'hi-pressable relative flex w-full items-center gap-3 px-4 py-3 text-left active:bg-[var(--hi-raised)]',
+                        'after:absolute after:bottom-0 after:left-[68px] after:right-0 after:h-px after:bg-[var(--hi-line)] last:after:hidden',
+                        highlighted && 'animate-highlight-pulse',
+                      )}
+                    >
+                      <AssetAvatar label={asset.ticker ?? asset.name} color={getTypeColor(asset.type)} />
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-[length:var(--hi-text-body)] font-medium text-[var(--hi-text)]">{asset.name}</div>
+                        <div className="mt-0.5 truncate text-[length:var(--hi-text-caption)] text-[var(--hi-text-3)]">
+                          {asset.ticker && <span className="font-semibold">{asset.ticker} · </span>}
+                          {formatNumber(holding.quantity)} шт
+                        </div>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <div className="text-[length:var(--hi-text-body)] font-semibold text-[var(--hi-text)]">{formatMoney(valueOwn, asset.currency)}</div>
+                        {cost != null && cost > 0 && (
+                          <div className="mt-0.5 text-[length:var(--hi-text-micro)] text-[var(--hi-text-3)]">куплено за {formatMoney(cost, asset.currency)}</div>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+
+            <div className="grid grid-cols-2 gap-2 border-t border-[var(--hi-line)] p-3">
+              <button
+                type="button"
+                onClick={() => setAddAssetOpen(true)}
+                className="hi-pressable inline-flex h-11 items-center justify-center gap-1.5 rounded-2xl border border-dashed border-[var(--hi-line-strong)] text-[length:var(--hi-text-caption)] font-semibold text-[var(--hi-text-2)] active:bg-[var(--hi-raised)]"
+              >
+                <Plus className="size-4" /> Добавить актив
+              </button>
+              <button
+                type="button"
+                onClick={onImport}
+                className="hi-pressable inline-flex h-11 items-center justify-center gap-1.5 rounded-2xl border border-dashed border-[var(--hi-line-strong)] text-[length:var(--hi-text-caption)] font-semibold text-[var(--hi-text-2)] active:bg-[var(--hi-raised)]"
+              >
+                <FileUp className="size-4" /> Импорт отчёта
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Body */}
-      {expanded && (
-        <div>
-          {(() => { let globalHoldingIdx = 0; return Array.from(typeGroups.entries()).map(([type, items]) => {
-            const groupValue = items.reduce((sum, { asset, holding }) => {
-              const price = asset.currentPrice ?? holding.averagePrice ?? 0;
-              return sum + price * holding.quantity * getRateToRub(asset.currency, exchangeRates);
-            }, 0);
-
-            return (
-              <div key={type}>
-                {/* Type sub-header */}
-                <div className="flex justify-between items-center px-3 pt-4 pb-1.5 bg-[var(--hi-void)]">
-                  <span className="text-[var(--hi-ash)] text-[length:var(--hi-text-heading)] uppercase tracking-wider min-w-0" onClick={(e) => e.stopPropagation()}>
-                    <TypeCombobox
-                      value={type}
-                      existingTypes={allTypes}
-                      onSave={(newType) => {
-                        for (const { asset } of items) {
-                          if (asset.id != null) {
-                            updateAsset(asset.id, { type: newType });
-                          }
-                        }
-                      }}
-                    />
-                  </span>
-                  <span className="text-[var(--hi-muted)] text-[length:var(--hi-text-body)]">{formatCurrency(groupValue)}</span>
-                </div>
-
-                {/* Table header */}
-                <div className="grid grid-cols-[1fr_5rem_4rem_4rem_1.5rem] gap-x-2 px-3 text-[length:var(--hi-text-caption)] text-[var(--hi-muted)]">
-                  <span>Бумага</span>
-                  <span className="text-right">Кол-во</span>
-                  <span className="text-right">Стоим. пок.</span>
-                  <span className="text-right">Стоимость</span>
-                  <span></span>
-                </div>
-
-                {/* Rows */}
-                {items.map(({ asset, holding }) => {
-                  const isFirstHolding = globalHoldingIdx === 0;
-                  globalHoldingIdx++;
-                  const price = asset.currentPrice ?? holding.averagePrice ?? 0;
-                  const rowValue = price * holding.quantity;
-                  const isHighlighted = highlightAssetId != null && asset.id === highlightAssetId;
-                  return (
-                    <div
-                      key={holding.id}
-                      ref={isHighlighted ? highlightRowRef : undefined}
-                      className={`grid grid-cols-[1fr_5rem_4rem_4rem_1.5rem] gap-x-2 px-3 items-baseline border-t border-[var(--hi-void)] text-[length:var(--hi-text-body)]${isHighlighted ? ' animate-highlight-pulse' : ''}`}
-                    >
-                      <div className="min-w-0">
-                        <div className="font-medium text-[var(--hi-text)] truncate">{asset.name}</div>
-                        {(asset.ticker || asset.isin) && (
-                          <div className="text-[var(--hi-muted)] text-[length:var(--hi-text-micro)] truncate">
-                            {[asset.ticker, asset.isin].filter(Boolean).join(' · ')}
-                          </div>
-                        )}
-                      </div>
-                      <span
-                        className="text-right text-[var(--hi-text)] tabular-nums"
-                        {...(isFirstHolding && { 'data-onboarding': 'holding-quantity' })}
-                      >
-                        <InlineCell
-                          value={String(holding.quantity)}
-                          displayValue={Number(holding.quantity).toLocaleString('ru-RU')}
-                          type="number"
-                          onSave={(v) => {
-                            const num = parseFloat(v);
-                            if (!isNaN(num) && holding.id != null) {
-                              updateHolding(holding.id, { quantity: num, quantitySource: 'manual' });
-                            }
-                          }}
-                        />
-                      </span>
-                      <span className="text-right text-[var(--hi-ash)] tabular-nums">
-                        <InlineCell
-                          value={holding.averagePrice != null ? Math.round(holding.averagePrice * holding.quantity).toString() : ''}
-                          displayValue={holding.averagePrice != null ? `${Math.round(holding.averagePrice * holding.quantity).toLocaleString('ru-RU')} ₽` : ''}
-                          type="number"
-                          onSave={(v) => {
-                            const totalCost = parseFloat(v);
-                            if (holding.id != null) {
-                              if (v === '' || isNaN(totalCost)) {
-                                updateHolding(holding.id, { averagePrice: undefined });
-                              } else {
-                                const perUnit = holding.quantity > 0 ? totalCost / holding.quantity : totalCost;
-                                updateHolding(holding.id, { averagePrice: perUnit });
-                              }
-                            }
-                          }}
-                        />
-                      </span>
-                      <span className="text-right text-[var(--hi-ash)] tabular-nums">
-                        <InlineCell
-                          value={asset.currentPrice != null ? Math.round(asset.currentPrice * holding.quantity).toString() : ''}
-                          displayValue={formatMoney(rowValue, asset.currency)}
-                          type="number"
-                          onSave={(v) => {
-                            const totalValue = parseFloat(v);
-                            if (asset.id != null) {
-                              if (v === '' || isNaN(totalValue)) {
-                                updateAsset(asset.id, { currentPrice: undefined });
-                              } else {
-                                const perUnit = holding.quantity > 0 ? totalValue / holding.quantity : totalValue;
-                                updateAsset(asset.id, { currentPrice: perUnit });
-                              }
-                            }
-                          }}
-                        />
-                      </span>
-                      <button
-                        {...(isFirstHolding && { 'data-onboarding': 'holding-delete' })}
-                        onClick={async () => {
-                          if (window.confirm(`Удалить ${asset.ticker ?? asset.name} из счёта?`)) {
-                            await deleteHolding(holding.id!);
-                          }
-                        }}
-                        className="text-red-400/50 hover:text-red-300/70 transition-colors text-[length:var(--hi-text-title)] min-w-[36px] min-h-[36px]"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  );
-                })}
-                {items.some(({ asset }) => getRateToRub(asset.currency, exchangeRates) !== 1) && (
-                  <div className="px-3 pb-2 text-right font-mono text-[length:var(--hi-text-micro)] text-[var(--hi-muted)]">
-                    Итого в ₽: {formatCurrency(items.reduce((sum, { asset, holding }) => {
-                      const price = asset.currentPrice ?? holding.averagePrice ?? 0;
-                      return sum + price * holding.quantity * getRateToRub(asset.currency, exchangeRates);
-                    }, 0))}
-                  </div>
-                )}
-              </div>
-            );
-          }); })()}
-
-          {/* Add asset button */}
-          <div className="px-3 py-2">
+      <BottomSheet open={menuOpen} onOpenChange={setMenuOpen} title={account.name} description="Действия со счётом" hideDescription>
+        <Card className="overflow-hidden">
+          {[
+            { icon: <PencilLine />, label: 'Переименовать', onClick: () => { setMenuOpen(false); setRenameOpen(true); } },
+            { icon: <Plus />, label: 'Добавить актив', onClick: () => { setMenuOpen(false); setAddAssetOpen(true); } },
+            { icon: <FileUp />, label: 'Импорт отчёта брокера', onClick: () => { setMenuOpen(false); onImport(); } },
+          ].map((item) => (
             <button
-              onClick={() => setAddAssetOpen(true)}
-              className="w-full border border-dashed border-[var(--hi-shadow)] text-[var(--hi-muted)] py-1.5 rounded-md text-[length:var(--hi-text-body)] hover:bg-[var(--hi-stone)] transition-colors"
-              data-onboarding="add-asset-btn"
+              key={item.label}
+              type="button"
+              onClick={item.onClick}
+              className="hi-pressable relative flex w-full items-center gap-3 px-4 py-4 text-left text-[length:var(--hi-text-body)] text-[var(--hi-text)] active:bg-[var(--hi-raised)] after:absolute after:bottom-0 after:left-12 after:right-0 after:h-px after:bg-[var(--hi-line)] last:after:hidden [&_svg]:size-[18px] [&_svg]:text-[var(--hi-gold)]"
             >
-              + Добавить актив
+              {item.icon} {item.label}
             </button>
-          </div>
-        </div>
+          ))}
+        </Card>
+        <button
+          type="button"
+          onClick={removeAccount}
+          className="hi-pressable mt-3 flex w-full items-center gap-3 rounded-[22px] border border-[rgba(224,122,107,0.2)] bg-[var(--hi-negative-tint)] px-4 py-4 text-left text-[length:var(--hi-text-body)] font-semibold text-[var(--hi-negative)]"
+        >
+          <Trash2 className="size-[18px]" /> Удалить счёт
+        </button>
+      </BottomSheet>
+
+      <EditTextSheet
+        open={renameOpen}
+        onOpenChange={setRenameOpen}
+        title="Название счёта"
+        label="Название"
+        initialValue={account.name}
+        onSave={async (name) => { if (account.id != null) await updateAccount(account.id, { name }); }}
+      />
+
+      {editing && (
+        <HoldingSheet
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          asset={editing.asset}
+          holding={editing.holding}
+          existingTypes={allTypes}
+        />
       )}
 
-      <AddAssetSheet
-        open={addAssetOpen}
-        onClose={() => setAddAssetOpen(false)}
-        accountId={account.id!}
-        existingTypes={allTypes}
-      />
-    </div>
+      <AddAssetSheet open={addAssetOpen} onClose={() => setAddAssetOpen(false)} accountId={account.id!} existingTypes={allTypes} />
+    </Card>
   );
 }

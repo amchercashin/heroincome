@@ -15,11 +15,12 @@ export default defineConfig({
     VitePWA({
       registerType: 'prompt',
       manifest: {
-        name: 'HeroIncome',
-        short_name: 'HI!',
-        description: 'Трекер пассивного дохода',
-        theme_color: '#c8b48c',
-        background_color: '#0c0b09',
+        name: 'Рантье — пассивный доход',
+        short_name: 'Рантье',
+        description: 'Сколько денег в месяц приносит ваш капитал: акции, облигации, фонды, вклады, недвижимость',
+        lang: 'ru',
+        theme_color: '#0b0a08',
+        background_color: '#0b0a08',
         display: 'standalone',
         scope: base,
         start_url: base,
@@ -33,6 +34,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,woff2}'],
+        // Only Latin + Cyrillic font subsets are needed offline.
+        globIgnores: ['**/*-greek-*', '**/*-vietnamese-*'],
         navigateFallback: 'index.html',
         cleanupOutdatedCaches: true,
       },

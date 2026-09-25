@@ -3,6 +3,7 @@ import { db } from '@/db/database';
 import { useNdflRates } from '@/hooks/use-ndfl-rates';
 import { updateNdflRate } from '@/services/app-settings';
 import { getTypeColor } from '@/models/account';
+import { Card, Section } from '@/components/ds/surface';
 import { NdflRateSelector } from './ndfl-rate-selector';
 
 export function NdflSettings() {
@@ -17,16 +18,13 @@ export function NdflSettings() {
   if (!categories || categories.length === 0) return null;
 
   return (
-    <div>
-      <div className="text-[var(--hi-ash)] text-[length:var(--hi-text-caption)] font-mono uppercase tracking-[0.15em] mb-1.5">
-        НДФЛ с дохода
-      </div>
-      <div className="text-[var(--hi-muted)] text-[length:var(--hi-text-caption)] leading-relaxed mb-3">
-        Выплаты хранятся до налога. Доход и доходность считаются после применения ставки.
-      </div>
-      <div className="bg-[var(--hi-stone)] rounded-xl px-4 border border-[rgba(200,180,140,0.06)]">
+    <Section
+      title="НДФЛ с дохода"
+      description="Выплаты хранятся до налога. Доход и доходность считаются после применения ставки."
+    >
+      <Card className="overflow-hidden px-4">
         {categories.map((type, i) => (
-          <div key={type} className={i > 0 ? 'border-t border-[rgba(200,180,140,0.06)]' : ''}>
+          <div key={type} className={i > 0 ? 'border-t border-[var(--hi-line)]' : ''}>
             <NdflRateSelector
               category={type}
               color={getTypeColor(type)}
@@ -35,7 +33,7 @@ export function NdflSettings() {
             />
           </div>
         ))}
-      </div>
-    </div>
+      </Card>
+    </Section>
   );
 }

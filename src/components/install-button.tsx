@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import type { Platform } from '@/hooks/use-install-prompt';
 import { IosInstallGuide } from '@/components/ios-install-guide';
+import { X } from 'lucide-react';
+import { BrandMark } from '@/components/ds/brand-mark';
+import { Button } from '@/components/ds/button';
 
 interface InstallButtonProps {
   platform: Platform;
@@ -39,27 +42,27 @@ export function InstallButton({
   return (
     <>
       <div
-        className="fixed left-4 right-4 z-50 flex items-center justify-between rounded-xl border border-[var(--hi-gold)]/15 bg-[var(--hi-stone)] px-4 py-3"
+        className="fixed inset-x-4 z-40 mx-auto flex max-w-[520px] items-center gap-3 rounded-[22px] border border-[rgba(217,192,142,0.25)] bg-[var(--hi-raised)]/95 py-2.5 pl-3 pr-2 shadow-[0_18px_40px_-16px_rgba(0,0,0,0.9)] backdrop-blur-xl"
         style={{
-          bottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)',
-          animation: 'hi-fade-slide-up 0.4s ease-out both, hi-a2hs-glow 3s ease-in-out 0.4s infinite',
+          bottom: 'calc(var(--hi-tabbar-h) + var(--hi-safe-bottom) + 12px)',
+          animation: 'hi-fade-slide-up 0.5s var(--hi-ease-out) 1.2s both',
         }}
       >
-        <button
-          onClick={handleClick}
-          className="flex items-center gap-2.5 min-w-0"
-        >
-          <span className="text-lg shrink-0">📲</span>
-          <span className="text-[length:var(--hi-text-body)] text-[var(--hi-gold)] truncate">
-            Установить приложение
+        <button type="button" onClick={handleClick} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+          <BrandMark framed className="size-10" />
+          <span className="min-w-0">
+            <span className="block text-[length:var(--hi-text-body)] font-semibold text-[var(--hi-text)]">Установите Рантье</span>
+            <span className="block truncate text-[length:var(--hi-text-caption)] text-[var(--hi-text-3)]">Иконка на экране и работа офлайн</span>
           </span>
         </button>
+        <Button variant="primary" size="sm" onClick={handleClick}>Установить</Button>
         <button
+          type="button"
           onClick={(e) => { e.stopPropagation(); onDismiss(); }}
-          className="shrink-0 p-1 text-[var(--hi-ash)] text-[length:var(--hi-text-heading)] active:text-[var(--hi-text)] transition-colors"
+          className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-[var(--hi-text-3)] active:bg-[var(--hi-surface)]"
           aria-label="Скрыть"
         >
-          ✕
+          <X className="size-4" />
         </button>
       </div>
 

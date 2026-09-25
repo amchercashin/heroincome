@@ -88,3 +88,67 @@ export function calcCAGR(
   const span = lastYear - firstYear;
   return (Math.pow(incomeLast / incomeFirst, 1 / span) - 1) * 100;
 }
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+/** Payments on (almost) the same day form one payout, e.g. split coupons. */
+const SAME_PAYOUT_DAYS = 3;
+/** Longest grace after the period ends before a pocket counts as empty. */
+const MAX_GRACE_DAYS = 45;
+
+/**
+ * "Pocket per period": the latest payout fills a pocket that lasts one payment
+ * period (12 / frequency months). Monthly rent therefore counts in full at once,
+ * and a pocket runs dry when the next payout is overdue by more than half a
+ * period (at most 45 days).
+ */
+export function calcAnnualIncomePerUnitByPeriod(
+  history: PaymentRecord[],
+  frequencyPerYear: number,
+  now: Date = new Date(),
+): AnnualIncomeResult {
+  const empty = { annualIncome: 0, usedPayments: [] as PaymentRecord[] };
+  if (history.length === 0 || !(frequencyPerYear > 0)) return empty;
+
+  const past = history
+    .filter((p) => p.date <= now)
+    .sort((a, b) => b.date.getTime() - a.date.getTime());
+  if (past.length === 0) return empty;
+
+  const latest = past[0];
+  const periodDays = 365 / frequencyPerYear;
+  const graceDays = Math.min(periodDays / 2, MAX_GRACE_DAYS);
+  const ageDays = (now.getTime() - latest.date.getTime()) / DAY_MS;
+  if (ageDays > periodDays + graceDays) return empty;
+
+  const payout = past.filter((p) => (latest.date.getTime() - p.date.getTime()) / DAY_MS <= SAME_PAYOUT_DAYS);
+  const perPayout = payout.reduce((sum, p) => sum + p.amount, 0);
+  return { annualIncome: perPayout * frequencyPerYear, usedPayments: payout };
+}
+
+export interface IncomeAssetLike {
+  paymentPerUnitSource: 'fact' | 'manual';
+  paymentPerUnit?: number;
+  frequencyPerYear: number;
+}
+
+/**
+ * Annual income per unit for an asset at `now`, before tax.
+ * - manual override wins;
+ * - 'year' spread: sum of payments over the trailing 12 months (12 pockets);
+ * - 'period' spread: latest payout × frequency (pocket per period).
+ * Only payments dated on or before `now` should be passed for historical points.
+ */
+export function calcAssetAnnualIncomePerUnit(
+  asset: IncomeAssetLike,
+  spread: 'year' | 'period',
+  history: PaymentRecord[],
+  now: Date = new Date(),
+): AnnualIncomeResult {
+  if (asset.paymentPerUnitSource === 'manual' && asset.paymentPerUnit != null) {
+    return { annualIncome: asset.paymentPerUnit, usedPayments: [] };
+  }
+  if (spread === 'period') {
+    return calcAnnualIncomePerUnitByPeriod(history, asset.frequencyPerYear, now);
+  }
+  return calcAnnualIncomePerUnit(history, now);
+}

@@ -1,12 +1,13 @@
 import type { Asset, AssetStats, CategoryStats, PaymentHistory, PortfolioStats } from '@/models/types';
 import type { Holding } from '@/models/account';
 import {
-  calcAnnualIncomePerUnit,
+  calcAssetAnnualIncomePerUnit,
   calcAssetIncomePerMonth,
   calcYieldPercent,
   type PaymentRecord,
 } from './income-calculator';
 import { getRateToRub } from './exchange-rates';
+import { incomeSpreadOf } from '@/models/asset-kind';
 
 export interface CalculatedAssetStats extends AssetStats {
   assetId: number;
@@ -66,9 +67,12 @@ export function calculatePortfolioSnapshot(input: PortfolioCalculationInput): Po
     const nkd = asset.type === 'Облигации' ? (asset.accruedInterest ?? 0) : 0;
     const value = (price + nkd) * totalQuantity * rateToRub;
 
-    const annualIncomePerUnit = asset.paymentPerUnitSource === 'manual' && asset.paymentPerUnit != null
-      ? asset.paymentPerUnit
-      : calcAnnualIncomePerUnit(historyByAsset.get(assetId) ?? [], now).annualIncome;
+    const annualIncomePerUnit = calcAssetAnnualIncomePerUnit(
+      asset,
+      incomeSpreadOf(asset),
+      historyByAsset.get(assetId) ?? [],
+      now,
+    ).annualIncome;
     const ndflRate = input.ndflRates.get(asset.type) ?? 0;
     const taxMultiplier = 1 - ndflRate / 100;
     const incomePerMonth = calcAssetIncomePerMonth(totalQuantity, annualIncomePerUnit) * taxMultiplier * rateToRub;

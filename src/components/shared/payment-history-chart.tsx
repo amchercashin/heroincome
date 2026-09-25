@@ -1,7 +1,9 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
-import { formatCompact } from '@/lib/utils';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { PaymentRecord } from '@/services/income-calculator';
 import { calcCAGR } from '@/services/income-calculator';
+import { Card } from '@/components/ds/surface';
+import { Badge } from '@/components/ds/badge';
+import { cn, formatNumber, formatPercent, formatShortDate } from '@/lib/utils';
 
 export interface ChartPaymentRecord extends PaymentRecord {
   isForecast?: boolean;
@@ -9,281 +11,154 @@ export interface ChartPaymentRecord extends PaymentRecord {
 
 interface PaymentHistoryChartProps {
   history: ChartPaymentRecord[];
-  paymentPerUnit?: number;
+  currency?: string;
 }
 
-export function PaymentHistoryChart({
-  history,
-  paymentPerUnit,
-}: PaymentHistoryChartProps) {
-  const [selectedYear, setSelectedYear] = useState<number | null>(null);
+interface YearData {
+  year: number;
+  fact: number;
+  forecast: number;
+  payments: ChartPaymentRecord[];
+}
+
+const BAR_AREA = 112;
+
+/** Payments per unit, grouped by calendar year; forecasts drawn hatched on top. */
+export function PaymentHistoryChart({ history, currency = 'RUB' }: PaymentHistoryChartProps) {
+  const [selected, setSelected] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-
   const currentYear = new Date().getFullYear();
+  const unit = currency.toUpperCase() === 'RUB' ? '₽' : currency.toUpperCase();
 
-  // Group history by year (per-unit amounts — no quantity multiplication)
-  const byYear = useMemo(() => {
-    const map = new Map<number, { total: number; forecastTotal: number; payments: { date: Date; amount: number; isForecast?: boolean }[] }>();
+  const years = useMemo<YearData[]>(() => {
+    if (history.length === 0) return [];
+    const map = new Map<number, YearData>();
     for (const p of history) {
       const year = p.date.getFullYear();
-      const entry = map.get(year) ?? { total: 0, forecastTotal: 0, payments: [] };
-      if (p.isForecast) {
-        entry.forecastTotal += p.amount;
-      } else {
-        entry.total += p.amount;
-      }
-      entry.payments.push({ date: p.date, amount: p.amount, isForecast: p.isForecast });
+      const entry = map.get(year) ?? { year, fact: 0, forecast: 0, payments: [] };
+      if (p.isForecast) entry.forecast += p.amount;
+      else entry.fact += p.amount;
+      entry.payments.push(p);
       map.set(year, entry);
     }
-    for (const entry of map.values()) {
-      entry.payments.sort((a, b) => a.date.getTime() - b.date.getTime());
+    const all = [...map.keys()];
+    const first = Math.min(...all);
+    const last = Math.max(...all, currentYear);
+    const out: YearData[] = [];
+    for (let y = first; y <= last; y++) {
+      const e = map.get(y) ?? { year: y, fact: 0, forecast: 0, payments: [] };
+      e.payments.sort((a, b) => a.date.getTime() - b.date.getTime());
+      out.push(e);
     }
-    return map;
-  }, [history]);
+    return out;
+  }, [history, currentYear]);
 
-  // Build continuous year range: first data year → current year (fill gaps with zero)
-  const years = useMemo(() => {
-    const dataYears = [...byYear.keys()].sort((a, b) => a - b);
-    if (dataYears.length === 0) return [];
-    const firstYear = dataYears[0];
-    const lastYear = Math.max(dataYears[dataYears.length - 1], currentYear);
-    const range: number[] = [];
-    for (let y = firstYear; y <= lastYear; y++) {
-      range.push(y);
-      // Ensure every year has an entry in byYear (even if zero)
-      if (!byYear.has(y)) {
-        byYear.set(y, { total: 0, forecastTotal: 0, payments: [] });
-      }
-    }
-    return range;
-  }, [byYear, currentYear]);
+  const cagr = useMemo(() => calcCAGR(history.filter((p) => !p.isForecast), new Date()), [history]);
 
-  // No-history fallback: single bar with calculated annual
-  const isNoHistory = history.length === 0;
-  const fallbackAnnual =
-    isNoHistory && paymentPerUnit != null
-      ? paymentPerUnit
-      : null;
-
-  // Nothing to show at all
-  if (isNoHistory && fallbackAnnual == null) {
-    return (
-      <div className="bg-[rgba(200,180,140,0.02)] border border-[rgba(200,180,140,0.04)] rounded-lg p-4 mt-4 text-center font-mono text-[var(--hi-muted)] text-xs">
-        Нет данных о выплатах
-      </div>
-    );
-  }
-
-  // For fallback: fake single-year data
-  const displayYears = isNoHistory ? [currentYear] : years;
-  const displayValues = isNoHistory
-    ? [fallbackAnnual!]
-    : displayYears.map((y) => byYear.get(y)!.total + (byYear.get(y)!.forecastTotal ?? 0));
-  const maxValue = Math.max(...displayValues, 1);
-
-  // CAGR from per-unit history (excludes current year, needs >=2 full years)
-  const activeHistory = useMemo(() => history.filter(p => !p.isForecast), [history]);
-  const cagr = useMemo(
-    () => (isNoHistory ? null : calcCAGR(activeHistory, new Date())),
-    [activeHistory, isNoHistory],
-  );
-
-  const barOpacity = (i: number) => {
-    const min = 0.15;
-    const max = 0.85;
-    const t = displayYears.length > 1 ? i / (displayYears.length - 1) : 1;
-    return min + t * (max - min);
-  };
-
-  // Scroll to right edge on mount
   useEffect(() => {
     const el = scrollRef.current;
     if (el) el.scrollLeft = el.scrollWidth;
-  }, [displayYears.length]);
+  }, [years.length]);
 
-  // Close panel on click outside
-  useEffect(() => {
-    if (selectedYear == null) return;
-    const handler = (e: MouseEvent) => {
-      const chart = scrollRef.current?.parentElement;
-      if (chart && !chart.contains(e.target as Node)) {
-        setSelectedYear(null);
-      }
-    };
-    document.addEventListener('click', handler);
-    return () => document.removeEventListener('click', handler);
-  }, [selectedYear]);
-
-  const handleBarClick = (year: number) => {
-    setSelectedYear((prev) => (prev === year ? null : year));
-  };
-
-  // Format date as "14 мар"
-  const formatShortDate = (date: Date) =>
-    date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }).replace('.', '');
-
-  // Detail panel content
-  const renderDetailPanel = () => {
-    if (selectedYear == null) return null;
-
-    const isCurrentYear = selectedYear === currentYear;
-
-    // No-history fallback panel
-    if (isNoHistory && paymentPerUnit != null) {
-      return (
-        <div className="bg-[#252220] border border-[rgba(200,180,140,0.1)] rounded-lg px-3 py-2.5 mt-2.5 animate-[hi-panel-in_0.2s_ease]">
-          <div className="flex justify-between items-baseline mb-1.5">
-            <span className="font-mono text-[length:var(--hi-text-caption)] text-[var(--hi-gold)] font-medium">{selectedYear}</span>
-            <span className="font-mono text-[length:var(--hi-text-caption)] text-[#b0a898]">{formatCompact(fallbackAnnual!)} ₽ / ед.</span>
-          </div>
-          <div className="font-mono text-[length:var(--hi-text-micro)] text-[#3a3530] italic">
-            Расчётно до НДФЛ: {formatCompact(paymentPerUnit)} ₽ / год
-          </div>
-        </div>
-      );
-    }
-
-    const yearData = byYear.get(selectedYear);
-    if (!yearData) return null;
-
+  if (years.length === 0) {
     return (
-      <div className="bg-[#252220] border border-[rgba(200,180,140,0.1)] rounded-lg px-3 py-2.5 mt-2.5 animate-[hi-panel-in_0.2s_ease]">
-        <div className="flex justify-between items-baseline mb-1.5">
-          <span className="font-mono text-[length:var(--hi-text-caption)] text-[var(--hi-gold)] font-medium">
-            {selectedYear}
-            {isCurrentYear && (
-              <span className="text-[length:var(--hi-text-micro)] text-[var(--hi-muted)] font-normal ml-1.5">· неполный</span>
-            )}
-          </span>
-          <span className="font-mono text-[length:var(--hi-text-caption)] text-[#b0a898]">
-            {formatCompact(yearData.total)} ₽ / ед.
-          </span>
-        </div>
-        {yearData.payments.map((p, i) => (
-          <div key={i} className={`flex justify-between font-mono text-[length:var(--hi-text-caption)] mb-0.5${p.isForecast ? ' opacity-60' : ''}`}>
-            <span className="text-[#4a4540]">
-              {formatShortDate(p.date)}
-              {p.isForecast && <span className="text-[length:var(--hi-text-micro)] text-[var(--hi-muted)] italic ml-1">прогноз</span>}
-            </span>
-            <span className="text-[#b0a898]">{formatCompact(p.amount)} ₽</span>
-          </div>
-        ))}
-        {isCurrentYear && (
-          <div className="font-mono text-[length:var(--hi-text-micro)] text-[#3a3530] italic mt-1.5">
-            Год не завершён — итого за {selectedYear} обновится
-          </div>
-        )}
-      </div>
+      <Card className="px-4 py-6 text-center text-[length:var(--hi-text-caption)] text-[var(--hi-text-3)]">
+        Истории выплат пока нет
+      </Card>
     );
-  };
+  }
+
+  const max = Math.max(...years.map((y) => y.fact + y.forecast), 1);
+  const detail = selected != null ? years.find((y) => y.year === selected) : null;
 
   return (
-    <div className="bg-[rgba(200,180,140,0.02)] rounded-lg p-4 mt-4">
-      {/* Header */}
-      <div className="flex justify-between items-baseline mb-3">
-        <span className="font-mono text-[length:var(--hi-text-caption)] uppercase tracking-wider text-[var(--hi-muted)]">
-          Выплата на единицу, ₽
-        </span>
+    <Card className="px-4 pt-4 pb-3">
+      <div className="flex items-baseline justify-between gap-3">
+        <div className="hi-eyebrow">На 1 бумагу по годам</div>
         {cagr != null && (
-          <span className="font-mono text-[length:var(--hi-text-micro)] text-[var(--hi-gold)] tracking-wide">
-            CAGR {cagr > 0 ? '+' : ''}{cagr.toFixed(1)}%
-          </span>
+          <Badge tone={cagr >= 0 ? 'positive' : 'negative'} title="Среднегодовой рост выплат (CAGR)">
+            {cagr >= 0 ? '+' : ''}{formatPercent(cagr)} в год
+          </Badge>
         )}
       </div>
 
-      {/* Bars */}
-      <div
-        ref={scrollRef}
-        className="flex items-end gap-[5px] overflow-x-auto"
-        style={{
-          height: 120,
-          scrollSnapType: 'x mandatory',
-          scrollbarWidth: 'thin',
-          scrollbarColor: 'rgba(200,180,140,0.15) transparent',
-        }}
-      >
-        {displayYears.map((year, i) => {
-          const isCurrentYr = year === currentYear;
-          const isSelected = year === selectedYear;
-
+      <div ref={scrollRef} className="hi-scroll-hide mt-4 flex items-end gap-1.5 overflow-x-auto pb-1" style={{ height: BAR_AREA + 40 }}>
+        {years.map((y, i) => {
+          const isCurrent = y.year === currentYear;
+          const isSelected = y.year === selected;
+          const factH = y.fact > 0 ? Math.max(3, (y.fact / max) * BAR_AREA) : 0;
+          const foreH = y.forecast > 0 ? Math.max(3, (y.forecast / max) * BAR_AREA) : 0;
           return (
-            <div
-              key={year}
-              className="flex flex-col items-center justify-end cursor-pointer"
-              style={{
-                flex: '1 1 0',
-                maxWidth: 64,
-                minWidth: 36,
-                height: '100%',
-                scrollSnapAlign: 'start',
-              }}
-              onClick={() => handleBarClick(year)}
+            <button
+              key={y.year}
+              type="button"
+              onClick={() => setSelected(isSelected ? null : y.year)}
+              className="flex h-full min-w-[38px] max-w-[64px] flex-1 flex-col items-center justify-end outline-none"
+              aria-label={`${y.year}: ${formatNumber(y.fact)} ${unit}`}
             >
-              {/* Value label — facts only */}
-              <span
-                className="font-mono text-[length:var(--hi-text-micro)] mb-[3px] whitespace-nowrap shrink-0"
-                style={{ color: isCurrentYr ? '#4a4540' : '#b0a898' }}
-              >
-                {formatCompact(byYear.get(year)?.total ?? 0)}
+              <span className={cn('mb-1 text-[10px] font-semibold', isCurrent ? 'text-[var(--hi-text-3)]' : 'text-[var(--hi-text-2)]')}>
+                {y.fact > 0
+                  ? formatNumber(y.fact, y.fact < 10 ? 2 : 0)
+                  : y.forecast > 0
+                    ? `≈${formatNumber(y.forecast, y.forecast < 10 ? 2 : 0)}`
+                    : '—'}
               </span>
-
-              {/* Bar — stacked: fact + forecast */}
-              {(() => {
-                const yearData = byYear.get(year);
-                const forecastValue = yearData?.forecastTotal ?? 0;
-                const factValue = yearData?.total ?? 0;
-                const factHeightPx = Math.max(Math.round((factValue / maxValue) * 100), factValue > 0 ? 3 : 0);
-                const forecastHeightPx = forecastValue > 0
-                  ? Math.max(Math.round((forecastValue / maxValue) * 100), 3)
-                  : 0;
-
-                return (
-                  <div className="w-full flex flex-col items-stretch" style={{ minWidth: 6 }}>
-                    {forecastHeightPx > 0 && (
-                      <div
-                        className="w-full rounded-t"
-                        style={{
-                          height: forecastHeightPx,
-                          background: 'rgba(200,180,140,0.12)',
-                          border: '1px dashed rgba(200,180,140,0.25)',
-                          borderBottom: 'none',
-                          transformOrigin: 'bottom',
-                          animation: `hi-bar-grow 0.8s ease-out ${1.2 + i * 0.1}s both`,
-                        }}
-                      />
-                    )}
-                    <div
-                      className={`w-full ${forecastHeightPx > 0 ? '' : 'rounded-t'}`}
-                      style={{
-                        height: factHeightPx || 3,
-                        background: isCurrentYr
-                          ? 'rgba(200,180,140,0.05)'
-                          : `rgba(200,180,140,${barOpacity(i)})`,
-                        border: isCurrentYr ? '1px dashed rgba(200,180,140,0.3)' : 'none',
-                        outline: isSelected ? '1px solid rgba(200,180,140,0.5)' : 'none',
-                        outlineOffset: isSelected ? 1 : 0,
-                        transformOrigin: 'bottom',
-                        animation: `hi-bar-grow 0.8s ease-out ${1.2 + i * 0.1}s both`,
-                      }}
-                    />
-                  </div>
-                );
-              })()}
-
-              {/* Year label */}
-              <span
-                className="font-mono text-[length:var(--hi-text-micro)] mt-1 shrink-0"
-                style={{ color: isCurrentYr ? 'var(--hi-gold)' : '#4a4540' }}
-              >
-                &apos;{String(year).slice(2)}{isCurrentYr ? '~' : ''}
+              <div className="flex w-full flex-col items-stretch" style={{ animation: `hi-bar-grow 0.8s var(--hi-ease-out) ${0.2 + i * 0.05}s both`, transformOrigin: 'bottom' }}>
+                {foreH > 0 && (
+                  <div
+                    className="w-full rounded-t-md border border-dashed border-[rgba(217,192,142,0.45)] border-b-0"
+                    style={{
+                      height: foreH,
+                      background: 'repeating-linear-gradient(135deg, rgba(217,192,142,0.14) 0 4px, transparent 4px 8px)',
+                    }}
+                  />
+                )}
+                <div
+                  className={cn('w-full transition-all', foreH > 0 ? '' : 'rounded-t-md', isSelected && 'ring-2 ring-[var(--hi-gold-bright)] ring-offset-2 ring-offset-[var(--hi-surface)]')}
+                  style={{
+                    height: factH || 2,
+                    background: y.fact > 0
+                      ? isCurrent
+                        ? 'linear-gradient(180deg, rgba(217,192,142,0.55), rgba(217,192,142,0.25))'
+                        : 'linear-gradient(180deg, var(--hi-gold-bright), var(--hi-gold-deep))'
+                      : 'var(--hi-line-strong)',
+                    opacity: y.fact > 0 ? 0.55 + 0.45 * ((i + 1) / years.length) : 1,
+                  }}
+                />
+              </div>
+              <span className={cn('mt-1.5 text-[10.5px] font-semibold', isCurrent ? 'text-[var(--hi-gold)]' : 'text-[var(--hi-text-3)]')}>
+                {String(y.year).slice(2).padStart(3, "'")}
               </span>
-            </div>
+            </button>
           );
         })}
       </div>
 
-      {/* Detail panel */}
-      {renderDetailPanel()}
-    </div>
+      {detail && (
+        <div className="mt-3 rounded-2xl border border-[var(--hi-line)] bg-[var(--hi-raised)] px-3.5 py-3 animate-[hi-fade-slide-down_0.25s_var(--hi-ease-out)_both]">
+          <div className="flex items-baseline justify-between">
+            <span className="text-[length:var(--hi-text-caption)] font-bold text-[var(--hi-gold)]">
+              {detail.year}
+              {detail.year === currentYear && <span className="ml-1.5 font-medium text-[var(--hi-text-3)]">· год не завершён</span>}
+            </span>
+            <span className="text-[length:var(--hi-text-caption)] font-semibold text-[var(--hi-text)]">
+              {formatNumber(detail.fact)} {unit}
+            </span>
+          </div>
+          <div className="mt-2 space-y-1">
+            {detail.payments.length === 0 && <div className="text-[length:var(--hi-text-caption)] text-[var(--hi-text-3)]">Выплат не было</div>}
+            {detail.payments.map((p, i) => (
+              <div key={i} className={cn('flex justify-between text-[length:var(--hi-text-caption)]', p.isForecast && 'opacity-70')}>
+                <span className="text-[var(--hi-text-3)]">
+                  {formatShortDate(p.date)}
+                  {p.isForecast && <span className="ml-1.5 italic">прогноз</span>}
+                </span>
+                <span className="text-[var(--hi-text-2)]">{formatNumber(p.amount)} {unit}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </Card>
   );
 }

@@ -1,5 +1,7 @@
+import { Trash2 } from 'lucide-react';
 import type { PaymentHistory } from '@/models/types';
-import { formatMoney } from '@/lib/utils';
+import { SourceBadge, type SourceKind } from '@/components/ds/badge';
+import { cn, formatNumericDate, formatPrice } from '@/lib/utils';
 
 interface PaymentRowProps {
   payment: PaymentHistory;
@@ -7,57 +9,28 @@ interface PaymentRowProps {
   onDelete: (id: number) => void;
 }
 
-const formatDate = (date: Date) =>
-  new Date(date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
-
-const SOURCE_BADGE: Record<string, { label: string; bg: string; text: string }> = {
-  moex:   { label: 'moex',   bg: 'bg-[#2d5a2d]', text: 'text-[#6bba6b]' },
-  dohod:  { label: 'dohod',  bg: 'bg-[#2d3d5a]', text: 'text-[#6b9eba]' },
-  parus:  { label: 'parus',  bg: 'bg-[#4a2d5a]', text: 'text-[#ba8bd4]' },
-  manual: { label: 'ручной', bg: 'bg-[#5a5a2d]', text: 'text-[#baba6b]' },
-  import: { label: 'импорт', bg: 'bg-[#3a3a3a]', text: 'text-[#9a9a9a]' },
-};
-
 export function PaymentRow({ payment, currency, onDelete }: PaymentRowProps) {
-  const isForecast = payment.isForecast;
-  const badge = SOURCE_BADGE[payment.dataSource] ?? SOURCE_BADGE.manual;
+  const source = (payment.dataSource === 'manual' ? 'manual' : payment.dataSource) as SourceKind;
 
   return (
-    <div
-      className={`grid grid-cols-[1fr_auto_auto_auto] gap-x-3 items-center pl-7 pr-3 py-0.5 text-[length:var(--hi-text-body)] border-t border-[var(--hi-void)]${isForecast ? ' opacity-60' : ''}`}
-    >
-      {/* Date */}
-      <span className="font-mono tabular-nums text-[var(--hi-text)]">
-        {formatDate(payment.date)}
+    <div className={cn('group flex items-center gap-3 py-2 pl-4 pr-1.5', payment.isForecast && 'opacity-70')}>
+      <span className="w-[86px] shrink-0 text-[length:var(--hi-text-caption)] text-[var(--hi-text-2)]">{formatNumericDate(payment.date)}</span>
+      <span className="flex min-w-0 flex-1 items-center gap-1.5">
+        <SourceBadge source={source} />
+        {payment.isForecast && <SourceBadge source="forecast" />}
       </span>
-
-      {/* Amount */}
-      <span className="font-mono tabular-nums text-right text-[var(--hi-ash)]">
-        {formatMoney(payment.amount, currency)}
+      <span className="shrink-0 text-right text-[length:var(--hi-text-caption)] font-semibold text-[var(--hi-text)]">
+        {formatPrice(payment.amount, currency)}
       </span>
-
-      {/* Source badge + forecast label */}
-      <span className="flex items-center gap-1">
-        <span className={`text-[10px] leading-tight px-1 py-px rounded ${badge.bg} ${badge.text}`}>
-          {badge.label}
-        </span>
-        {isForecast && (
-          <span className="text-[length:var(--hi-text-micro)] text-[var(--hi-muted)] italic">
-            прогноз
-          </span>
-        )}
-      </span>
-
-      {/* Actions: delete for manual only */}
-      <div className="flex gap-1 ml-1">
-        <button
-          onClick={() => onDelete(payment.id!)}
-          className="text-red-400 hover:text-red-300 text-[length:var(--hi-text-title)] min-w-[32px] min-h-[28px] flex items-center justify-center transition-colors"
-          title="Удалить"
-        >
-          ×
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={() => payment.id != null && onDelete(payment.id)}
+        className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-[var(--hi-text-3)] active:bg-[var(--hi-negative-tint)] active:text-[var(--hi-negative)]"
+        aria-label="Удалить выплату"
+        title="Удалить"
+      >
+        <Trash2 className="size-3.5" />
+      </button>
     </div>
   );
 }

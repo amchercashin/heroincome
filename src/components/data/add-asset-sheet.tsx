@@ -1,10 +1,14 @@
-import { useState } from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { useEffect, useState } from 'react';
 import { db } from '@/db/database';
 import { addHolding } from '@/hooks/use-holdings';
-import { getTypeSuggestions, getDefaultFrequency } from '@/models/account';
+import { getTypeSuggestions, getTypeColor } from '@/models/account';
 import { useSyncContext } from '@/contexts/sync-context';
-import { createAssetDraft } from '@/services/asset-factory';
+import { addAssetKindOf, buildAssetFromForm } from '@/services/add-asset-form';
+import { BottomSheet } from '@/components/ds/bottom-sheet';
+import { Button } from '@/components/ds/button';
+import { Field, TextInput, SelectInput, parseDecimal } from '@/components/ds/field';
+import { useFeedback } from '@/components/ds/feedback';
+import { cn, formatCurrencyFull, formatPrice } from '@/lib/utils';
 
 interface AddAssetSheetProps {
   open: boolean;
@@ -13,169 +17,184 @@ interface AddAssetSheetProps {
   existingTypes: string[];
 }
 
-const EXCHANGE_TYPES = new Set(['Акции', 'Облигации', 'Фонды', 'Крипта']);
 const CURRENCY_OPTIONS = ['RUB', 'USD', 'EUR', 'CNY'] as const;
+
+const EMPTY = { name: '', ticker: '', quantity: '', cost: '', value: '', rate: '', rent: '', income: '', currency: 'RUB' };
 
 export function AddAssetSheet({ open, onClose, accountId, existingTypes }: AddAssetSheetProps) {
   const { syncAsset } = useSyncContext();
-  const [name, setName] = useState('');
+  const { toast } = useFeedback();
   const [type, setType] = useState('Акции');
-  const [ticker, setTicker] = useState('');
-  const [quantity, setQuantity] = useState('');
-  const [avgPrice, setAvgPrice] = useState('');
-  const [currency, setCurrency] = useState('RUB');
+  const [f, setF] = useState(EMPTY);
+  const set = (key: keyof typeof EMPTY) => (e: { target: { value: string } }) => setF((prev) => ({ ...prev, [key]: e.target.value }));
 
+  useEffect(() => {
+    if (open) {
+      setF(EMPTY);
+      setType('Акции');
+    }
+  }, [open]);
+
+  const kind = addAssetKindOf(type);
   const suggestions = getTypeSuggestions(existingTypes);
-  const isExchangeType = EXCHANGE_TYPES.has(type);
+  const unit = f.currency === 'RUB' ? '₽' : f.currency;
+  const canSubmit = kind === 'security' ? f.ticker.trim() !== '' : f.name.trim() !== '';
+
+  const quantity = parseDecimal(f.quantity);
+  const cost = parseDecimal(f.cost);
+  const value = parseDecimal(f.value);
+  const rate = parseDecimal(f.rate);
 
   const handleAdd = async () => {
-    const trimmedName = name.trim();
-    if (!trimmedName) return;
-    const qty = parseFloat(quantity) || 0;
-    const totalCost = parseFloat(avgPrice) || undefined;
-    const perUnit = totalCost != null && qty > 0 ? totalCost / qty : totalCost;
-
-    // Find existing asset by ticker
-    let assetId: number;
-    const trimmedTicker = isExchangeType ? ticker.trim().toUpperCase() : '';
-    const existing = trimmedTicker
-      ? await db.assets.where('ticker').equals(trimmedTicker).first()
-      : undefined;
-
-    if (existing) {
-      assetId = existing.id!;
-    } else {
-      const now = new Date();
-      const freq = getDefaultFrequency(type) ?? 12;
-      assetId = (await db.assets.add(createAssetDraft({
-        type,
-        ticker: trimmedTicker || undefined,
-        name: trimmedName,
-        currentPrice: perUnit,
-        currency,
-        paymentPerUnitSource: 'fact',
-        frequencyPerYear: freq,
-        frequencySource: 'manual',
-        dataSource: 'manual',
-        now,
-      }))) as number;
-    }
-
-    await addHolding({
-      accountId,
-      assetId,
-      quantity: qty,
-      quantitySource: 'manual',
-      averagePrice: perUnit,
+    if (!canSubmit) return;
+    const { asset, quantity: qty, averagePrice } = buildAssetFromForm({
+      type,
+      name: f.name,
+      ticker: f.ticker,
+      currency: f.currency,
+      quantity,
+      totalCost: cost,
+      value,
+      ratePercent: rate,
+      monthlyRent: parseDecimal(f.rent),
+      annualIncome: parseDecimal(f.income),
     });
 
-    // Reset form
-    setName('');
-    setType('Акции');
-    setTicker('');
-    setQuantity('');
-    setAvgPrice('');
-    setCurrency('RUB');
+    // Re-use an existing security with the same ticker (shared across accounts).
+    const existing = asset.ticker ? await db.assets.where('ticker').equals(asset.ticker).first() : undefined;
+    const assetId = existing?.id ?? ((await db.assets.add(asset)) as number);
+
+    await addHolding({ accountId, assetId, quantity: qty, quantitySource: 'manual', averagePrice });
     onClose();
-    syncAsset(assetId); // fire-and-forget
+    toast(`${asset.name} добавлен`);
+    if (kind === 'security') syncAsset(assetId); // fire-and-forget: price + payments from MOEX
   };
 
-  const inputCls =
-    'w-full bg-[var(--hi-stone)] border border-[var(--hi-shadow)] rounded-lg px-3 py-2 text-base text-[var(--hi-text)] placeholder:text-[var(--hi-muted)] outline-none focus:border-[var(--hi-gold)]';
-
   return (
-    <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
-      <SheetContent side="bottom" className="bg-[var(--hi-void)] border-t-[var(--hi-shadow)]">
-        <SheetHeader>
-          <SheetTitle className="text-[var(--hi-text)]">Добавить актив</SheetTitle>
-          <SheetDescription className="sr-only">Добавление нового актива в счёт</SheetDescription>
-        </SheetHeader>
-        <div className="mt-4 space-y-3">
-          <div>
-            <label className="text-[length:var(--hi-text-body)] text-[var(--hi-ash)] block mb-1">Название *</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Сбербанк"
-              className={inputCls}
-              autoFocus
-            />
+    <BottomSheet
+      open={open}
+      onOpenChange={(v) => !v && onClose()}
+      title="Новый актив"
+      description="Для бумаг с Мосбиржи цена и выплаты подтянутся автоматически."
+      footer={
+        <Button variant="primary" size="lg" block disabled={!canSubmit} onClick={handleAdd}>
+          Добавить
+        </Button>
+      }
+    >
+      <div className="space-y-4">
+        <div>
+          <div className="mb-2 px-1 text-[length:var(--hi-text-caption)] font-medium text-[var(--hi-text-2)]">Категория</div>
+          <div className="hi-scroll-hide -mx-5 flex gap-2 overflow-x-auto px-5 pb-1" role="radiogroup" aria-label="Категория">
+            {suggestions.map((s) => (
+              <button
+                key={s}
+                type="button"
+                role="radio"
+                aria-checked={type === s}
+                onClick={() => setType(s)}
+                className={cn(
+                  'hi-pressable inline-flex h-9 shrink-0 items-center gap-2 rounded-full border px-3.5 text-[length:var(--hi-text-caption)] font-semibold transition-colors',
+                  type === s
+                    ? 'border-[rgba(217,192,142,0.45)] bg-[var(--hi-gold-tint)] text-[var(--hi-gold)]'
+                    : 'border-[var(--hi-line)] bg-[var(--hi-surface)] text-[var(--hi-text-2)]',
+                )}
+              >
+                <span className="size-2 rounded-full" style={{ backgroundColor: getTypeColor(s) }} />
+                {s}
+              </button>
+            ))}
           </div>
-          <div>
-            <label className="text-[length:var(--hi-text-body)] text-[var(--hi-ash)] block mb-1">Тип</label>
-            <select value={type} onChange={(e) => setType(e.target.value)} className={inputCls}>
-              {suggestions.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="text-[length:var(--hi-text-body)] text-[var(--hi-ash)] block mb-1">Валюта</label>
-            <select value={currency} onChange={(e) => setCurrency(e.target.value)} className={inputCls}>
-              {CURRENCY_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className={`grid ${isExchangeType ? 'grid-cols-3' : 'grid-cols-2'} gap-2`}>
-            {isExchangeType && (
-              <div>
-                <label className="text-[length:var(--hi-text-body)] text-[var(--hi-ash)] block mb-1">Тикер *</label>
-                <input
-                  type="text"
-                  value={ticker}
-                  onChange={(e) => setTicker(e.target.value)}
-                  placeholder="SBER"
-                  className={inputCls}
-                />
+        </div>
+
+        {kind === 'security' && (
+          <>
+            <div className="grid grid-cols-[1fr_1.4fr] gap-3">
+              <Field label="Тикер или ISIN">
+                <TextInput value={f.ticker} onChange={set('ticker')} placeholder="SBER" autoCapitalize="characters" autoFocus />
+              </Field>
+              <Field label="Название">
+                <TextInput value={f.name} onChange={set('name')} placeholder="необязательно" />
+              </Field>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Количество">
+                <TextInput inputMode="decimal" value={f.quantity} onChange={set('quantity')} placeholder="100" suffix="шт" />
+              </Field>
+              <Field
+                label="Куплено за"
+                hint={quantity > 1 && cost > 0 ? `${formatPrice(cost / quantity)} за шт` : 'всего, необязательно'}
+              >
+                <TextInput inputMode="decimal" value={f.cost} onChange={set('cost')} placeholder="25 000" suffix="₽" />
+              </Field>
+            </div>
+          </>
+        )}
+
+        {kind === 'deposit' && (
+          <>
+            <Field label="Название">
+              <TextInput value={f.name} onChange={set('name')} placeholder="Вклад в Т-Банке" autoFocus />
+            </Field>
+            <div className="grid grid-cols-[1.4fr_1fr] gap-3">
+              <Field label="Сумма вклада">
+                <TextInput inputMode="decimal" value={f.value} onChange={set('value')} placeholder="500 000" suffix={unit} />
+              </Field>
+              <Field label="Ставка">
+                <TextInput inputMode="decimal" value={f.rate} onChange={set('rate')} placeholder="18" suffix="%" />
+              </Field>
+            </div>
+            {value > 0 && rate > 0 && (
+              <div className="rounded-2xl bg-[var(--hi-gold-tint)] px-4 py-3 text-[length:var(--hi-text-caption)] text-[var(--hi-text-2)]">
+                Доход ≈ <span className="font-semibold text-[var(--hi-gold)]">{formatCurrencyFull((value * rate) / 100 / 12)}</span> в месяц до НДФЛ
               </div>
             )}
-            <div>
-              <label className="text-[length:var(--hi-text-body)] text-[var(--hi-ash)] block mb-1">Кол-во</label>
-              <input
-                type="text"
-                inputMode="decimal"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                placeholder="100"
-                className={inputCls}
-              />
+          </>
+        )}
+
+        {kind === 'realty' && (
+          <>
+            <Field label="Название">
+              <TextInput value={f.name} onChange={set('name')} placeholder="Студия на Ленина" autoFocus />
+            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Стоимость объекта">
+                <TextInput inputMode="decimal" value={f.value} onChange={set('value')} placeholder="6 500 000" suffix={unit} />
+              </Field>
+              <Field label="Аренда в месяц" hint="можно не указывать и записывать поступления">
+                <TextInput inputMode="decimal" value={f.rent} onChange={set('rent')} placeholder="40 000" suffix={unit} />
+              </Field>
             </div>
-            <div>
-              <label className="text-[length:var(--hi-text-body)] text-[var(--hi-ash)] block mb-1">Стоимость пок.</label>
-              <input
-                type="text"
-                inputMode="decimal"
-                value={avgPrice}
-                onChange={(e) => setAvgPrice(e.target.value)}
-                placeholder="25 000"
-                className={inputCls}
-              />
-              {(() => {
-                const q = parseFloat(quantity);
-                const t = parseFloat(avgPrice);
-                return q > 1 && t > 0 ? (
-                  <div className="text-[length:var(--hi-text-micro)] text-[var(--hi-muted)] mt-0.5">
-                    {Math.round(t / q).toLocaleString('ru-RU')} ₽/шт
-                  </div>
-                ) : null;
-              })()}
+          </>
+        )}
+
+        {kind === 'other' && (
+          <>
+            <Field label="Название">
+              <TextInput value={f.name} onChange={set('name')} placeholder="Например, золото" autoFocus />
+            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Количество">
+                <TextInput inputMode="decimal" value={f.quantity} onChange={set('quantity')} placeholder="1" suffix="шт" />
+              </Field>
+              <Field label="Куплено за" hint={quantity > 1 && cost > 0 ? `${formatPrice(cost / quantity, f.currency)} за шт` : 'всего'}>
+                <TextInput inputMode="decimal" value={f.cost} onChange={set('cost')} placeholder="25 000" suffix={unit} />
+              </Field>
             </div>
-          </div>
-          <button
-            onClick={handleAdd}
-            disabled={!name.trim() || (isExchangeType && !ticker.trim())}
-            className="w-full bg-[var(--hi-stone)] text-[var(--hi-text)] py-2.5 rounded-lg text-[length:var(--hi-text-body)] font-medium hover:bg-[var(--hi-shadow)] transition-colors disabled:opacity-40"
-          >
-            Добавить
-          </button>
-        </div>
-      </SheetContent>
-    </Sheet>
+            <Field label="Доход на 1 шт в год" hint="необязательно — можно записывать выплаты">
+              <TextInput inputMode="decimal" value={f.income} onChange={set('income')} placeholder="0" suffix={unit} />
+            </Field>
+          </>
+        )}
+
+        {kind !== 'security' && (
+          <Field label="Валюта">
+            <SelectInput value={f.currency} onChange={set('currency')}>
+              {CURRENCY_OPTIONS.map((c) => <option key={c} value={c}>{c}</option>)}
+            </SelectInput>
+          </Field>
+        )}
+      </div>
+    </BottomSheet>
   );
 }

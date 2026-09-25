@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { PwaUpdatePrompt } from '@/components/pwa-update-prompt';
 import { SyncProvider } from '@/contexts/sync-context';
-import { OnboardingProvider } from '@/contexts/onboarding-context';
+import { FeedbackProvider } from '@/components/ds/feedback';
 
 const MainPage = lazy(() => import('@/pages/main-page').then((m) => ({ default: m.MainPage })));
 const CategoryPage = lazy(() => import('@/pages/category-page').then((m) => ({ default: m.CategoryPage })));
@@ -11,14 +11,14 @@ const AssetDetailPage = lazy(() => import('@/pages/asset-detail-page').then((m) 
 const DataPage = lazy(() => import('@/pages/data-page').then((m) => ({ default: m.DataPage })));
 const SettingsPage = lazy(() => import('@/pages/settings-page').then((m) => ({ default: m.SettingsPage })));
 const PaymentsPage = lazy(() => import('@/pages/payments-page').then((m) => ({ default: m.PaymentsPage })));
-const FirstLaunchTour = lazy(() => import('@/components/onboarding/FirstLaunchTour').then((m) => ({ default: m.FirstLaunchTour })));
+const Welcome = lazy(() => import('@/components/onboarding/welcome').then((m) => ({ default: m.Welcome })));
 
 export default function App() {
   return (
     <ErrorBoundary>
-      <PwaUpdatePrompt />
       <BrowserRouter basename={import.meta.env.BASE_URL}>
-        <OnboardingProvider>
+        <FeedbackProvider>
+          <PwaUpdatePrompt />
           <SyncProvider>
             <Suspense fallback={null}>
               <Routes>
@@ -28,11 +28,12 @@ export default function App() {
                 <Route path="/data" element={<DataPage />} />
                 <Route path="/payments" element={<PaymentsPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
+                <Route path="*" element={<MainPage />} />
               </Routes>
-              <FirstLaunchTour />
+              <Welcome />
             </Suspense>
           </SyncProvider>
-        </OnboardingProvider>
+        </FeedbackProvider>
       </BrowserRouter>
     </ErrorBoundary>
   );

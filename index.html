@@ -3,16 +3,42 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#c8b48c" />
-  <meta name="description" content="Трекер пассивного дохода" />
+  <meta name="theme-color" content="#0b0a08" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="description" content="Рантье — учёт пассивного дохода: сколько денег в месяц приносит ваш капитал" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Рантье" />
   <link rel="icon" href="/icon.svg" type="image/svg+xml" />
   <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
   <link rel="icon" href="/favicon-16.png" sizes="16x16" type="image/png" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-  <title>HeroIncome</title>
+  <title>Рантье</title>
   <style>
-    .s-fill { display:inline-block; width:0; overflow:hidden; opacity:0; }
-    #s-bang { transition: opacity 0.3s ease; }
+    html, body { background: #0b0a08; margin: 0; }
+    #splash {
+      position: fixed; inset: 0; z-index: 9999;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
+      background: radial-gradient(90% 60% at 50% 38%, #1f1b15 0%, #0b0a08 70%);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    #splash.s-out { opacity: 0; transform: scale(1.03); }
+    #splash .s-mark { width: 72px; height: 72px; opacity: 0; animation: s-mark 1s cubic-bezier(0.22,1,0.36,1) 0.1s forwards; }
+    #splash .s-word {
+      font-family: 'Cormorant Garamond Variable', 'Cormorant Garamond', Georgia, serif;
+      font-weight: 400; font-size: 44px; color: #efe7d8; letter-spacing: 0.5em; padding-left: 0.5em;
+      opacity: 0; animation: s-word 1.1s cubic-bezier(0.22,1,0.36,1) 0.45s forwards;
+    }
+    #splash .s-tag {
+      font-family: 'Manrope Variable', system-ui, sans-serif; font-size: 11px; font-weight: 600;
+      letter-spacing: 0.28em; text-transform: uppercase; color: #7f7666;
+      opacity: 0; animation: s-fade 0.8s ease 0.95s forwards;
+    }
+    @keyframes s-mark { from { opacity: 0; transform: translateY(8px) scale(0.92); } to { opacity: 1; transform: none; } }
+    @keyframes s-word { from { opacity: 0; letter-spacing: 0.9em; } to { opacity: 1; letter-spacing: 0.14em; padding-left: 0.14em; } }
+    @keyframes s-fade { to { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { #splash * { animation-duration: 1ms !important; animation-delay: 0s !important; } }
   </style>
   <!-- SPA redirect restore (works with 404.html for GitHub Pages) -->
   <script>
@@ -26,19 +52,24 @@
     }(window.location))
   </script>
 </head>
-<body class="bg-[#0c0b09]">
-  <!-- Branded startup splash, removed by app JS after the intro animation. -->
-  <div id="splash" style="
-    position:fixed; inset:0; z-index:9999;
-    display:flex; align-items:center; justify-content:center;
-    background:#c8b48c;
-    font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;
-    font-weight:700; font-size:min(15vw,64px); color:#0c0b09;
-    transition: opacity 0.5s ease;
-  ">
-    <span id="s-H">H</span><span class="s-fill" style="display:inline-block;width:0;overflow:hidden;opacity:0">e</span><span class="s-fill" style="display:inline-block;width:0;overflow:hidden;opacity:0">r</span><span class="s-fill" style="display:inline-block;width:0;overflow:hidden;opacity:0">o</span><span id="s-I">I</span><span class="s-fill" style="display:inline-block;width:0;overflow:hidden;opacity:0">n</span><span class="s-fill" style="display:inline-block;width:0;overflow:hidden;opacity:0">c</span><span class="s-fill" style="display:inline-block;width:0;overflow:hidden;opacity:0">o</span><span class="s-fill" style="display:inline-block;width:0;overflow:hidden;opacity:0">m</span><span class="s-fill" style="display:inline-block;width:0;overflow:hidden;opacity:0">e</span><span id="s-bang">!</span>
+<body>
+  <!-- Branded startup splash: shown once per brand version, removed by main.tsx. -->
+  <div id="splash" aria-hidden="true">
+    <svg class="s-mark" viewBox="0 0 512 512">
+      <defs>
+        <linearGradient id="s-g" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#f3dfb0"/><stop offset="1" stop-color="#c3a164"/>
+        </linearGradient>
+      </defs>
+      <g transform="translate(83.4 463.2) scale(0.66)" fill="url(#s-g)" stroke="url(#s-g)" stroke-width="10" stroke-linejoin="round">
+        <path d="M186-542L186-85Q186-55 194.5-39.5Q203-24 230-18Q257-12 311-12Q314-12 314-6Q314 0 311 0Q279 0 241.5-1Q204-2 160-2Q128-2 98-1Q68 0 44 0Q42 0 42-6Q42-12 44-12Q82-12 101-17Q120-22 126.5-37Q133-52 133-81L133-544Q133-573 126.5-587.5Q120-602 101-607.5Q82-613 44-613Q42-613 42-619Q42-625 44-625Q68-625 97.5-623.5Q127-622 159-622Q185-622 222-625Q259-628 299-628Q354-628 399-611Q444-594 470.5-558Q497-522 497-464Q497-411 477-373Q457-335 424.5-310.5Q392-286 353-274Q314-262 276-262Q263-262 250.5-263Q238-264 227-267Q223-268 224.5-274.5Q226-281 229-280Q238-278 247.5-277Q257-276 265-276Q309-276 348-294Q387-312 411-349.5Q435-387 435-444Q435-499 413.5-537Q392-575 356-595Q320-615 276-615Q240-615 220.5-611.5Q201-608 193.5-593Q186-578 186-542"/>
+        <rect x="28" y="-196" width="300" height="20" rx="4"/>
+      </g>
+    </svg>
+    <div class="s-word">Рантье</div>
+    <div class="s-tag">капитал, который платит</div>
   </div>
-  <script>if(localStorage.getItem('hi-splash-seen-v2'))document.getElementById('splash').style.display='none'</script>
+  <script>try{if(localStorage.getItem('rt-splash-seen'))document.getElementById('splash').style.display='none'}catch(e){}</script>
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
 </body>

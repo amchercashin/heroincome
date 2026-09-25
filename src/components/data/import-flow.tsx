@@ -1,5 +1,8 @@
 import { useState, useCallback, useRef } from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { BottomSheet } from '@/components/ds/bottom-sheet';
+import { Button } from '@/components/ds/button';
+import { Field, TextArea, TextInput } from '@/components/ds/field';
+import { ChevronRight, Loader2 } from 'lucide-react';
 import { parseSberHTML, extractAgreementNumber } from '@/services/sber-html-parser';
 import { parseMDTable } from '@/services/import-parser';
 import { computeImportDiff } from '@/services/import-diff';
@@ -44,14 +47,18 @@ function MethodButton({ icon: Icon, label, desc, onClick }: {
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
-      className="w-full flex items-center gap-3 bg-[var(--hi-stone)] border border-[var(--hi-shadow)] rounded-lg p-4 text-left hover:border-[var(--hi-gold)] transition-colors"
+      className="hi-pressable flex w-full items-center gap-3.5 rounded-[22px] border border-[var(--hi-line)] bg-[var(--hi-surface)] p-4 text-left active:bg-[var(--hi-raised)]"
     >
-      <Icon className="w-5 h-5 text-[var(--hi-ash)] shrink-0" />
-      <div>
-        <div className="text-[length:var(--hi-text-heading)] font-medium text-[var(--hi-text)]">{label}</div>
-        <div className="text-[length:var(--hi-text-body)] text-[var(--hi-ash)]">{desc}</div>
+      <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-[var(--hi-line-strong)] bg-[var(--hi-raised)] text-[var(--hi-gold)]">
+        <Icon className="size-5" />
       </div>
+      <div className="min-w-0 flex-1">
+        <div className="text-[length:var(--hi-text-body)] font-semibold text-[var(--hi-text)]">{label}</div>
+        <div className="mt-0.5 text-[length:var(--hi-text-caption)] leading-snug text-[var(--hi-text-3)]">{desc}</div>
+      </div>
+      <ChevronRight className="size-4 shrink-0 text-[var(--hi-text-3)]" />
     </button>
   );
 }
@@ -59,12 +66,22 @@ function MethodButton({ icon: Icon, label, desc, onClick }: {
 function BackButton({ onClick }: { onClick: () => void }) {
   return (
     <button
+      type="button"
       onClick={onClick}
-      className="flex items-center gap-1 text-[length:var(--hi-text-body)] text-[var(--hi-ash)] hover:text-[var(--hi-text)] transition-colors mb-3"
+      className="mb-1 inline-flex items-center gap-1 text-[length:var(--hi-text-caption)] font-semibold text-[var(--hi-text-2)]"
     >
-      <ArrowLeft className="w-3.5 h-3.5" />
+      <ArrowLeft className="size-3.5" />
       Назад
     </button>
+  );
+}
+
+function Working({ text }: { text: string }) {
+  return (
+    <div className="flex items-center justify-center gap-2 py-6 text-[length:var(--hi-text-caption)] text-[var(--hi-text-2)]">
+      <Loader2 className="size-4 animate-spin text-[var(--hi-gold)]" />
+      {text}
+    </div>
   );
 }
 
@@ -206,146 +223,91 @@ export function ImportFlow({ open, onClose, accountId, accountName }: ImportFlow
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const title = step === 'preview' ? 'Проверьте изменения' : accountId !== null ? `Импорт: ${accountName}` : 'Импорт отчёта';
+  const description = step === 'method'
+    ? 'Бумаги, количество и цены покупки — из отчёта брокера. Выплаты подтянутся с биржи.'
+    : step === 'ai'
+      ? 'Любой брокер: ИИ-ассистент превратит отчёт в таблицу.'
+      : 'Ничего не изменится, пока вы не нажмёте «Применить».';
+
   return (
-    <Sheet open={open} onOpenChange={(v) => !v && handleClose()}>
-      <SheetContent side="bottom" className="bg-[var(--hi-void)] border-t-[var(--hi-shadow)] max-h-[85vh] overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle className="text-[var(--hi-text)]">
-            {accountId !== null ? `Импорт: ${accountName}` : 'Импорт в новый счёт'}
-          </SheetTitle>
-          <SheetDescription className="sr-only">
-            Загрузка и предпросмотр импорта брокерского отчёта
-          </SheetDescription>
-        </SheetHeader>
-
-        <div className="mt-4 px-4">
-          {/* Step: method selection */}
-          {step === 'method' && (
-            <div className="space-y-2">
-              <MethodButton
-                icon={Landmark}
-                label="Отчёт Сбера"
-                desc="HTML-отчёт брокера"
-                onClick={() => sberFileRef.current?.click()}
-              />
-              <MethodButton
-                icon={Bot}
-                label="Markdown / через AI"
-                desc="Промт для ChatGPT/Claude → вставьте таблицу"
-                onClick={() => setStep('ai')}
-              />
-              {enriching && (
-                <div className="flex items-center justify-center gap-2 py-8 text-[var(--hi-ash)] text-[length:var(--hi-text-body)]">
-                  <span className="inline-block animate-spin">⟳</span>
-                  Определяю бумаги на MOEX...
-                </div>
-              )}
-            </div>
-          )}
-          {step === 'method' && error && (
-            <p className="text-[length:var(--hi-text-body)] text-red-400 mt-2">{error}</p>
-          )}
-
-          {/* Step: AI import */}
-          {step === 'ai' && (
-            <div className="space-y-3">
-              <BackButton onClick={() => { setStep('method'); setError(null); }} />
-              <p className="text-[length:var(--hi-text-body)] text-[var(--hi-ash)]">
-                Скопируйте промт, отправьте в ChatGPT или Claude вместе с отчётом, затем вставьте ответ
-              </p>
-
-              {/* AI prompt with copy button */}
-              <div className="relative">
-                <pre className="bg-[var(--hi-stone)] border border-[var(--hi-shadow)] rounded-lg p-3 pr-10 text-xs text-[var(--hi-ash)] whitespace-pre-wrap overflow-x-auto max-h-40 overflow-y-auto max-w-full">
-                  {AI_PROMPT}
-                </pre>
-                <button
-                  onClick={handleCopyPrompt}
-                  className="absolute top-2 right-2 p-1.5 rounded-md bg-[var(--hi-void)] hover:bg-[var(--hi-shadow)] transition-colors"
-                  title="Скопировать промт"
-                >
-                  {copied
-                    ? <Check className="w-3.5 h-3.5 text-green-400" />
-                    : <Copy className="w-3.5 h-3.5 text-[var(--hi-ash)]" />
-                  }
-                </button>
-              </div>
-
-              {/* Textarea for pasting AI response */}
-              <textarea
-                value={aiText}
-                onChange={(e) => setAiText(e.target.value)}
-                placeholder="Вставьте Markdown-таблицу из ответа AI..."
-                className="w-full bg-[var(--hi-stone)] border border-[var(--hi-shadow)] rounded-lg px-3 py-2 text-base text-[var(--hi-text)] placeholder:text-[var(--hi-shadow)] outline-none focus:border-[var(--hi-gold)] min-h-[120px] resize-y font-mono"
-              />
-
-              <button
-                onClick={handleAiParse}
-                disabled={!aiText.trim()}
-                className="w-full bg-[var(--hi-stone)] text-[var(--hi-text)] py-2.5 rounded-lg text-[length:var(--hi-text-body)] font-medium disabled:opacity-40 hover:border-[var(--hi-gold)] border border-[var(--hi-shadow)] transition-colors"
-              >
-                Распознать
-              </button>
-
-              {enriching && (
-                <div className="flex items-center justify-center gap-2 py-4 text-[var(--hi-ash)] text-[length:var(--hi-text-body)]">
-                  <span className="inline-block animate-spin">⟳</span>
-                  Определяю бумаги на MOEX...
-                </div>
-              )}
-
-              {error && (
-                <p className="text-[length:var(--hi-text-body)] text-red-400">{error}</p>
-              )}
-            </div>
-          )}
-
-          {/* Step: preview */}
-          {step === 'preview' && diff && (
-            <div className="space-y-3">
-              {/* Editable name for new accounts */}
-              {accountId === null && (
-                <div>
-                  <label className="text-[length:var(--hi-text-body)] text-[var(--hi-ash)] block mb-1">Название счёта</label>
-                  <input
-                    type="text"
-                    value={editableName}
-                    onChange={(e) => setEditableName(e.target.value)}
-                    className="w-full bg-[var(--hi-stone)] border border-[var(--hi-shadow)] rounded-lg px-3 py-2 text-base text-[var(--hi-text)] outline-none focus:border-[var(--hi-gold)]"
-                  />
-                </div>
-              )}
-
-              <ImportPreview diff={diff} />
-
-              {error && <p className="text-[length:var(--hi-text-body)] text-red-400">{error}</p>}
-
-              <div className="flex gap-2">
-                <button
-                  onClick={handleClose}
-                  className="flex-1 bg-[var(--hi-stone)] text-[var(--hi-ash)] py-2.5 rounded-lg text-[length:var(--hi-text-body)]"
-                >
-                  Отмена
-                </button>
-                <button
-                  onClick={handleApply}
-                  disabled={applying}
-                  className="flex-[2] bg-[#2d5a2d] text-[#6be06b] py-2.5 rounded-lg text-[length:var(--hi-text-body)] font-medium disabled:opacity-50"
-                >
-                  {applying ? 'Применяю...' : 'Применить'}
-                </button>
-              </div>
-            </div>
-          )}
+    <BottomSheet
+      open={open}
+      onOpenChange={(v) => !v && handleClose()}
+      title={title}
+      description={description}
+      footer={
+        step === 'preview' && diff ? (
+          <div className="flex gap-2">
+            <Button variant="secondary" size="lg" onClick={handleClose} className="flex-1">Отмена</Button>
+            <Button variant="primary" size="lg" onClick={handleApply} loading={applying} className="flex-[2]">
+              {applying ? 'Применяю…' : 'Применить'}
+            </Button>
+          </div>
+        ) : step === 'ai' ? (
+          <Button variant="primary" size="lg" block onClick={handleAiParse} disabled={!aiText.trim() || enriching} loading={enriching}>
+            Распознать таблицу
+          </Button>
+        ) : undefined
+      }
+    >
+      {step === 'method' && (
+        <div className="space-y-2.5">
+          <MethodButton icon={Landmark} label="Отчёт Сбербанка" desc="HTML-файл брокерского отчёта" onClick={() => sberFileRef.current?.click()} />
+          <MethodButton icon={Bot} label="Любой брокер через ИИ" desc="Промт для ChatGPT или Claude → вставьте ответ" onClick={() => setStep('ai')} />
+          {enriching && <Working text="Определяю бумаги на Мосбирже…" />}
+          {error && <p className="px-1 text-[length:var(--hi-text-caption)] text-[var(--hi-negative)]">{error}</p>}
         </div>
-        <input
-          ref={sberFileRef}
-          type="file"
-          accept=".html,.htm"
-          onChange={handleSberUpload}
-          className="hidden"
-        />
-      </SheetContent>
-    </Sheet>
+      )}
+
+      {step === 'ai' && (
+        <div className="space-y-4">
+          <BackButton onClick={() => { setStep('method'); setError(null); }} />
+          <ol className="space-y-1.5 px-1 text-[length:var(--hi-text-caption)] text-[var(--hi-text-2)]">
+            <li><span className="font-semibold text-[var(--hi-gold)]">1.</span> Скопируйте промт</li>
+            <li><span className="font-semibold text-[var(--hi-gold)]">2.</span> Отправьте его ИИ вместе с отчётом брокера</li>
+            <li><span className="font-semibold text-[var(--hi-gold)]">3.</span> Вставьте ответ ниже</li>
+          </ol>
+          <div className="relative">
+            <pre className="max-h-40 max-w-full overflow-auto whitespace-pre-wrap rounded-2xl border border-[var(--hi-line)] bg-[var(--hi-surface)] p-3.5 pr-12 text-[12px] leading-relaxed text-[var(--hi-text-3)]">
+              {AI_PROMPT}
+            </pre>
+            <button
+              type="button"
+              onClick={handleCopyPrompt}
+              className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full border border-[var(--hi-line-strong)] bg-[var(--hi-raised)] px-2.5 py-1.5 text-[length:var(--hi-text-micro)] font-semibold text-[var(--hi-gold)]"
+              title="Скопировать промт"
+            >
+              {copied ? <Check className="size-3.5 text-[var(--hi-positive)]" /> : <Copy className="size-3.5" />}
+              {copied ? 'Скопировано' : 'Копировать'}
+            </button>
+          </div>
+          <Field label="Ответ ИИ">
+            <TextArea
+              value={aiText}
+              onChange={(e) => setAiText(e.target.value)}
+              placeholder="Вставьте Markdown-таблицу из ответа AI..."
+              className="font-mono text-[14px]"
+            />
+          </Field>
+          {enriching && <Working text="Определяю бумаги на Мосбирже…" />}
+          {error && <p className="px-1 text-[length:var(--hi-text-caption)] text-[var(--hi-negative)]">{error}</p>}
+        </div>
+      )}
+
+      {step === 'preview' && diff && (
+        <div className="space-y-4">
+          {accountId === null && (
+            <Field label="Название счёта">
+              <TextInput value={editableName} onChange={(e) => setEditableName(e.target.value)} />
+            </Field>
+          )}
+          <ImportPreview diff={diff} />
+          {error && <p className="px-1 text-[length:var(--hi-text-caption)] text-[var(--hi-negative)]">{error}</p>}
+        </div>
+      )}
+
+      <input ref={sberFileRef} type="file" accept=".html,.htm" onChange={handleSberUpload} className="hidden" />
+    </BottomSheet>
   );
 }

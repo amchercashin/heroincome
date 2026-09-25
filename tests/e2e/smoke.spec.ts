@@ -1,14 +1,17 @@
 import { expect, test } from '@playwright/test';
 
-async function skipTours(page: import('@playwright/test').Page) {
+/** Mark the welcome flow and splash as seen so tests start on real screens. */
+async function skipIntro(page: import('@playwright/test').Page) {
   await page.evaluate(() => {
-    localStorage.setItem('hi-onboarding-done', '1');
-    localStorage.setItem('hi-tip-category', '1');
-    localStorage.setItem('hi-tip-asset', '1');
-    localStorage.setItem('hi-tip-data', '1');
-    localStorage.setItem('hi-tip-payments', '1');
+    localStorage.setItem('rt-welcome-done', '1');
+    localStorage.setItem('rt-splash-seen', '1');
   });
 }
+
+/** Text with non-breaking spaces normalised. */
+const nb = (s: string) => new RegExp(s.replace(/ /g, '[\\s\\u00a0]'));
+/** Exact text with non-breaking spaces normalised. */
+const exact = (s: string) => new RegExp(`^${s.replace(/ /g, '[\\s\\u00a0]')}$`);
 
 test.beforeEach(async ({ page }) => {
   await page.route('**/*', (route) => {
@@ -25,23 +28,36 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-test('mobile core flow renders portfolio, asset detail, data, and settings', async ({ page }) => {
+test('first launch shows the welcome flow and the demo portfolio', async ({ page }) => {
   await page.goto('/');
+  await page.evaluate(() => localStorage.setItem('rt-splash-seen', '1'));
+  await page.reload();
+
+  const welcome = page.getByRole('dialog', { name: 'Добро пожаловать в Рантье' });
+  await expect(welcome).toBeVisible();
+  await welcome.getByRole('button', { name: 'Пропустить' }).click();
+  await welcome.getByRole('button', { name: 'Посмотреть на демо-портфеле' }).click();
+  await expect(welcome).toBeHidden();
+
+  await expect(page.getByText('Вы смотрите')).toBeVisible();
+  await expect(page.getByTestId('hero-amount')).not.toHaveText('—');
+  await expect(page.getByText('Динамика дохода')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Удалить', exact: true }).click();
+  await page.getByRole('button', { name: 'Удалить демо' }).click();
+  await expect(page.getByText('Капитал, который платит')).toBeVisible();
+});
+
+test('mobile core flow renders portfolio, asset detail, accounts, and settings', async ({ page }) => {
+  await page.goto('/');
+  await skipIntro(page);
   await page.evaluate(async () => {
-    localStorage.setItem('hi-onboarding-done', '1');
-    localStorage.setItem('hi-tip-category', '1');
-    localStorage.setItem('hi-tip-asset', '1');
-    localStorage.setItem('hi-tip-data', '1');
     const { db } = await (0, eval)("import('/src/db/database.ts')");
     await db.delete();
     await db.open();
 
     const now = new Date();
-    const accountId = await db.accounts.add({
-      name: 'Тестовый счёт',
-      createdAt: now,
-      updatedAt: now,
-    });
+    const accountId = await db.accounts.add({ name: 'Тестовый счёт', createdAt: now, updatedAt: now });
     const assetId = await db.assets.add({
       type: 'Акции',
       ticker: 'USDY',
@@ -57,86 +73,68 @@ test('mobile core flow renders portfolio, asset detail, data, and settings', asy
       updatedAt: now,
     });
     await db.holdings.add({
-      accountId,
-      assetId,
-      quantity: 2,
-      quantitySource: 'manual',
-      averagePrice: 90,
-      createdAt: now,
-      updatedAt: now,
+      accountId, assetId, quantity: 2, quantitySource: 'manual', averagePrice: 90, createdAt: now, updatedAt: now,
     });
-    await db.exchangeRates.put({
-      currency: 'USD',
-      rateToRub: 90,
-      updatedAt: now,
-      source: 'manual',
-    });
+    await db.exchangeRates.put({ currency: 'USD', rateToRub: 90, updatedAt: now, source: 'manual' });
   });
 
   await page.goto('/');
   await expect(page.getByText('расчётный пассивный доход')).toBeVisible();
-  await expect(page.getByText('Акции')).toBeVisible();
-  await expect(page.getByText(/портфель ₽ 18K/)).toBeVisible();
+  await expect(page.getByText(nb('18 тыс ₽'))).toBeVisible();
 
-  await page.getByText('Акции').click();
+  await page.getByRole('link', { name: /Акции/ }).click();
   await expect(page.getByText('Долларовый актив')).toBeVisible();
 
   await page.getByText('Долларовый актив').click();
   await expect(page.getByText('Текущая цена')).toBeVisible();
-  await expect(page.getByText('100 USD')).toBeVisible();
+  await expect(page.getByText(nb('100 USD'))).toBeVisible();
 
-  await page.goto('/data');
+  await page.getByRole('button', { name: 'Счета' }).click();
   await expect(page.getByText('Тестовый счёт')).toBeVisible();
 
-  await page.goto('/settings');
+  await page.getByRole('button', { name: 'Настройки' }).click();
   await expect(page.getByText('Курсы валют')).toBeVisible();
-  await expect(page.getByText('USD')).toBeVisible();
   await expect(page.locator('input[value="90"]')).toBeVisible();
 });
 
 test('mobile manual flow supports foreign currency asset and payment', async ({ page }) => {
   await page.goto('/');
-  await skipTours(page);
+  await skipIntro(page);
 
   await page.goto('/data');
-  await page.getByRole('button', { name: '+ Добавить счёт' }).click();
+  await page.getByRole('button', { name: 'Добавить счёт' }).first().click();
   await page.getByPlaceholder('Сбер / Недвижимость / Вклады / Прочее').fill('Валютный счёт');
   await page.getByRole('button', { name: 'Создать пустой' }).click();
 
-  const accountButton = page.getByRole('button', { name: /Валютный счёт/ });
-  await expect(accountButton).toBeVisible();
-  await accountButton.click();
-  await page.getByRole('button', { name: '+ Добавить актив' }).click();
-  await page.getByPlaceholder('Сбербанк').fill('Валютный актив');
-  await page.locator('select').first().selectOption('Прочее');
-  await page.locator('select').nth(1).selectOption('USD');
-  await page.getByPlaceholder('100').fill('2');
+  await page.getByRole('button', { name: /Валютный счёт/ }).first().click();
+  await page.getByRole('button', { name: 'Добавить актив' }).first().click();
+  await page.getByRole('radio', { name: 'Прочее' }).click();
+  await page.getByPlaceholder('Например, золото').fill('Валютный актив');
+  await page.getByPlaceholder('1', { exact: true }).fill('2');
   await page.getByPlaceholder('25 000').fill('200');
-  await page.getByRole('button', { name: 'Добавить' }).click();
-  await expect(page.getByText('200 USD')).toBeVisible();
+  await page.locator('select').selectOption('USD');
+  await page.getByRole('button', { name: 'Добавить', exact: true }).click();
+  await expect(page.getByText(exact('200 USD'))).toBeVisible();
 
   await page.goto('/settings');
-  const usdRateInput = page.locator('input[placeholder="курс"]').nth(2);
+  const usdRateInput = page.getByLabel('Курс USD к рублю');
   await usdRateInput.fill('90');
   await usdRateInput.press('Enter');
   await expect(page.locator('input[value="90"]')).toBeVisible();
   await expect(page.getByText(/обновлён/)).toBeVisible();
 
   await page.goto('/data');
-  const convertedAccountButton = page.getByRole('button', { name: /Валютный счёт/ });
-  await expect(convertedAccountButton).toContainText('₽ 18K');
-  await convertedAccountButton.click();
-  await expect(page.getByText('200 USD')).toBeVisible();
+  await expect(page.getByRole('button', { name: /Валютный счёт/ }).first()).toContainText(nb('18 тыс ₽'));
 
   await page.goto('/payments');
-  await page.getByRole('button', { name: /Прочее/ }).click();
-  await page.getByText('Валютный актив').click();
-  await page.getByRole('button', { name: '+ выплата' }).click();
+  await page.getByRole('radio', { name: 'История' }).click();
+  await page.getByRole('button', { name: /Прочее/ }).first().click();
+  await page.getByRole('button', { name: 'Добавить выплату: Валютный актив' }).click();
   await page.getByPlaceholder('До НДФЛ').fill('12');
-  await page.getByRole('button', { name: '✓' }).click();
-  await expect(page.getByText('12 USD')).toBeVisible();
+  await page.getByRole('button', { name: 'Сохранить выплату' }).click();
+  await expect(page.getByText(exact('12 USD'))).toBeVisible();
 
   await page.goto('/');
-  await expect(page.getByText(/портфель ₽ 18K/)).toBeVisible();
-  await expect(page.getByText('₽ 180')).toBeVisible();
+  await expect(page.getByText(nb('18 тыс ₽'))).toBeVisible();
+  await expect(page.getByTestId('hero-amount')).toHaveText(nb('180'));
 });

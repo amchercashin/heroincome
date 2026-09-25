@@ -6,6 +6,7 @@ export default defineConfig({
   expect: { timeout: 5_000 },
   use: {
     baseURL: 'http://127.0.0.1:5174',
+    launchOptions: process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : undefined,
     trace: 'retain-on-failure',
   },
   projects: [

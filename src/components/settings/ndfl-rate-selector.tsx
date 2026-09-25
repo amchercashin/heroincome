@@ -46,19 +46,19 @@ export function NdflRateSelector({ category, color, rate, onChange }: NdflRateSe
   };
 
   const segmentClass = (active: boolean) =>
-    `px-2 py-1 font-mono text-[length:var(--hi-text-micro)] transition-colors ${
+    `min-w-[38px] rounded-full px-2 py-1.5 text-[length:var(--hi-text-caption)] font-semibold transition-colors ${
       active
-        ? 'bg-[rgba(200,180,140,0.08)] text-[var(--hi-gold)]'
-        : 'text-[var(--hi-ash)]'
+        ? 'bg-[var(--hi-gold-tint)] text-[var(--hi-gold)] shadow-[inset_0_0_0_1px_rgba(217,192,142,0.35)]'
+        : 'text-[var(--hi-text-3)]'
     }`;
 
   return (
-    <div className="flex items-center justify-between py-2.5">
-      <span className="text-[var(--hi-text)] text-[length:var(--hi-text-body)] flex items-center gap-2">
-        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-        {category}
+    <div className="flex items-center justify-between gap-3 py-3">
+      <span className="flex min-w-0 items-center gap-2.5 text-[length:var(--hi-text-body)] text-[var(--hi-text)]">
+        <span className="size-2.5 flex-shrink-0 rounded-full" style={{ backgroundColor: color }} />
+        <span className="truncate">{category}</span>
       </span>
-      <div className="flex border border-[rgba(200,180,140,0.12)] rounded-md overflow-hidden">
+      <div className="flex shrink-0 items-center gap-0.5 rounded-full border border-[var(--hi-line)] bg-[var(--hi-void)] p-0.5">
         {PRESETS.map((preset) => (
           <button
             key={preset}
@@ -81,7 +81,8 @@ export function NdflRateSelector({ category, color, rate, onChange }: NdflRateSe
             }}
             onBlur={commitCustom}
             onKeyDown={handleKeyDown}
-            className="w-12 px-1 py-1 font-mono text-base text-[var(--hi-gold)] bg-[rgba(200,180,140,0.08)] border-l border-[rgba(200,180,140,0.08)] text-center outline-none"
+            aria-label={`Своя ставка НДФЛ для ${category}`}
+            className="w-14 rounded-full bg-[var(--hi-gold-tint)] px-1 py-1 text-center text-base font-semibold text-[var(--hi-gold)] outline-none"
           />
         ) : (
           <button

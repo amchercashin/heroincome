@@ -1,114 +1,104 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource/cormorant-garamond/cyrillic-300.css";
-@import "@fontsource/cormorant-garamond/cyrillic-400.css";
-@import "@fontsource/cormorant-garamond/latin-300.css";
-@import "@fontsource/cormorant-garamond/latin-400.css";
-@import "@fontsource/ibm-plex-mono/cyrillic-300.css";
-@import "@fontsource/ibm-plex-mono/cyrillic-400.css";
-@import "@fontsource/ibm-plex-mono/cyrillic-500.css";
-@import "@fontsource/ibm-plex-mono/latin-300.css";
-@import "@fontsource/ibm-plex-mono/latin-400.css";
-@import "@fontsource/ibm-plex-mono/latin-500.css";
-@import "@fontsource/dm-sans/latin-300.css";
-@import "@fontsource/dm-sans/latin-400.css";
-@import "@fontsource/dm-sans/latin-500.css";
+@import "@fontsource-variable/manrope/wght.css";
+@import "@fontsource-variable/cormorant-garamond/wght.css";
+@import "@fontsource-variable/cormorant-garamond/wght-italic.css";
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Рантье design tokens.
+ * Warm "old money" palette: near-black paper, ivory type, brushed gold accents.
+ * Text tiers are tuned for WCAG contrast on --hi-void:
+ *   --hi-text ≈ 15:1, --hi-text-2 ≈ 8:1, --hi-text-3 ≈ 4.2:1.
+ */
 :root {
-    /* HeroIncome design tokens */
-    --hi-void: #0c0b09;
-    --hi-stone: #1a1815;
-    --hi-gold: #c8b48c;
-    --hi-earth: #8b7355;
-    --hi-ash: #5a5548;
-    --hi-shadow: #3a3530;
-    --hi-text: #b0a898;
-    --hi-muted: #4a4540;
+    /* Surfaces */
+    --hi-void: #0b0a08;          /* app background */
+    --hi-surface: #14120f;       /* cards */
+    --hi-raised: #1c1915;        /* sheets, pressed states, inputs */
+    --hi-overlay: rgba(6, 5, 4, 0.72);
+    --hi-line: rgba(236, 220, 190, 0.08);
+    --hi-line-strong: rgba(236, 220, 190, 0.14);
 
-    /* Fluid typography tokens */
-    --hi-text-display: clamp(40px, 12vw, 56px);
+    /* Type */
+    --hi-text: #efe7d8;
+    --hi-text-2: #b3a894;
+    --hi-text-3: #7f7666;
+
+    /* Accents */
+    --hi-gold: #d9c08e;
+    --hi-gold-bright: #efd9a8;
+    --hi-gold-deep: #a88b57;
+    --hi-gold-tint: rgba(217, 192, 142, 0.12);
+    --hi-gold-glow: rgba(217, 192, 142, 0.22);
+    --hi-positive: #9dbf8e;
+    --hi-positive-tint: rgba(157, 191, 142, 0.12);
+    --hi-negative: #e07a6b;
+    --hi-negative-tint: rgba(224, 122, 107, 0.12);
+    --hi-info: #8fb0c9;
+    --hi-info-tint: rgba(143, 176, 201, 0.12);
+    --hi-violet: #b59ad1;
+    --hi-violet-tint: rgba(181, 154, 209, 0.12);
+
+    /* Fluid typography tokens (scale between 320px and 430px viewports) */
+    --hi-text-display: clamp(48px, 15vw, 66px);
+    --hi-text-large:   clamp(28px, 8.6vw, 36px);
     --hi-text-nav:     clamp(20px, 5.5vw, 24px);
-    --hi-text-title:   clamp(16px, 4.5vw, 20px);
-    --hi-text-heading: clamp(14px, 3.8vw, 16px);
-    --hi-text-body:    clamp(12px, 3.4vw, 14px);
-    --hi-text-caption: clamp(11px, 3.2vw, 13px);
-    --hi-text-micro:   clamp(10px, 2.7vw, 11px);
+    --hi-text-title:   clamp(17px, 4.8vw, 19px);
+    --hi-text-heading: clamp(15px, 4.1vw, 17px);
+    --hi-text-body:    clamp(13px, 3.7vw, 15px);
+    --hi-text-caption: clamp(12px, 3.3vw, 13px);
+    --hi-text-micro:   clamp(10.5px, 2.9vw, 11.5px);
 
-    --background: #0c0b09;
-    --foreground: #b0a898;
-    --card: #1a1815;
-    --card-foreground: #b0a898;
-    --popover: #1a1815;
-    --popover-foreground: #b0a898;
-    --primary: #c8b48c;
-    --primary-foreground: #0c0b09;
-    --secondary: #1a1815;
-    --secondary-foreground: #b0a898;
-    --muted: #1a1815;
-    --muted-foreground: #4a4540;
-    --accent: #1a1815;
-    --accent-foreground: #b0a898;
-    --destructive: #b8413a;
-    --border: rgba(200,180,140,0.08);
-    --input: #1a1815;
-    --ring: #c8b48c;
-    --chart-1: #c8b48c;
-    --chart-2: #8b7355;
-    --chart-3: #5a5548;
-    --chart-4: #3a3530;
-    --chart-5: #4a4540;
-    --radius: 0.625rem;
-    --sidebar: #0c0b09;
-    --sidebar-foreground: #b0a898;
-    --sidebar-primary: #c8b48c;
-    --sidebar-primary-foreground: #0c0b09;
-    --sidebar-accent: #1a1815;
-    --sidebar-accent-foreground: #b0a898;
-    --sidebar-border: rgba(200,180,140,0.08);
-    --sidebar-ring: #c8b48c;
-}
+    /* Layout */
+    --hi-gutter: 20px;
+    --hi-tabbar-h: 64px;
+    --hi-safe-bottom: env(safe-area-inset-bottom, 0px);
+    --hi-safe-top: env(safe-area-inset-top, 0px);
+    --hi-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --hi-ease-spring: cubic-bezier(0.34, 1.36, 0.64, 1);
 
-.dark {
-    --background: #0c0b09;
-    --foreground: #b0a898;
-    --card: #1a1815;
-    --card-foreground: #b0a898;
-    --popover: #1a1815;
-    --popover-foreground: #b0a898;
-    --primary: #c8b48c;
-    --primary-foreground: #0c0b09;
-    --secondary: #1a1815;
-    --secondary-foreground: #b0a898;
-    --muted: #1a1815;
-    --muted-foreground: #4a4540;
-    --accent: #1a1815;
-    --accent-foreground: #b0a898;
-    --destructive: #b8413a;
-    --border: rgba(200,180,140,0.08);
-    --input: #1a1815;
-    --ring: #c8b48c;
-    --chart-1: #c8b48c;
-    --chart-2: #8b7355;
-    --chart-3: #5a5548;
-    --chart-4: #3a3530;
-    --chart-5: #4a4540;
-    --sidebar: #0c0b09;
-    --sidebar-foreground: #b0a898;
-    --sidebar-primary: #c8b48c;
-    --sidebar-primary-foreground: #0c0b09;
-    --sidebar-accent: #1a1815;
-    --sidebar-accent-foreground: #b0a898;
-    --sidebar-border: rgba(200,180,140,0.08);
-    --sidebar-ring: #c8b48c;
+    /* shadcn bridge */
+    --background: var(--hi-void);
+    --foreground: var(--hi-text);
+    --card: var(--hi-surface);
+    --card-foreground: var(--hi-text);
+    --popover: var(--hi-raised);
+    --popover-foreground: var(--hi-text);
+    --primary: var(--hi-gold);
+    --primary-foreground: var(--hi-void);
+    --secondary: var(--hi-raised);
+    --secondary-foreground: var(--hi-text);
+    --muted: var(--hi-surface);
+    --muted-foreground: var(--hi-text-3);
+    --accent: var(--hi-raised);
+    --accent-foreground: var(--hi-text);
+    --destructive: var(--hi-negative);
+    --border: var(--hi-line);
+    --input: var(--hi-raised);
+    --ring: var(--hi-gold);
+    --chart-1: #d9c08e;
+    --chart-2: #8fb0c9;
+    --chart-3: #c79a7a;
+    --chart-4: #9dbf8e;
+    --chart-5: #b59ad1;
+    --radius: 0.875rem;
+    --sidebar: var(--hi-void);
+    --sidebar-foreground: var(--hi-text);
+    --sidebar-primary: var(--hi-gold);
+    --sidebar-primary-foreground: var(--hi-void);
+    --sidebar-accent: var(--hi-raised);
+    --sidebar-accent-foreground: var(--hi-text);
+    --sidebar-border: var(--hi-line);
+    --sidebar-ring: var(--hi-gold);
 }
 
 @theme inline {
-    --font-sans: 'DM Sans', sans-serif;
-    --font-serif: 'Cormorant Garamond', serif;
-    --font-mono: 'IBM Plex Mono', monospace;
+    --font-sans: 'Manrope Variable', system-ui, -apple-system, sans-serif;
+    --font-serif: 'Cormorant Garamond Variable', 'Cormorant Garamond', Georgia, serif;
+    --font-mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -153,12 +143,20 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
   html {
     @apply font-sans;
     touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    background: var(--hi-void);
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    overscroll-behavior: none;
   }
   /* iOS auto-zoom prevention — safety net for inputs without explicit Tailwind font-size */
   input, textarea, select {
@@ -170,24 +168,167 @@
     user-select: none;
     -webkit-touch-callout: none;
   }
+  /* Cormorant defaults to old-style figures ("1" looks like "ı") — use lining
+     figures in titles; the hero amount opts back in via .hi-numerals-oldstyle. */
+  :where(.font-serif) {
+    font-variant-numeric: lining-nums proportional-nums;
+  }
+  :focus-visible {
+    outline: 2px solid var(--hi-gold);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: var(--hi-gold-glow);
+    color: var(--hi-text);
+  }
 }
 
-/* Page transition animations (View Transitions API) */
-@keyframes hi-vt-fade-in {
+@layer utilities {
+  /* Serif numerals: elegant old-style figures for the hero amount */
+  .hi-numerals-oldstyle {
+    font-variant-numeric: oldstyle-nums proportional-nums;
+    font-feature-settings: "onum" 1, "pnum" 1;
+  }
+  .hi-eyebrow {
+    font-size: var(--hi-text-micro);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--hi-text-3);
+  }
+  .hi-pressable {
+    transition: transform 160ms var(--hi-ease-out), background-color 160ms ease, opacity 160ms ease;
+  }
+  .hi-pressable:active {
+    transform: scale(0.98);
+  }
+  .hi-scroll-hide {
+    scrollbar-width: none;
+  }
+  .hi-scroll-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .hi-glass {
+    background: color-mix(in srgb, var(--hi-void) 72%, transparent);
+    -webkit-backdrop-filter: saturate(160%) blur(18px);
+    backdrop-filter: saturate(160%) blur(18px);
+  }
+  .hi-card-glow {
+    background:
+      radial-gradient(120% 80% at 50% -10%, rgba(217, 192, 142, 0.10), transparent 60%),
+      var(--hi-surface);
+  }
+}
+
+/* ── Page transitions (View Transitions API) ─────────────────────────── */
+/* Direction is set on <html data-nav="forward|back|tab"> by withViewTransition(). */
+::view-transition-group(root) {
+  animation-duration: 320ms;
+  animation-timing-function: var(--hi-ease-out);
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 320ms;
+  animation-timing-function: var(--hi-ease-out);
+}
+html[data-nav="forward"]::view-transition-old(root) { animation-name: hi-vt-out-left; }
+html[data-nav="forward"]::view-transition-new(root) { animation-name: hi-vt-in-right; }
+html[data-nav="back"]::view-transition-old(root) { animation-name: hi-vt-out-right; }
+html[data-nav="back"]::view-transition-new(root) { animation-name: hi-vt-in-left; }
+html[data-nav="tab"]::view-transition-old(root) { animation: hi-vt-fade-out 140ms ease-in both; }
+html[data-nav="tab"]::view-transition-new(root) { animation: hi-vt-fade-rise 260ms var(--hi-ease-out) both; }
+
+/* The tab bar stays put while pages move underneath it. */
+::view-transition-group(hi-tabbar) { animation: none; }
+::view-transition-old(hi-tabbar) { display: none; }
+::view-transition-new(hi-tabbar) { animation: none; }
+
+@keyframes hi-vt-out-left  { to   { opacity: 0; transform: translateX(-12%); } }
+@keyframes hi-vt-in-right  { from { opacity: 0; transform: translateX(18%); } }
+@keyframes hi-vt-out-right { to   { opacity: 0; transform: translateX(18%); } }
+@keyframes hi-vt-in-left   { from { opacity: 0; transform: translateX(-12%); } }
+@keyframes hi-vt-fade-out  { to   { opacity: 0; } }
+@keyframes hi-vt-fade-rise { from { opacity: 0; transform: translateY(6px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+/* ── Keyframes ───────────────────────────────────────────────────────── */
+@keyframes hi-fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-@keyframes hi-vt-fade-out {
-  from { opacity: 1; }
-  to { opacity: 0; }
+@keyframes hi-fade-slide-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-::view-transition-old(root) {
-  animation: hi-vt-fade-out 100ms ease-in;
+@keyframes hi-fade-slide-down {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-::view-transition-new(root) {
-  animation: hi-vt-fade-in 150ms ease-out;
+@keyframes hi-fade-scale-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes hi-sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes hi-sheet-down {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+@keyframes hi-bar-grow {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+@keyframes hi-bar-grow-x {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes hi-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes hi-highlight-pulse {
+  0% { background-color: var(--hi-gold-glow); }
+  100% { background-color: transparent; }
+}
+@keyframes hi-glow-breathe {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.06); }
+}
+@keyframes hi-toast-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes a2hs-tap {
+  0%, 40%, 100% { transform: translateY(0) scale(1); opacity: 0.9; }
+  20% { transform: translateY(4px) scale(0.92); opacity: 1; }
+  25% { transform: translateY(0) scale(1); opacity: 0.9; }
 }
 
+.animate-highlight-pulse {
+  animation: hi-highlight-pulse 2s ease-out forwards;
+}
+
+.hi-skeleton {
+  background: linear-gradient(90deg, var(--hi-surface) 25%, var(--hi-raised) 50%, var(--hi-surface) 75%);
+  background-size: 200% 100%;
+  animation: hi-shimmer 1.6s linear infinite;
+}
+
+/* ── Bottom sheets (radix dialog) ────────────────────────────────────── */
 [data-slot="sheet-content"] {
   overflow-x: hidden;
   overflow-wrap: anywhere;
@@ -196,73 +337,11 @@
 [data-slot="sheet-content"][data-side="bottom"] {
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }
+.hi-sheet[data-state="open"] { animation: hi-sheet-up 420ms var(--hi-ease-out) both; }
+.hi-sheet[data-state="closed"] { animation: hi-sheet-down 240ms ease-in both; }
+.hi-sheet-overlay[data-state="open"] { animation: hi-fade-in 300ms ease-out both; }
+.hi-sheet-overlay[data-state="closed"] { animation: hi-vt-fade-out 220ms ease-in both; }
 
-@keyframes hi-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes hi-fade-slide-up {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes hi-fade-slide-down {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes hi-fade-slide-right {
-  from { opacity: 0; transform: translateX(-16px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes hi-fade-scale-in {
-  from { opacity: 0; transform: scale(0.92); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-@keyframes hi-panel-in {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes hi-bar-grow {
-  from { opacity: 0; transform: scaleY(0); }
-  to { opacity: 1; transform: scaleY(1); }
-}
-
-@keyframes hi-highlight-pulse {
-  0% { background-color: rgba(200, 180, 140, 0.2); }
-  100% { background-color: transparent; }
-}
-
-.animate-highlight-pulse {
-  animation: hi-highlight-pulse 2s ease-out forwards;
-}
-
-@keyframes hi-a2hs-glow {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(200, 180, 140, 0);
-    border-color: rgba(200, 180, 140, 0.15);
-  }
-  50% {
-    box-shadow: 0 0 16px 2px rgba(200, 180, 140, 0.12);
-    border-color: rgba(200, 180, 140, 0.35);
-  }
-}
-
-@keyframes a2hs-tap {
-  0%, 40%, 100% {
-    transform: translateY(0) scale(1);
-    opacity: 0.9;
-  }
-  20% {
-    transform: translateY(4px) scale(0.92);
-    opacity: 1;
-  }
-  25% {
-    transform: translateY(0) scale(1);
-    opacity: 0.9;
-  }
+@keyframes hi-draw {
+  to { stroke-dashoffset: 0; }
 }
