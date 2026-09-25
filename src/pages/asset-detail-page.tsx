@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { CalendarClock, ChevronRight, History, PencilLine, RotateCcw } from 'lucide-react';
+import { CalendarClock, ChevronRight, History, PencilLine, Plus } from 'lucide-react';
 import { withViewTransition } from '@/lib/view-transition';
 import { AppShell } from '@/components/layout/app-shell';
 import { SummaryCard } from '@/components/shared/summary-card';
 import { PaymentHistoryChart } from '@/components/shared/payment-history-chart';
-import { EditValueSheet } from '@/components/shared/edit-value-sheet';
+import { IncomeAmountSheet } from '@/components/asset-detail/income-amount-sheet';
+import { Segmented } from '@/components/ds/segmented';
 import { Card, ListRow, Section, EmptyState } from '@/components/ds/surface';
 import { SourceBadge } from '@/components/ds/badge';
 import { BottomSheet } from '@/components/ds/bottom-sheet';
@@ -80,9 +81,7 @@ export function AssetDetailPage() {
     }));
   const openPayments = () => withViewTransition(() => navigate('/payments', { state: { highlightAssetId: assetId } }));
 
-  const incomeExplanation = isManual
-    ? 'Указано вручную'
-    : spread === 'period'
+  const incomeExplanation = spread === 'period'
       ? `Последняя выплата × ${asset.frequencyPerYear} (${formatFrequency(asset.frequencyPerYear)})`
       : calculated.usedPayments.length > 0
         ? `Сумма ${calculated.usedPayments.length} ${calculated.usedPayments.length === 1 ? 'выплаты' : 'выплат'} за 12 месяцев`
@@ -98,76 +97,93 @@ export function AssetDetailPage() {
         badges={<SourceBadge source={isManual ? 'manual' : 'fact'} />}
       />
 
-      <Section title="Доход на 1 бумагу" className="mt-8">
+      <Section title="Как считать доход" className="mt-8">
         <Card className="overflow-hidden">
-          <button
-            type="button"
-            onClick={() => setEditIncome(true)}
-            className="hi-pressable flex w-full items-start gap-3 px-4 py-4 text-left active:bg-[var(--hi-raised)]"
-          >
-            <div className="min-w-0 flex-1">
-              <div className="flex items-baseline gap-2">
+          <div className="px-4 pt-4">
+            <Segmented
+              value={isManual ? 'manual' : 'fact'}
+              onChange={(mode) => {
+                if (mode === 'manual') setEditIncome(true);
+                else updateAsset(assetId, { paymentPerUnitSource: 'fact', paymentPerUnit: undefined });
+              }}
+              ariaLabel="Способ расчёта дохода"
+              className="w-full"
+              options={[
+                { value: 'fact', label: 'По выплатам' },
+                { value: 'manual', label: 'Своя сумма' },
+              ]}
+            />
+          </div>
+
+          {isManual ? (
+            <button
+              type="button"
+              onClick={() => setEditIncome(true)}
+              className="hi-pressable flex w-full items-start gap-3 px-4 py-4 text-left active:bg-[var(--hi-raised)]"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-baseline gap-x-2">
+                  <span className="text-[22px] font-semibold text-[var(--hi-text)]">{formatPrice(annualIncome / 12, currency)}</span>
+                  <span className="text-[length:var(--hi-text-caption)] text-[var(--hi-text-3)]">
+                    в месяц · {formatPrice(annualIncome, currency)} в год, до НДФЛ
+                  </span>
+                </div>
+                <div className="mt-1 text-[length:var(--hi-text-caption)] leading-snug text-[var(--hi-text-3)]">
+                  Учитывается каждый месяц, пока вы её не измените. Записи выплат на доход не влияют.
+                </div>
+              </div>
+              <span className="mt-1 inline-flex shrink-0 items-center gap-1 text-[length:var(--hi-text-caption)] font-semibold text-[var(--hi-gold)]">
+                <PencilLine className="size-3.5" /> Изменить
+              </span>
+            </button>
+          ) : (
+            <div className="px-4 py-4">
+              <div className="flex flex-wrap items-baseline gap-x-2">
                 <span className="text-[22px] font-semibold text-[var(--hi-text)]">
                   {annualIncome > 0 ? formatPrice(annualIncome, currency) : '—'}
                 </span>
-                <span className="text-[length:var(--hi-text-caption)] text-[var(--hi-text-3)]">в год до НДФЛ</span>
+                <span className="text-[length:var(--hi-text-caption)] text-[var(--hi-text-3)]">в год на 1 шт, до НДФЛ</span>
               </div>
-              <div className="mt-1 text-[length:var(--hi-text-caption)] text-[var(--hi-text-3)]">{incomeExplanation}</div>
-            </div>
-            <span className="mt-1 inline-flex items-center gap-1 text-[length:var(--hi-text-caption)] font-semibold text-[var(--hi-gold)]">
-              <PencilLine className="size-3.5" /> Изменить
-            </span>
-          </button>
-
-          {!isManual && calculated.usedPayments.length > 0 && (
-            <div className="border-t border-[var(--hi-line)] px-4 py-3">
-              {calculated.usedPayments.map((p, i) => (
-                <div key={i} className="flex justify-between py-0.5 text-[length:var(--hi-text-caption)]">
-                  <span className="text-[var(--hi-text-3)]">{formatNumericDate(p.date)}</span>
-                  <span className="text-[var(--hi-text-2)]">{formatPrice(p.amount, currency)}</span>
+              <div className="mt-1 text-[length:var(--hi-text-caption)] leading-snug text-[var(--hi-text-3)]">{incomeExplanation}</div>
+              {calculated.usedPayments.length > 0 && (
+                <div className="mt-3 border-t border-[var(--hi-line)] pt-2">
+                  {calculated.usedPayments.map((p, i) => (
+                    <div key={i} className="flex justify-between py-0.5 text-[length:var(--hi-text-caption)]">
+                      <span className="text-[var(--hi-text-3)]">{formatNumericDate(p.date)}</span>
+                      <span className="text-[var(--hi-text-2)]">{formatPrice(p.amount, currency)}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
+              {!exchange && (
+                <Button variant="outline" size="sm" className="mt-3" icon={<Plus />} onClick={openPayments}>
+                  Записать выплату
+                </Button>
+              )}
             </div>
           )}
 
-          {isManual && (
-            <button
-              type="button"
-              onClick={() => updateAsset(assetId, { paymentPerUnitSource: 'fact', paymentPerUnit: undefined })}
-              className="hi-pressable flex w-full items-center gap-2 border-t border-[var(--hi-line)] px-4 py-3 text-left text-[length:var(--hi-text-caption)] font-semibold text-[var(--hi-gold)] active:bg-[var(--hi-raised)]"
-            >
-              <RotateCcw className="size-3.5" /> Вернуть расчёт по фактическим выплатам
-              {calculated.annualIncome > 0 && (
-                <span className="ml-auto font-medium text-[var(--hi-text-3)]">{formatPrice(calculated.annualIncome, currency)}</span>
-              )}
-            </button>
+          {!exchange && (
+            <ListRow
+              title="Периодичность выплат"
+              subtitle={isManual ? 'Для календаря выплат' : 'Выплата покрывает свой период'}
+              trailing={
+                <span className="text-[length:var(--hi-text-caption)] font-semibold text-[var(--hi-text-2)]">
+                  {formatFrequency(asset.frequencyPerYear)}
+                </span>
+              }
+              chevron
+              onClick={() => setEditFrequency(true)}
+              className="border-t border-[var(--hi-line)]"
+            />
           )}
-
-          <ListRow
-            title="Периодичность выплат"
-            subtitle={
-              exchange
-                ? 'По данным биржи'
-                : spread === 'period'
-                  ? 'Выплата покрывает свой период'
-                  : 'Выплата делится на 12 месяцев'
-            }
-            trailing={
-              <span className="text-[length:var(--hi-text-caption)] font-semibold text-[var(--hi-text-2)]">
-                {formatFrequency(asset.frequencyPerYear)}
-              </span>
-            }
-            chevron={!exchange}
-            onClick={exchange ? undefined : () => setEditFrequency(true)}
-            className="border-t border-[var(--hi-line)]"
-          />
         </Card>
       </Section>
 
-      <Hint id="asset-income" className="mt-4">
+      <Hint id="asset-income-modes" className="mt-4" title="Два способа учесть доход">
         {exchange
-          ? 'Доход бумаги — сумма выплат за последние 12 месяцев. Если знаете точнее (например, объявлен новый дивиденд), укажите годовой доход вручную.'
-          : 'Записывайте поступления во вкладке «Выплаты» — каждое покрывает свой период, и месячный доход сразу будет полным. Или просто укажите доход в год.'}
+          ? '«По выплатам» — сумма выплат бумаги за последние 12 месяцев с Мосбиржи и dohod.ru, обновляется сама. «Своя сумма» — если знаете точнее, например объявлен новый дивиденд.'
+          : '«Своя сумма» — укажите, сколько приходит в месяц, и забудьте. «По выплатам» — записывайте каждое поступление во вкладке «Выплаты»: доход будет точным, но если забыть внести выплату, он упадёт.'}
       </Hint>
 
       {next && (
@@ -225,21 +241,14 @@ export function AssetDetailPage() {
         </Button>
       </Section>
 
-      <EditValueSheet
+      <IncomeAmountSheet
         open={editIncome}
         onOpenChange={setEditIncome}
-        title="Доход на 1 бумагу"
-        description="Сумма всех выплат за год на одну бумагу (или на объект), до НДФЛ."
-        label={`В год, ${currency === 'RUB' ? '₽' : currency}`}
-        suffix={currency === 'RUB' ? '₽' : currency}
-        initialValue={annualIncome || null}
-        hint={!isManual && calculated.annualIncome > 0 ? `По факту: ${formatPrice(calculated.annualIncome, currency)}` : undefined}
-        onSave={(v) => {
-          if (v == null) return;
-          return updateAsset(assetId, { paymentPerUnit: v, paymentPerUnitSource: 'manual' });
-        }}
-        resetLabel={isManual ? 'Вернуть расчёт по факту' : undefined}
-        onReset={isManual ? () => updateAsset(assetId, { paymentPerUnitSource: 'fact', paymentPerUnit: undefined }) : undefined}
+        annualIncome={annualIncome || null}
+        calculatedAnnual={calculated.annualIncome}
+        currency={currency}
+        defaultUnit={exchange ? 'year' : 'month'}
+        onSave={(v) => updateAsset(assetId, { paymentPerUnit: v, paymentPerUnitSource: 'manual' })}
       />
 
       <BottomSheet

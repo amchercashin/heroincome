@@ -66,3 +66,22 @@ describe('demo portfolio income', () => {
     expect(snapshot.assetsById.get(rent.id!)!.incomePerMonth).toBe(42_000);
   });
 });
+
+describe('demo portfolio sources', () => {
+  beforeEach(async () => {
+    await clearAllData();
+  });
+
+  it('labels securities payments with their real sources, rent as manual', async () => {
+    await loadDemoPortfolio(new Date('2026-09-25T12:00:00'));
+    const [assets, history] = await Promise.all([db.assets.toArray(), db.paymentHistory.toArray()]);
+    const sourceOf = (type: string) => {
+      const ids = new Set(assets.filter((a) => a.type === type).map((a) => a.id));
+      return new Set(history.filter((p) => ids.has(p.assetId)).map((p) => p.dataSource));
+    };
+    expect(sourceOf('Акции')).toEqual(new Set(['dohod']));
+    expect(sourceOf('Облигации')).toEqual(new Set(['moex']));
+    expect(sourceOf('Фонды')).toEqual(new Set(['parus']));
+    expect(sourceOf('Недвижимость')).toEqual(new Set(['manual']));
+  });
+});

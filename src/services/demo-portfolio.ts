@@ -1,5 +1,5 @@
 import { db } from '@/db/database';
-import type { Asset, PaymentHistory } from '@/models/types';
+import type { Asset, DataSource, PaymentHistory } from '@/models/types';
 import { deleteAccount } from '@/hooks/use-accounts';
 
 /**
@@ -17,6 +17,8 @@ interface DemoAsset {
   /** [months ago, amount per unit]; negative months = announced forecast */
   payments?: [number, number][];
   paymentType?: PaymentHistory['type'];
+  /** Where the payment history comes from (as after a real sync). */
+  paymentSource?: DataSource;
 }
 
 function monthsAgo(now: Date, months: number, day: number): Date {
@@ -31,48 +33,53 @@ const DEMO: DemoAsset[] = [
   {
     asset: {
       type: 'Акции', ticker: 'SBER', name: 'Сбербанк', currency: 'RUB', currentPrice: 312.4,
-      dataSource: 'manual', paymentPerUnitSource: 'fact', frequencyPerYear: 1, frequencySource: 'moex',
+      dataSource: 'moex', paymentPerUnitSource: 'fact', frequencyPerYear: 1, frequencySource: 'moex',
     },
     quantity: 400, averagePrice: 251,
     payments: [...stockHistory(2, [36.1, 34.84, 33.3, 25, 18.7, 18.7]), [-10, 38.4]],
     paymentType: 'dividend',
+    paymentSource: 'dohod',
   },
   {
     asset: {
       type: 'Акции', ticker: 'LKOH', name: 'Лукойл', currency: 'RUB', currentPrice: 6980,
-      dataSource: 'manual', paymentPerUnitSource: 'fact', frequencyPerYear: 2, frequencySource: 'moex',
+      dataSource: 'moex', paymentPerUnitSource: 'fact', frequencyPerYear: 2, frequencySource: 'moex',
     },
     quantity: 12, averagePrice: 5240,
     payments: stockHistory(3, [498, 397, 541, 514, 498, 447], 6),
     paymentType: 'dividend',
+    paymentSource: 'dohod',
   },
   {
     asset: {
       type: 'Акции', ticker: 'MTSS', name: 'МТС', currency: 'RUB', currentPrice: 228,
-      dataSource: 'manual', paymentPerUnitSource: 'fact', frequencyPerYear: 1, frequencySource: 'moex',
+      dataSource: 'moex', paymentPerUnitSource: 'fact', frequencyPerYear: 1, frequencySource: 'moex',
     },
     quantity: 300, averagePrice: 244,
     payments: stockHistory(2, [35, 35, 35, 34.29]),
     paymentType: 'dividend',
+    paymentSource: 'dohod',
   },
   {
     asset: {
       type: 'Облигации', ticker: 'SU26238RMFS4', isin: 'RU000A1038V6', name: 'ОФЗ 26238', currency: 'RUB',
       currentPrice: 612, faceValue: 1000, moexMarket: 'bonds',
-      dataSource: 'manual', paymentPerUnitSource: 'fact', frequencyPerYear: 2, frequencySource: 'moex',
+      dataSource: 'moex', paymentPerUnitSource: 'fact', frequencyPerYear: 2, frequencySource: 'moex',
     },
     quantity: 150, averagePrice: 640,
     payments: stockHistory(4, [35.4, 35.4, 35.4, 35.4, 35.4], 6),
     paymentType: 'coupon',
+    paymentSource: 'moex',
   },
   {
     asset: {
       type: 'Фонды', ticker: 'RU000A104KU3', isin: 'RU000A104KU3', name: 'Парус-Нордвей', currency: 'RUB', currentPrice: 1150,
-      dataSource: 'manual', paymentPerUnitSource: 'fact', frequencyPerYear: 12, frequencySource: 'moex',
+      dataSource: 'moex', paymentPerUnitSource: 'fact', frequencyPerYear: 12, frequencySource: 'moex',
     },
     quantity: 40, averagePrice: 1000,
     payments: Array.from({ length: 20 }, (_, i) => [i + 1, Math.round((11.8 - i * 0.07) * 100) / 100] as [number, number]),
     paymentType: 'distribution',
+    paymentSource: 'parus',
   },
   {
     asset: {
@@ -128,7 +135,7 @@ export async function loadDemoPortfolio(now: Date = new Date()): Promise<number>
           amount,
           date,
           type: item.paymentType ?? 'other',
-          dataSource: 'manual',
+          dataSource: item.paymentSource ?? 'manual',
           isForecast: ago < 0 ? true : undefined,
         });
       }
