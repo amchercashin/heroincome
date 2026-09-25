@@ -4,7 +4,6 @@ import { AppShell } from '@/components/layout/app-shell';
 import { SummaryCard } from '@/components/shared/summary-card';
 import { AssetRow } from '@/components/category/asset-row';
 import { Card, CategoryDot, Section, EmptyState } from '@/components/ds/surface';
-import { Hint } from '@/components/ds/hint';
 import { usePortfolioStats } from '@/hooks/use-portfolio-stats';
 import { getTypeColor } from '@/models/account';
 import { formatPercent, plural } from '@/lib/utils';
@@ -48,10 +47,6 @@ export function CategoryPage() {
           portfolioSharePercent={catStats.portfolioSharePercent}
         />
       )}
-
-      <Hint id="category-rows" className="mt-4">
-        Доход и доходность — по каждому активу. Нажмите на актив, чтобы увидеть историю выплат и указать доход вручную.
-      </Hint>
 
       <Section title="Активы" className="mt-8" action={<span className="hi-eyebrow normal-case tracking-normal">доход в мес · годовых</span>}>
         {rows.length > 0 ? (

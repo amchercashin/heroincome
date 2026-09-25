@@ -31,7 +31,17 @@ export interface ProjectedPayment {
   estimated: boolean;
   /** true when the payment comes from an announced forecast. */
   announced: boolean;
+  /** Why this payment is expected. */
+  basis: ProjectionBasis;
 }
+
+/**
+ * announced — a forecast or a future-dated record (e.g. dohod.ru);
+ * last-year — last year's payment repeated;
+ * last-payout — the latest self-recorded payout repeated every period;
+ * fixed — the user's own amount, spread over the frequency.
+ */
+export type ProjectionBasis = 'announced' | 'last-year' | 'last-payout' | 'fixed';
 
 export interface MonthBucket {
   /** 0–11, calendar month */
@@ -59,6 +69,7 @@ export interface ProjectionInput {
 interface FuturePayment extends PaymentRecord {
   estimated: boolean;
   announced: boolean;
+  basis: ProjectionBasis;
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -111,14 +122,14 @@ function futurePaymentsFor(asset: Asset, history: PaymentHistory[], now: Date, h
     for (let k = 0; ; k++) {
       const date = addMonths(first, Math.round((k * 12) / frequency));
       if (date > horizon) break;
-      out.push({ amount: perUnit, date, estimated: !hasKnownDate, announced: false });
+      out.push({ amount: perUnit, date, estimated: !hasKnownDate, announced: false, basis: 'fixed' });
     }
     return out.sort((a, b) => a.date.getTime() - b.date.getTime());
   }
 
   // Real payments already dated in the future (rare, e.g. typed in by hand).
   for (const p of real) {
-    if (p.date > now && p.date <= horizon) out.push({ ...p, estimated: false, announced: true });
+    if (p.date > now && p.date <= horizon) out.push({ ...p, estimated: false, announced: true, basis: 'announced' });
   }
   // A zero-amount forecast means "no payment expected": it cancels the repeated
   // payment but is not a payment itself.
@@ -126,7 +137,7 @@ function futurePaymentsFor(asset: Asset, history: PaymentHistory[], now: Date, h
   for (const p of forecasts) {
     if (p.date <= now || p.date > horizon) continue;
     announcedDates.push(p.date);
-    if (p.amount > 0) out.push({ ...p, estimated: false, announced: true });
+    if (p.amount > 0) out.push({ ...p, estimated: false, announced: true, basis: 'announced' });
   }
   for (const q of out) announcedDates.push(q.date);
   const isCovered = (date: Date) =>
@@ -141,7 +152,7 @@ function futurePaymentsFor(asset: Asset, history: PaymentHistory[], now: Date, h
         const date = addMonths(p.date, 12 * years);
         if (date > horizon) break;
         if (date <= now) continue;
-        if (!isCovered(date)) out.push({ amount: p.amount, date, estimated: false, announced: false });
+        if (!isCovered(date)) out.push({ amount: p.amount, date, estimated: false, announced: false, basis: 'last-year' });
       }
     }
   } else {
@@ -155,7 +166,7 @@ function futurePaymentsFor(asset: Asset, history: PaymentHistory[], now: Date, h
         const date = addMonths(last, Math.round(k * step));
         if (date > horizon) break;
         if (date <= now) continue;
-        if (!isCovered(date)) out.push({ amount: perPayout, date, estimated: false, announced: false });
+        if (!isCovered(date)) out.push({ amount: perPayout, date, estimated: false, announced: false, basis: 'last-payout' });
       }
     }
   }
@@ -198,6 +209,7 @@ export function projectIncome(input: ProjectionInput): ProjectedPayment[] {
         perUnit: p.amount,
         estimated: p.estimated,
         announced: p.announced,
+        basis: p.basis,
       });
     }
   }
@@ -242,19 +254,21 @@ export function incomeTimeline(input: ProjectionInput & { monthsBack?: number; m
 }
 
 /**
- * Twelve calendar-month buckets starting from the current month — a "typical year"
- * of cash flow. Payments landing in the current month next year fold into the
- * current month's bucket.
+ * Real calendar months from the current month to the last projected payment
+ * (12–13 buckets): the current month holds only its remaining days, the last one
+ * only the days up to the horizon, so every payment sits under its true month.
  */
 export function bucketByMonth(projection: ProjectedPayment[], now: Date = new Date()): MonthBucket[] {
+  const key = (d: Date) => d.getFullYear() * 12 + d.getMonth();
+  const first = key(now);
+  const last = Math.max(first + 11, ...projection.map((p) => key(p.date)));
   const buckets: MonthBucket[] = [];
-  for (let i = 0; i < 12; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-    buckets.push({ month: d.getMonth(), year: d.getFullYear(), total: 0, payments: [] });
+  for (let k = first; k <= last; k++) {
+    buckets.push({ month: k % 12, year: Math.floor(k / 12), total: 0, payments: [] });
   }
-  const indexByMonth = new Map(buckets.map((b, i) => [b.month, i]));
   for (const p of projection) {
-    const bucket = buckets[indexByMonth.get(p.date.getMonth())!];
+    const bucket = buckets[key(p.date) - first];
+    if (!bucket) continue;
     bucket.total += p.amount;
     bucket.payments.push(p);
   }

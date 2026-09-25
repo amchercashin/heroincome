@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { Asset } from '@/models/types';
 import { getTypeColor } from '@/models/account';
-import type { MonthBucket } from '@/services/income-projection';
+import type { MonthBucket, ProjectedPayment } from '@/services/income-projection';
 import { Card } from '@/components/ds/surface';
 import { TransitionLink } from '@/components/ui/transition-link';
 import { cn, formatCompact, formatCurrency, formatCurrencyFull } from '@/lib/utils';
@@ -9,6 +9,13 @@ import { cn, formatCompact, formatCurrency, formatCurrencyFull } from '@/lib/uti
 const MONTHS = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
 const MONTHS_FULL = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
 const BAR_H = 128;
+
+const BASIS_LABEL: Record<ProjectedPayment['basis'], string> = {
+  announced: 'объявлено',
+  'last-year': 'как год назад',
+  'last-payout': 'как последняя выплата',
+  fixed: 'ваша сумма',
+};
 
 interface CashFlowCalendarProps {
   buckets: MonthBucket[];
@@ -20,7 +27,11 @@ interface CashFlowCalendarProps {
  * month by month, stacked by asset class.
  */
 export function CashFlowCalendar({ buckets, assetsById }: CashFlowCalendarProps) {
-  const [selected, setSelected] = useState(0);
+  // null = not chosen yet → the first month that has payments (data may still be loading on mount).
+  const [chosen, setChosen] = useState<number | null>(null);
+  const firstWithPayments = Math.max(0, buckets.findIndex((b) => b.total > 0));
+  const selected = chosen ?? firstWithPayments;
+  const setSelected = setChosen;
   const total = buckets.reduce((s, b) => s + b.total, 0);
   const max = Math.max(...buckets.map((b) => b.total), 1);
 
@@ -37,7 +48,7 @@ export function CashFlowCalendar({ buckets, assetsById }: CashFlowCalendarProps)
     [buckets, assetsById],
   );
 
-  const bucket = buckets[selected];
+  const bucket = buckets[Math.min(selected, buckets.length - 1)];
   const rows = [...bucket.payments].sort((a, b) => a.date.getTime() - b.date.getTime());
 
   return (
@@ -54,7 +65,12 @@ export function CashFlowCalendar({ buckets, assetsById }: CashFlowCalendarProps)
           </div>
         </div>
 
-        <div className="mt-5 grid grid-cols-12 items-end gap-1" style={{ height: BAR_H + 34 }} role="tablist" aria-label="Месяцы">
+        <div
+          className="mt-5 grid items-end gap-1"
+          style={{ height: BAR_H + 34, gridTemplateColumns: `repeat(${buckets.length}, minmax(0, 1fr))` }}
+          role="tablist"
+          aria-label="Месяцы"
+        >
           {buckets.map((b, i) => {
             const active = i === selected;
             const h = b.total > 0 ? Math.max(4, (b.total / max) * BAR_H) : 2;
@@ -86,7 +102,14 @@ export function CashFlowCalendar({ buckets, assetsById }: CashFlowCalendarProps)
                     <div className="h-full bg-[var(--hi-line-strong)]" />
                   )}
                 </div>
-                <span className={cn('mt-1.5 text-[10px] font-semibold', active ? 'text-[var(--hi-gold)]' : 'text-[var(--hi-text-3)]')}>
+                <span
+                  className={cn(
+                    'mt-1.5 whitespace-nowrap text-[10px] font-semibold',
+                    active ? 'text-[var(--hi-gold)]' : 'text-[var(--hi-text-3)]',
+                    // Narrow phones: label every other month (the selected one always).
+                    !active && i % 2 === 1 && buckets.length > 12 && 'max-[400px]:invisible',
+                  )}
+                >
                   {MONTHS[b.month]}
                 </span>
               </button>
@@ -121,7 +144,7 @@ export function CashFlowCalendar({ buckets, assetsById }: CashFlowCalendarProps)
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[length:var(--hi-text-body)] text-[var(--hi-text)]">{asset.name}</div>
                 <div className="text-[length:var(--hi-text-micro)] text-[var(--hi-text-3)]">
-                  {p.announced ? 'объявлено' : p.estimated ? 'равномерно, дата не известна' : 'по прошлогодней выплате'}
+                  {BASIS_LABEL[p.basis]}{p.estimated && ' · дата условная'}
                 </div>
               </div>
               <span className="shrink-0 text-[length:var(--hi-text-body)] font-semibold text-[var(--hi-text)]">{formatCurrencyFull(p.amount)}</span>

@@ -203,6 +203,11 @@ async function resolveAndCache(asset: Asset): Promise<ResolvedAsset | null> {
   if (!asset.ticker) {
     cacheUpdates.ticker = info.secid;
   }
+  // Assets added by ticker only are named after it — replace with the MOEX name.
+  const placeholderName = !asset.name || asset.name.toUpperCase() === (asset.ticker ?? info.secid).toUpperCase();
+  if (placeholderName && info.shortName) {
+    cacheUpdates.name = info.shortName;
+  }
   await db.assets.update(asset.id!, cacheUpdates);
 
   return {

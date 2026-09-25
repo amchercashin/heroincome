@@ -66,7 +66,7 @@ export function AddAssetSheet({ open, onClose, accountId, existingTypes }: AddAs
 
     await addHolding({ accountId, assetId, quantity: qty, quantitySource: 'manual', averagePrice });
     onClose();
-    toast(`${asset.name} добавлен`);
+    toast(`Добавлено: ${asset.name}`);
     if (kind === 'security') syncAsset(assetId); // fire-and-forget: price + payments from MOEX
   };
 

@@ -1,10 +1,11 @@
-import type { HTMLAttributes, ReactNode } from 'react';
+import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export function Card({ className, glow, ...props }: HTMLAttributes<HTMLDivElement> & { glow?: boolean }) {
+export const Card = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement> & { glow?: boolean }>(function Card({ className, glow, ...props }, ref) {
   return (
     <div
+      ref={ref}
       className={cn(
         'rounded-[22px] border border-[var(--hi-line)]',
         glow ? 'hi-card-glow' : 'bg-[var(--hi-surface)]',
@@ -13,7 +14,7 @@ export function Card({ className, glow, ...props }: HTMLAttributes<HTMLDivElemen
       {...props}
     />
   );
-}
+});
 
 interface SectionProps {
   title?: ReactNode;

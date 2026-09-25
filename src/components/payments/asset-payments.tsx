@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Plus, RefreshCw } from 'lucide-react';
+import { ChevronDown, Info, Plus, RefreshCw } from 'lucide-react';
 import type { Asset, PaymentHistory } from '@/models/types';
 import { getTypeColor } from '@/models/account';
 import { AssetAvatar } from '@/components/ds/surface';
@@ -8,6 +8,7 @@ import { useFeedback } from '@/components/ds/feedback';
 import { PaymentRow } from './payment-row';
 import { AddPaymentForm } from './add-payment-form';
 import { deletePayment, addPayment } from '@/hooks/use-payment-history';
+import { updateAsset } from '@/hooks/use-assets';
 import { isSyncable, syncAssetPayments, deleteManualPayments } from '@/services/moex-sync';
 import { cn, plural } from '@/lib/utils';
 
@@ -135,6 +136,21 @@ export function AssetPayments({ asset, payments, isHighlighted }: AssetPaymentsP
 
       {expanded && (
         <div className="pb-2 animate-[hi-fade-in_0.25s_ease-out_both]">
+          {asset.paymentPerUnitSource === 'manual' && (
+            <div className="mx-4 mb-2 flex items-start gap-2.5 rounded-2xl bg-[var(--hi-gold-tint)] px-3.5 py-2.5 text-[length:var(--hi-text-caption)] leading-snug text-[var(--hi-text-2)]">
+              <Info className="mt-0.5 size-4 shrink-0 text-[var(--hi-gold)]" />
+              <span>
+                Для этого актива задана своя сумма дохода — записи ниже на доход не влияют.{' '}
+                <button
+                  type="button"
+                  onClick={() => updateAsset(asset.id!, { paymentPerUnitSource: 'fact', paymentPerUnit: undefined })}
+                  className="font-semibold text-[var(--hi-gold)] underline-offset-2 hover:underline"
+                >
+                  Считать по выплатам
+                </button>
+              </span>
+            </div>
+          )}
           {addFormOpen && (
             <AddPaymentForm
               assetId={asset.id!}

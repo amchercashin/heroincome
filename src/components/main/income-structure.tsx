@@ -51,7 +51,7 @@ export function IncomeStructure({ categories, mode, animate = true }: IncomeStru
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[length:var(--hi-text-heading)] font-medium text-[var(--hi-text)]">{c.type}</div>
                 <div className="mt-0.5 truncate text-[length:var(--hi-text-caption)] text-[var(--hi-text-3)]">
-                  {c.assetCount} {plural(c.assetCount, ['позиция', 'позиции', 'позиций'])} · {Math.round(incomeShare)}% дохода
+                  {Math.round(incomeShare)}% дохода · {c.assetCount} {plural(c.assetCount, ['позиция', 'позиции', 'позиций'])}
                 </div>
               </div>
               <div className="shrink-0 text-right">

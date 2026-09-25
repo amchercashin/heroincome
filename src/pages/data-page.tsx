@@ -30,6 +30,7 @@ export function DataPage() {
   const demoAccountId = useDemoAccountId();
   const rates = useExchangeRateMap();
   const [addAccountOpen, setAddAccountOpen] = useState(false);
+  const [focusAccountId, setFocusAccountId] = useState<number | null>(null);
   const [importTarget, setImportTarget] = useState<{ accountId: number | null; accountName?: string } | null>(null);
 
   const location = useLocation();
@@ -85,8 +86,7 @@ export function DataPage() {
       ) : (
         <div className="space-y-3">
           <Hint id="data-accounts">
-            Нажмите на счёт, чтобы увидеть позиции, и на позицию — чтобы изменить количество, цену или категорию.
-            Повторный импорт отчёта обновит количество.
+            Нажмите на позицию, чтобы изменить количество, цену или категорию. Повторный импорт отчёта обновит количество.
           </Hint>
           {accounts.map((account, i) => (
             <div key={account.id} style={{ animation: `hi-fade-slide-up 0.5s var(--hi-ease-out) ${0.05 * i}s both` }}>
@@ -97,6 +97,7 @@ export function DataPage() {
                 isDemo={account.id === demoAccountId}
                 onImport={() => setImportTarget({ accountId: account.id!, accountName: account.name })}
                 highlightAssetId={navState?.highlightAccountId === account.id ? navState?.highlightAssetId : undefined}
+                focus={focusAccountId === account.id}
               />
             </div>
           ))}
@@ -115,6 +116,7 @@ export function DataPage() {
         open={addAccountOpen}
         onClose={() => setAddAccountOpen(false)}
         onImport={() => setImportTarget({ accountId: null })}
+        onCreated={setFocusAccountId}
       />
 
       {importTarget !== null && (
