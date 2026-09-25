@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, onTestFinished } from 'vitest';
 import {
   parseISSBlock,
   calcDividendFrequency,
@@ -352,6 +352,10 @@ describe('fetchCouponHistory', () => {
   });
 
   it('paginates through all coupon pages', async () => {
+    // Pin "today" so the 2026+ coupons in the fixture stay in the future.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-01-15'));
+    onTestFinished(() => { vi.useRealTimers(); });
     // Page 1: exactly 20 rows (triggers next page fetch)
     const page1Data = Array.from({ length: 20 }, (_, i) => [
       'RU000A0JV4Q1',

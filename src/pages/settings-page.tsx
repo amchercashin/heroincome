@@ -1,25 +1,38 @@
-import { useState, useRef } from 'react';
+import { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Download, Lightbulb, Sparkles, Trash2, Upload } from 'lucide-react';
 import { withViewTransition } from '@/lib/view-transition';
 import { AppShell } from '@/components/layout/app-shell';
-import { Button } from '@/components/ui/button';
+import { Card, ListRow, Section } from '@/components/ds/surface';
+import { BrandMark } from '@/components/ds/brand-mark';
+import { useFeedback } from '@/components/ds/feedback';
 import { clearAllData } from '@/services/app-settings';
 import { exportAllData, importAllData } from '@/services/backup';
+import { removeDemoPortfolio } from '@/services/demo-portfolio';
+import { resetHints } from '@/lib/hints';
+import { useDemoAccountId } from '@/hooks/use-demo';
 import { NdflSettings } from '@/components/settings/ndfl-settings';
 import { ExchangeRatesSettings } from '@/components/settings/exchange-rates-settings';
 
+function RowIcon({ children, tone = 'gold' }: { children: React.ReactNode; tone?: 'gold' | 'danger' }) {
+  return (
+    <span
+      className={
+        tone === 'gold'
+          ? 'inline-flex size-9 items-center justify-center rounded-xl bg-[var(--hi-gold-tint)] text-[var(--hi-gold)] [&_svg]:size-[18px]'
+          : 'inline-flex size-9 items-center justify-center rounded-xl bg-[var(--hi-negative-tint)] text-[var(--hi-negative)] [&_svg]:size-[18px]'
+      }
+    >
+      {children}
+    </span>
+  );
+}
+
 export function SettingsPage() {
   const navigate = useNavigate();
-
-  const handleClear = async () => {
-    if (!confirm('Удалить все данные? Это действие необратимо.')) return;
-    await clearAllData();
-    withViewTransition(() => navigate('/'));
-  };
-
+  const { toast, confirm } = useFeedback();
   const fileRef = useRef<HTMLInputElement>(null);
-  const [status, setStatus] = useState<string | null>(null);
-  const [backupError, setBackupError] = useState<string | null>(null);
+  const demoAccountId = useDemoAccountId();
 
   const handleExport = async () => {
     const json = await exportAllData();
@@ -27,80 +40,102 @@ export function SettingsPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `heroincome-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `rantie-backup-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    setStatus('Бэкап сохранён');
+    toast('Бэкап сохранён');
   };
 
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
     try {
       const json = await file.text();
       JSON.parse(json);
-      if (!confirm('Это заменит все текущие данные. Продолжить?')) return;
+      const ok = await confirm({
+        title: 'Восстановить из бэкапа?',
+        description: 'Все текущие данные будут заменены данными из файла.',
+        confirmLabel: 'Восстановить',
+        destructive: true,
+      });
+      if (!ok) return;
       await importAllData(json);
-      setStatus('Данные восстановлены');
-      setBackupError(null);
-    } catch (e) {
-      setBackupError(e instanceof Error ? e.message : 'Ошибка: невалидный JSON файл');
+      toast('Данные восстановлены');
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Ошибка: невалидный JSON файл', 'error');
     }
   };
 
-  const backButton = (
-    <button onClick={() => withViewTransition(() => navigate(-1))} className="text-[var(--hi-ash)] text-[length:var(--hi-text-nav)]" aria-label="Назад">‹</button>
-  );
+  const handleClear = async () => {
+    const ok = await confirm({
+      title: 'Удалить все данные?',
+      description: 'Счета, активы, выплаты и настройки будут удалены с этого устройства. Отменить нельзя — сначала сохраните бэкап.',
+      confirmLabel: 'Удалить всё',
+      destructive: true,
+    });
+    if (!ok) return;
+    await clearAllData();
+    toast('Данные удалены', 'info');
+    withViewTransition(() => navigate('/'), 'tab');
+  };
 
   return (
-    <AppShell leftAction={backButton} title="Настройки">
-      <div className="space-y-6">
-        <NdflSettings />
-        <ExchangeRatesSettings />
+    <AppShell title="Настройки">
+      <NdflSettings />
 
-        <div>
-          <div className="text-[var(--hi-ash)] text-[length:var(--hi-text-body)] mb-2">Экспорт</div>
-          <Button onClick={handleExport} className="w-full border border-[rgba(200,180,140,0.2)] text-[var(--hi-gold)] bg-transparent hover:bg-[rgba(200,180,140,0.06)] font-semibold">
-            Скачать бэкап (JSON)
-          </Button>
-        </div>
+      <ExchangeRatesSettings />
 
-        <div>
-          <div className="text-[var(--hi-ash)] text-[length:var(--hi-text-body)] mb-2">Восстановление</div>
-          <input ref={fileRef} type="file" accept=".json" onChange={handleImport} className="hidden" />
-          <Button variant="outline" onClick={() => fileRef.current?.click()} className="w-full border-[rgba(200,180,140,0.08)] text-[var(--hi-text)]">
-            Загрузить бэкап
-          </Button>
-        </div>
+      <Section title="Данные" description="Всё хранится только на этом устройстве. Сохраняйте бэкап, чтобы перенести данные или не потерять их.">
+        <Card className="overflow-hidden">
+          <ListRow leading={<RowIcon><Download /></RowIcon>} title="Скачать бэкап" subtitle="JSON-файл со всеми данными" chevron onClick={handleExport} />
+          <ListRow leading={<RowIcon><Upload /></RowIcon>} title="Восстановить из бэкапа" subtitle="Заменит текущие данные" chevron onClick={() => fileRef.current?.click()} />
+        </Card>
+        <input ref={fileRef} type="file" accept=".json,application/json" onChange={handleImport} className="hidden" />
+      </Section>
 
-        {status && <div className="text-[var(--hi-gold)] text-[length:var(--hi-text-body)] text-center">{status}</div>}
-        {backupError && <div className="text-[var(--destructive)] text-[length:var(--hi-text-body)] text-center">{backupError}</div>}
-
-        <div>
-          <div className="text-[var(--hi-ash)] text-[length:var(--hi-text-body)] mb-2">Подсказки</div>
-          <button
+      <Section title="Обучение">
+        <Card className="overflow-hidden">
+          <ListRow
+            leading={<RowIcon><Lightbulb /></RowIcon>}
+            title="Показать подсказки снова"
+            subtitle="Приветствие и советы на экранах"
             onClick={() => {
-              localStorage.removeItem('hi-onboarding-done');
-              localStorage.removeItem('hi-tip-payments');
-              localStorage.removeItem('hi-tip-data');
-              localStorage.removeItem('hi-tip-category');
-              localStorage.removeItem('hi-tip-asset');
+              resetHints();
+              toast('Подсказки вернутся при следующем открытии экранов', 'info');
             }}
-            className="w-full py-3 rounded-lg border border-[rgba(200,180,140,0.08)] text-[var(--hi-ash)] transition-all hover:text-[var(--hi-gold)] hover:border-[rgba(200,180,140,0.15)] active:translate-y-px"
-            style={{ fontSize: 'var(--hi-text-body)' }}
-          >
-            Сбросить подсказки
-          </button>
-        </div>
+          />
+          {demoAccountId != null && (
+            <ListRow
+              leading={<RowIcon><Sparkles /></RowIcon>}
+              title="Удалить демо-портфель"
+              subtitle="Ваши собственные счета не затронутся"
+              onClick={async () => {
+                await removeDemoPortfolio();
+                toast('Демо-данные удалены');
+              }}
+            />
+          )}
+        </Card>
+      </Section>
 
-        <div className="border-t border-[rgba(200,180,140,0.08)] pt-6 mt-8">
-          <div className="text-[var(--destructive)] text-[length:var(--hi-text-body)] uppercase tracking-widest mb-3">Опасная зона</div>
-          <button
+      <Section title="Опасная зона">
+        <Card className="overflow-hidden border-[rgba(224,122,107,0.18)]">
+          <ListRow
+            leading={<RowIcon tone="danger"><Trash2 /></RowIcon>}
+            title={<span className="text-[var(--hi-negative)]">Удалить все данные</span>}
+            subtitle="Необратимо"
             onClick={handleClear}
-            className="w-full py-3 rounded-lg border border-red-900 text-[var(--destructive)] text-[length:var(--hi-text-body)] hover:bg-red-900/20 transition-colors"
-          >
-            Удалить все данные
-          </button>
+          />
+        </Card>
+      </Section>
+
+      <div className="mt-12 flex flex-col items-center text-center">
+        <BrandMark framed className="size-14" />
+        <div className="mt-3 font-serif text-[26px] leading-none text-[var(--hi-text)]">Рантье</div>
+        <div className="mt-1.5 text-[length:var(--hi-text-caption)] text-[var(--hi-text-3)]">Капитал, который платит</div>
+        <div className="mt-1 text-[length:var(--hi-text-micro)] text-[var(--hi-text-3)]">
+          Данные: Мосбиржа, dohod.ru · работает офлайн
         </div>
       </div>
     </AppShell>

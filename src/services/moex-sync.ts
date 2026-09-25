@@ -1,4 +1,5 @@
 import Dexie from 'dexie';
+import { isExchangeTraded } from '@/models/asset-kind';
 import { db } from '@/db/database';
 import type { Asset, PaymentHistory, DataSource } from '@/models/types';
 import type { DividendHistoryRow, StockPriceResult, BondDataResult } from './moex-api';
@@ -65,8 +66,7 @@ interface ResolvedAsset {
 }
 
 export function isSyncable(asset: Asset): boolean {
-  return !!(asset.ticker || asset.isin || asset.moexSecid)
-    && ['Акции', 'Облигации', 'Фонды'].includes(asset.type);
+  return isExchangeTraded(asset);
 }
 
 export async function syncAllAssets(options?: { pricesOnly?: boolean }): Promise<SyncResult> {

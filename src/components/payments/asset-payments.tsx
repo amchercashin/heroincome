@@ -1,9 +1,15 @@
 import { useState, useRef, useEffect } from 'react';
+import { ChevronDown, Plus, RefreshCw } from 'lucide-react';
 import type { Asset, PaymentHistory } from '@/models/types';
+import { getTypeColor } from '@/models/account';
+import { AssetAvatar } from '@/components/ds/surface';
+import { SourceBadge, type SourceKind } from '@/components/ds/badge';
+import { useFeedback } from '@/components/ds/feedback';
 import { PaymentRow } from './payment-row';
 import { AddPaymentForm } from './add-payment-form';
 import { deletePayment, addPayment } from '@/hooks/use-payment-history';
 import { isSyncable, syncAssetPayments, deleteManualPayments } from '@/services/moex-sync';
+import { cn, plural } from '@/lib/utils';
 
 const PAYMENT_TYPE_MAP: Record<string, PaymentHistory['type']> = {
   'Акции': 'dividend',
@@ -11,9 +17,6 @@ const PAYMENT_TYPE_MAP: Record<string, PaymentHistory['type']> = {
   'Недвижимость': 'rent',
   'Вклады': 'interest',
   'Фонды': 'distribution',
-  'Крипта': 'other',
-  'Валюта': 'other',
-  'Прочее': 'other',
 };
 
 interface AssetPaymentsProps {
@@ -24,45 +27,51 @@ interface AssetPaymentsProps {
 
 export function AssetPayments({ asset, payments, isHighlighted }: AssetPaymentsProps) {
   const [addFormOpen, setAddFormOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(!isHighlighted);
+  const [expanded, setExpanded] = useState(!!isHighlighted);
   const [syncing, setSyncing] = useState(false);
   const [syncFailed, setSyncFailed] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const { confirm, toast } = useFeedback();
 
   useEffect(() => {
-    if (isHighlighted) {
-      requestAnimationFrame(() => {
-        ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      });
-    }
+    if (!isHighlighted) return;
+    setExpanded(true);
+    const t = setTimeout(() => ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
+    return () => clearTimeout(t);
   }, [isHighlighted]);
 
   const sorted = [...payments].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   const paymentType = PAYMENT_TYPE_MAP[asset.type] ?? 'other';
-  const identLine = [asset.ticker, asset.isin].filter(Boolean).join(' · ');
   const syncable = isSyncable(asset);
-  const manualCount = payments.filter(p => p.dataSource === 'manual').length;
-  const hasManual = manualCount > 0;
-  const autoSource = !hasManual && payments.length > 0
-    ? payments[0].dataSource
-    : null;
+  const manualCount = payments.filter((p) => p.dataSource === 'manual').length;
+  const source: SourceKind | null = syncFailed
+    ? 'error'
+    : payments.length === 0
+      ? null
+      : manualCount > 0
+        ? 'manual'
+        : (payments[0].dataSource as SourceKind);
 
-  const handleSync = async (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleSync = async () => {
     if (syncing) return;
-
-    if (hasManual) {
-      const ok = window.confirm(`Ручные выплаты (${manualCount} шт.) будут удалены при синхронизации с MOEX. Продолжить?`);
+    if (manualCount > 0) {
+      const ok = await confirm({
+        title: 'Загрузить выплаты с биржи?',
+        description: `Ручные выплаты (${manualCount}) будут заменены данными Мосбиржи и dohod.ru.`,
+        confirmLabel: 'Загрузить',
+      });
       if (!ok) return;
       await deleteManualPayments(asset.id!);
     }
-
     setSyncing(true);
     setSyncFailed(false);
     try {
       const result = await syncAssetPayments(asset.id!);
       if (!result.success) {
         setSyncFailed(true);
+        toast(`${asset.ticker ?? asset.name}: не удалось загрузить выплаты`, 'error');
+      } else {
+        toast(`${asset.ticker ?? asset.name}: выплаты обновлены`);
       }
     } catch {
       setSyncFailed(true);
@@ -71,74 +80,61 @@ export function AssetPayments({ asset, payments, isHighlighted }: AssetPaymentsP
     }
   };
 
+  const handleDelete = async (id: number) => {
+    await deletePayment(id);
+    toast('Выплата удалена', 'info');
+  };
+
   return (
     <div
       ref={ref}
-      className={`border-t border-[var(--hi-shadow)]/30${isHighlighted ? ' animate-highlight-pulse' : ''}`}
+      className={cn(
+        'relative after:absolute after:bottom-0 after:left-4 after:right-0 after:h-px after:bg-[var(--hi-line)] last:after:hidden',
+        isHighlighted && 'animate-highlight-pulse',
+      )}
     >
-      {/* Asset header */}
-      <div
-        className="flex justify-between items-start px-3 py-2 bg-[var(--hi-void)] cursor-pointer select-none"
-        onClick={() => setCollapsed(!collapsed)}
-        data-onboarding="asset-header"
-        data-expanded={String(!collapsed)}
-      >
-        <div className="flex gap-1.5 min-w-0">
-          <span className="text-[var(--hi-muted)] text-[length:var(--hi-text-caption)] mt-0.5 flex-shrink-0">{collapsed ? '▸' : '▾'}</span>
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[var(--hi-text)] text-[length:var(--hi-text-body)] font-medium truncate">
-                {asset.name}
-              </span>
-              {collapsed && sorted.length > 0 && (
-                <span className="text-[var(--hi-muted)] text-[length:var(--hi-text-caption)] flex-shrink-0">({sorted.length})</span>
-              )}
-              {syncable && payments.length > 0 && (
-                <span className={`text-[length:var(--hi-text-micro)] px-1 py-0.5 rounded flex-shrink-0 ${
-                  syncFailed
-                    ? 'bg-[#5a4a2d] text-[#d4a846]'
-                    : hasManual
-                      ? 'bg-[#5a5a2d] text-[#baba6b]'
-                      : autoSource === 'dohod'
-                        ? 'bg-[#2d3d5a] text-[#6b9eba]'
-                        : autoSource === 'parus'
-                          ? 'bg-[#4a2d5a] text-[#ba8bd4]'
-                          : 'bg-[#2d5a2d] text-[#6bba6b]'
-                }`}>
-                  {syncFailed ? 'moex ⚠' : hasManual ? 'ручной' : autoSource ?? 'moex'}
-                </span>
-              )}
-              {syncable && (
-                <button
-                  onClick={handleSync}
-                  disabled={syncing}
-                  data-onboarding="asset-sync-btn"
-                  className="text-[var(--hi-ash)] text-[length:var(--hi-text-title)] hover:text-[var(--hi-gold)] transition-colors flex-shrink-0 disabled:opacity-50 ml-1.5 min-w-[32px] min-h-[32px] flex items-center justify-center"
-                  title="Синхронизировать выплаты с MOEX"
-                >
-                  <span className={syncing ? 'inline-block animate-spin' : ''}>⟳</span>
-                </button>
-              )}
-            </div>
-            {identLine && (
-              <div className="text-[length:var(--hi-text-caption)] text-[var(--hi-muted)] mt-0.5">
-                {identLine}
-              </div>
-            )}
-          </div>
-        </div>
+      <div className="flex items-center">
         <button
-          onClick={(e) => { e.stopPropagation(); setAddFormOpen(!addFormOpen); }}
-          data-onboarding="add-payment-btn"
-          className="text-[var(--hi-muted)] text-[length:var(--hi-text-body)] hover:text-[var(--hi-gold)] transition-colors flex-shrink-0 min-w-[36px] min-h-[36px] flex items-center justify-center"
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          className="hi-pressable flex min-w-0 flex-1 items-center gap-3 py-3 pl-4 pr-2 text-left active:bg-[var(--hi-raised)]"
         >
-          + выплата
+          <AssetAvatar label={asset.ticker ?? asset.name} color={getTypeColor(asset.type)} className="size-9 text-[10px]" />
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-[length:var(--hi-text-body)] font-medium text-[var(--hi-text)]">{asset.name}</div>
+            <div className="mt-0.5 flex items-center gap-1.5 text-[length:var(--hi-text-caption)] text-[var(--hi-text-3)]">
+              <span>
+                {payments.length} {plural(payments.length, ['выплата', 'выплаты', 'выплат'])}
+              </span>
+              {source && <SourceBadge source={source} />}
+            </div>
+          </div>
+          <ChevronDown className={cn('size-4 shrink-0 text-[var(--hi-text-3)] transition-transform duration-300', expanded && 'rotate-180')} />
+        </button>
+        {syncable && (
+          <button
+            type="button"
+            onClick={handleSync}
+            disabled={syncing}
+            aria-label={`Загрузить выплаты ${asset.ticker ?? asset.name} с биржи`}
+            className="inline-flex size-10 shrink-0 items-center justify-center rounded-full text-[var(--hi-text-2)] active:bg-[var(--hi-raised)]"
+          >
+            <RefreshCw className={cn('size-4', syncing && 'animate-spin text-[var(--hi-gold)]')} />
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => { setExpanded(true); setAddFormOpen((v) => !v); }}
+          aria-label={`Добавить выплату: ${asset.name}`}
+          className="mr-2 inline-flex size-10 shrink-0 items-center justify-center rounded-full text-[var(--hi-gold)] active:bg-[var(--hi-gold-tint)]"
+        >
+          <Plus className="size-5" />
         </button>
       </div>
 
-      {/* Content (collapsible) */}
-      {!collapsed && (
-        <>
+      {expanded && (
+        <div className="pb-2 animate-[hi-fade-in_0.25s_ease-out_both]">
           {addFormOpen && (
             <AddPaymentForm
               assetId={asset.id!}
@@ -147,26 +143,25 @@ export function AssetPayments({ asset, payments, isHighlighted }: AssetPaymentsP
               onAdd={async (p) => {
                 await addPayment(p);
                 setAddFormOpen(false);
+                toast('Выплата добавлена');
               }}
               onCancel={() => setAddFormOpen(false)}
             />
           )}
-
           {sorted.length > 0 ? (
-            sorted.map((p) => (
-              <PaymentRow
-                key={p.id}
-                payment={p}
-                currency={asset.currency ?? 'RUB'}
-                onDelete={deletePayment}
-              />
-            ))
-          ) : (
-            <div className="pl-7 pr-3 py-2 text-[var(--hi-muted)] text-[length:var(--hi-text-body)] font-mono">
-              Нет выплат
+            <div className="max-h-[360px] overflow-y-auto">
+              {sorted.map((p) => (
+                <PaymentRow key={p.id} payment={p} currency={asset.currency ?? 'RUB'} onDelete={handleDelete} />
+              ))}
             </div>
+          ) : (
+            !addFormOpen && (
+              <div className="px-4 py-3 text-[length:var(--hi-text-caption)] text-[var(--hi-text-3)]">
+                Выплат пока нет. {syncable ? 'Загрузите их с биржи или добавьте вручную.' : 'Добавьте поступление кнопкой «+».'}
+              </div>
+            )
           )}
-        </>
+        </div>
       )}
     </div>
   );

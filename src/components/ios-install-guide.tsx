@@ -73,18 +73,18 @@ export function IosInstallGuide({ onClose }: IosInstallGuideProps) {
 
       {/* Bottom sheet */}
       <div
-        className="fixed left-0 right-0 bottom-0 z-[9001] bg-[var(--hi-stone)] rounded-t-2xl animate-[hi-fade-slide-up_0.3s_ease-out_both]"
+        className="fixed left-0 right-0 bottom-0 z-[9001] bg-[var(--hi-raised)] rounded-t-2xl animate-[hi-fade-slide-up_0.3s_ease-out_both]"
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}
         onClick={advance}
       >
         {/* Drag handle */}
         <div className="flex justify-center pt-3 pb-4">
-          <div className="w-9 h-1 rounded-full bg-[var(--hi-shadow)]" />
+          <div className="w-9 h-1 rounded-full bg-[var(--hi-line-strong)]" />
         </div>
 
         {/* Step indicator */}
         <div className="text-center mb-4">
-          <span className="font-mono text-[length:var(--hi-text-micro)] text-[var(--hi-ash)]">
+          <span className="text-[length:var(--hi-text-micro)] font-semibold text-[var(--hi-text-2)]">
             {step + 1} / {TOTAL_STEPS}
           </span>
         </div>
@@ -112,7 +112,7 @@ export function IosInstallGuide({ onClose }: IosInstallGuideProps) {
           <div className="text-[length:var(--hi-text-body)] text-[var(--hi-gold)] font-medium">
             {current.caption}
           </div>
-          <div className="text-[length:var(--hi-text-micro)] text-[var(--hi-ash)] mt-2">
+          <div className="text-[length:var(--hi-text-micro)] text-[var(--hi-text-2)] mt-2">
             Нажмите, чтобы продолжить
           </div>
         </div>

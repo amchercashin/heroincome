@@ -18,9 +18,8 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "@fontsource/cormorant-garamond": "^5.2.11",
-    "@fontsource/dm-sans": "^5.2.8",
-    "@fontsource/ibm-plex-mono": "^5.2.7",
+    "@fontsource-variable/cormorant-garamond": "^5.3.0",
+    "@fontsource-variable/manrope": "^5.3.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dexie": "^4.3.0",

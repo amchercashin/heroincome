@@ -18,14 +18,14 @@ export interface Holding {
 }
 
 export const KNOWN_TYPE_CONFIG: Record<string, { label: string; color: string; defaultFrequency: number }> = {
-  'Акции': { label: 'Акции', color: '#c8b48c', defaultFrequency: 1 },
-  'Облигации': { label: 'Облигации', color: '#8b7355', defaultFrequency: 2 },
-  'Фонды': { label: 'Фонды', color: '#a09080', defaultFrequency: 12 },
-  'Вклады': { label: 'Вклады', color: '#6b8070', defaultFrequency: 12 },
-  'Недвижимость': { label: 'Недвижимость', color: '#7a6a5a', defaultFrequency: 12 },
-  'Крипта': { label: 'Крипта', color: '#5a5548', defaultFrequency: 12 },
-  'Валюта': { label: 'Валюта', color: '#5a7080', defaultFrequency: 0 },
-  'Прочее': { label: 'Прочее', color: '#6a6560', defaultFrequency: 0 },
+  'Акции': { label: 'Акции', color: '#d9c08e', defaultFrequency: 1 },
+  'Облигации': { label: 'Облигации', color: '#8fb0c9', defaultFrequency: 2 },
+  'Фонды': { label: 'Фонды', color: '#c79a7a', defaultFrequency: 12 },
+  'Вклады': { label: 'Вклады', color: '#9dbf8e', defaultFrequency: 12 },
+  'Недвижимость': { label: 'Недвижимость', color: '#b59ad1', defaultFrequency: 12 },
+  'Крипта': { label: 'Крипта', color: '#e0a458', defaultFrequency: 12 },
+  'Валюта': { label: 'Валюта', color: '#7fbfb4', defaultFrequency: 0 },
+  'Прочее': { label: 'Прочее', color: '#a39a8c', defaultFrequency: 0 },
 };
 
 export function getTypeSuggestions(existingTypes: string[]): string[] {
@@ -39,7 +39,7 @@ export function getTypeColor(type: string): string {
   let hash = 0;
   for (let i = 0; i < type.length; i++) hash = type.charCodeAt(i) + ((hash << 5) - hash);
   const hue = ((hash % 360) + 360) % 360;
-  return `hsl(${hue}, 20%, 55%)`;
+  return `hsl(${hue}, 32%, 66%)`;
 }
 
 export function getDefaultFrequency(type: string): number | undefined {

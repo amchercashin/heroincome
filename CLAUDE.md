@@ -9,11 +9,12 @@ npm run dev        # Vite dev server
 npm run build      # TypeScript check + production build
 npm run test       # Vitest (all tests)
 npx vitest run tests/services/income-calculator.test.ts  # Single test file
+npm run test:e2e   # Playwright smoke tests (set PW_CHROMIUM=/path/to/chromium to use a preinstalled browser)
 ```
 
 ## Architecture
 
-Local-first PWA for tracking passive income from stocks, bonds, deposits, real estate, and funds. No backend — all data stored in IndexedDB via Dexie. External reads: MOEX ISS API for prices/dividends, heroincome-data repo (dohod.ru) for stock dividends with priority over MOEX.
+**Рантье** (repo/deploy name `heroincome`) — local-first PWA for tracking passive income from stocks, bonds, deposits, real estate, and funds. No backend — all data stored in IndexedDB via Dexie. External reads: MOEX ISS API for prices/dividends, heroincome-data repo (dohod.ru) for stock dividends with priority over MOEX.
 
 **Stack:** React 19 + React Router v7 (SPA) + Dexie (IndexedDB) + Tailwind v4 + shadcn/ui + vite-plugin-pwa + Vitest
 
@@ -27,11 +28,14 @@ MOEX API / Import files → services/ (pure parsing) → Dexie DB → useLiveQue
 
 - **`src/models/types.ts`** — all domain types. `Asset` is the central entity with source-tracking fields (`paymentPerUnitSource`, `frequencySource`, `quantitySource`) distinguishing calculated/imported values from manual overrides.
 - **`src/db/database.ts`** — Dexie schema with versioned migrations. V4 merged PaymentSchedule into Asset; understand the upgrade function before adding fields.
-- **`src/services/`** — pure functions: `income-calculator.ts` (income math), `moex-api.ts` (API parsing), `moex-sync.ts` (orchestration), `heroincome-data.ts` (dohod.ru dividend fetch), `moex-enrich.ts` (price/dividend enrichment), `import-*.ts` (CSV/HTML/markdown parsing + diffing), `sber-html-parser.ts` (Sberbank report parsing), `app-settings.ts` (NDFL rates, general settings), `backup.ts` (JSON export/import).
-- **`src/hooks/`** — reactive data layer via `useLiveQuery`. `usePortfolioStats()` is the heaviest computation. `useNdflRates()` provides reactive NDFL tax rates. `useInstallPrompt()` manages A2HS install prompt lifecycle.
-- **`src/contexts/`** — `sync-context.tsx` (MOEX sync: `syncing`, `lastSyncAt`, `triggerSync()`, `syncAsset()`), `onboarding-context.tsx` (first-launch tour, page tours, PageTip coach marks).
-- **`src/pages/`** — one file per route. Asset detail page uses inline editing with source badges (ф = fact/moex, р = manual) and reset buttons.
-- **`src/components/ui/`** — shadcn-generated components. Do not edit by hand; use `npx shadcn@latest add <component>`.
+- **`src/models/asset-kind.ts`** — `isExchangeTraded()` and `incomeSpreadOf()` (how payments are spread into monthly "pockets", see below).
+- **`src/services/`** — pure functions: `income-calculator.ts` (income math), `income-projection.ts` (12-month cash-flow projection, monthly income timeline history + forecast, upcoming payments), `demo-portfolio.ts` (sample portfolio in its own account), `add-asset-form.ts` (type-aware "add asset" form → asset draft), `moex-api.ts` (API parsing), `moex-sync.ts` (orchestration), `heroincome-data.ts` (dohod.ru dividend fetch), `moex-enrich.ts` (price/dividend enrichment), `import-*.ts` (CSV/HTML/markdown parsing + diffing), `sber-html-parser.ts` (Sberbank report parsing), `app-settings.ts` (NDFL rates, general settings), `backup.ts` (JSON export/import).
+- **`src/hooks/`** — reactive data layer via `useLiveQuery`. `usePortfolioStats()` is the heaviest computation (snapshot + projection; pass `{ withTimeline: true }` for the income chart). `useNdflRates()` provides reactive NDFL tax rates. `useInstallPrompt()` manages A2HS install prompt lifecycle.
+- **`src/contexts/`** — `sync-context.tsx` (MOEX sync: `syncing`, `lastSyncAt`, `triggerSync()`, `syncAsset()`).
+- **`src/pages/`** — one file per route. Tabs: `/` Доход, `/payments` Выплаты (calendar + history), `/data` Счета, `/settings` Настройки; `/category/:type` and `/asset/:id` are pushed under Доход. Numbers are edited in bottom sheets (`EditValueSheet`, `HoldingSheet`), not inline cells.
+- **`src/components/ds/`** — the design system: `Button`/`IconButton`, `Card`/`Section`/`ListRow`/`Stat`/`EmptyState`/`AssetAvatar`, `Badge`/`SourceBadge`, `Segmented`, `BottomSheet` (Radix dialog), `Field`/`TextInput`/`SelectInput` + `parseDecimal`, `Hint` (inline dismissible coach mark), `BrandMark`/`Wordmark`, `FeedbackProvider` → `useFeedback()` for `toast()` and promise-based `confirm()`. Never use `window.confirm`/`alert`.
+- **`src/components/onboarding/welcome.tsx`** — first-launch welcome slides ending with Import / Manual / Demo. Persistence for welcome + hints lives in `src/lib/hints.ts` (`rt-welcome-done`, `rt-hint-*`).
+- **`src/components/ui/`** — shadcn-generated components. Do not edit by hand; use `npx shadcn@latest add <component>`. (`transition-link.tsx` is ours.)
 
 ### Source-aware income model
 
@@ -41,6 +45,13 @@ Every income-related field on `Asset` tracks its origin:
 - `quantitySource`: `'import'` or `'manual'`
 
 Manual values override calculated ones. Reset buttons revert to the calculated/imported value.
+
+### Income "pockets" (how a payment becomes monthly income)
+
+`calcAssetAnnualIncomePerUnit(asset, spread, history, now)` is the single entry point; monthly income = annual / 12.
+- **Exchange securities** (`isExchangeTraded`: Акции/Облигации/Фонды with a ticker/ISIN) — spread `'year'`: every payment is split into 12 monthly pockets, i.e. annual income = sum of payments over the trailing 12 months. History is the security's own history (MOEX/dohod.ru), so the window is always full and irregular dividends are smoothed.
+- **Self-recorded income** (rent, deposits, other; `frequencyPerYear > 0`) — spread `'period'`: the latest payout fills a pocket for its own period (12 / frequency months), so monthly rent counts in full at once. The pocket empties when the next payout is overdue by more than half a period (max 45 days). Frequency is editable on the asset page.
+- **Timeline / forecast** (`incomeTimeline`) — same formula evaluated month by month for the current quantities: 24 months of history, then 12 months of forecast built from announced forecasts (`isForecast`), otherwise last year's payments repeated. `projectIncome` gives the dated payments (calendar, upcoming list); without forecasts it sums exactly to the yearly income.
 
 ### Multi-source dividend data
 
@@ -57,9 +68,10 @@ Dividend/distribution history uses source priority: `dohod > moex` for stocks an
 
 Per-category tax rates stored in Dexie `settings` table with `ndfl-{category}` keys. `useNdflRates()` hook provides reactive `Map<string, number>`. Tax multiplier `(1 - rate/100)` applied to income in `usePortfolioStats`, `asset-detail-page`, `category-page`. Settings UI in `src/components/settings/ndfl-rate-selector.tsx`.
 
-### View Transitions
+### Navigation & View Transitions
 
-Page navigation uses the View Transitions API for smooth crossfades. `src/lib/view-transition.ts` exports `withViewTransition(cb)` which wraps callbacks with `document.startViewTransition` and `flushSync`. `src/components/ui/transition-link.tsx` is a drop-in replacement for React Router's `Link` — use `TransitionLink` instead of `Link` for all in-app navigation.
+Bottom tab bar (`src/components/layout/tab-bar.tsx`) + `AppShell` (large serif title that collapses into the glass header on scroll; `back` prop shows a back chevron with a fallback route).
+Page navigation uses the View Transitions API. `withViewTransition(cb, direction)` in `src/lib/view-transition.ts` sets `<html data-nav="forward|back|tab">` so CSS can slide forward/back or crossfade between tabs; the tab bar has its own `view-transition-name` and stays still. `TransitionLink` (with optional `direction`) replaces React Router's `Link` for all in-app navigation. Reduced motion disables all of it.
 
 ### Tooling details
 
@@ -69,33 +81,39 @@ Page navigation uses the View Transitions API for smooth crossfades. `src/lib/vi
 - **PWA** — `vite-plugin-pwa` with `registerType: 'prompt'`. User gets update prompt on new deploy, not auto-reload.
 - **Deploy** — GitHub Pages at subpath `/heroincome/`. CI sets `BASE_URL=/heroincome/` env var; `vite.config.ts` reads it for `base`. Workflow in `.github/workflows/deploy.yml`.
 
-### Design system (HeroIncome)
+### Design system (Рантье)
 
-**Colors** defined as CSS variables `--hi-*` in `src/index.css`. Key tokens: `--hi-void` (darkest bg), `--hi-stone` (cards), `--hi-gold` (accents), `--hi-text` (foreground).
+**Colors** — CSS variables `--hi-*` in `src/index.css` (the `hi` prefix is historical). Surfaces: `--hi-void` (background), `--hi-surface` (cards), `--hi-raised` (sheets, pressed), `--hi-line` / `--hi-line-strong` (hairlines). Text tiers: `--hi-text`, `--hi-text-2`, `--hi-text-3` (tuned for contrast; don't go dimmer). Accents: `--hi-gold` (+ `-bright`, `-deep`, `-tint`, `-glow`), `--hi-positive`, `--hi-negative`, `--hi-info`, `--hi-violet` with `-tint` backgrounds. Category colors live in `KNOWN_TYPE_CONFIG` (`src/models/account.ts`).
 
-**Fonts:** DM Sans (sans), Cormorant Garamond (serif), IBM Plex Mono (mono). Custom keyframes prefixed `hi-`.
+**Fonts:** Manrope Variable (sans, UI, tabular figures by default), Cormorant Garamond Variable (serif: titles, hero amount, brand). Both have Cyrillic. Serif titles use lining figures; the hero amount opts into old-style figures via `.hi-numerals-oldstyle`. Helpers: `.hi-eyebrow` (small caps label), `.hi-pressable`, `.hi-glass`, `.hi-card-glow`. Custom keyframes prefixed `hi-`.
 
-**Fluid typography** — 7 responsive tokens using `clamp()` in `src/index.css`, scaling between 320px and 430px viewports:
+**Money formatting** (`src/lib/utils.ts`) — Russian style, ruble sign after the number with a non-breaking space: `formatCurrencyFull` "47 054 ₽", `formatCurrency` "12 тыс ₽" / "1,5 млн ₽", `formatIncome` (exact below 100 тыс), `formatPrice` (kopecks under 1000), `formatPercent` "7,5%", `plural()`.
+
+**Fluid typography** — responsive tokens using `clamp()` in `src/index.css`, scaling between 320px and 430px viewports:
 
 | Token | Range | Usage |
 |-------|-------|-------|
-| `--hi-text-display` | 40–56px | Hero income sum |
-| `--hi-text-nav` | 20–24px | Nav icons ☰ ‹ ⟳ |
-| `--hi-text-title` | 16–20px | Page titles |
-| `--hi-text-heading` | 14–16px | Values, tickers, category names |
-| `--hi-text-body` | 12–14px | Income amounts, buttons, secondary data |
-| `--hi-text-caption` | 11–13px | Labels, badges, meta-info |
-| `--hi-text-micro` | 10–11px | Chart annotations, sync time |
+| `--hi-text-display` | 48–66px | Hero income sum |
+| `--hi-text-large` | 28–36px | Large serif page titles, empty states |
+| `--hi-text-nav` | 20–24px | Nav icons |
+| `--hi-text-title` | 17–19px | Compact header title |
+| `--hi-text-heading` | 15–17px | Values, category names |
+| `--hi-text-body` | 13–15px | Body, list rows, buttons |
+| `--hi-text-caption` | 12–13px | Secondary lines, labels |
+| `--hi-text-micro` | 10.5–11.5px | Eyebrows, chart annotations |
 
-Apply via `text-[length:var(--hi-text-heading)]`. Do not use hardcoded `text-[Xpx]` for font sizes — always use a token. Exception: `text-base` (16px) on inputs must stay for iOS zoom prevention.
+Apply via `text-[length:var(--hi-text-heading)]`. Prefer a token over hardcoded `text-[Xpx]`. Exception: `text-base` (16px) on inputs must stay for iOS zoom prevention.
+
+**Brand** — name «Рантье», monogram = Cormorant «Р» with a ruble crossbar (`BrandMark`; icons in `public/` are generated from the same path). IndexedDB name `HeroIncomeDB` and the deploy path `/heroincome/` are intentionally unchanged — renaming them would lose user data / break installs.
 
 ## Conventions
 
 - **Russian UI text** — all user-facing strings are in Russian; preserve this when modifying UI.
 - **Dark mode only** — hardcoded in `<html class="dark">`, no toggle.
 - **Path alias** — `@/*` maps to `src/*`.
-- **Tests** — in `tests/` mirroring `src/` structure. Use `fake-indexeddb` for DB tests. Pure function tests dominate; no component tests.
+- **Tests** — in `tests/` mirroring `src/` structure. Use `fake-indexeddb` for DB tests. Pure function tests dominate; a few component tests in `tests/components/`. Pin the clock (`vi.setSystemTime`) in tests with dates relative to "today".
 - **Dexie transactions** — asset mutations (`addAsset`, `updateAsset`, `deleteAsset`) are wrapped in Dexie transactions in `use-assets.ts`.
 - **iOS hardening** — `viewport-fit=cover` in index.html, `touch-action: manipulation` on html, `font-size: 16px` on all inputs (prevents Safari auto-zoom), safe-area insets for bottom sheets. Do not remove these.
-- **Navigation** — use `TransitionLink` (not `Link`) for in-app navigation; use `withViewTransition()` for programmatic `navigate()` calls.
+- **Navigation** — use `TransitionLink` (not `Link`) for in-app navigation; use `withViewTransition(cb, direction)` for programmatic `navigate()` calls.
+- **Feedback** — confirmations via `useFeedback().confirm()`, results via `toast()`; first-use explanations via `<Hint id="…">`, not overlays.
 - **Docs lookup** — при работе с Dexie, Tailwind v4, React Router v7 и shadcn/ui сверяйся с актуальной документацией через context7, а не полагайся на обучающие данные.

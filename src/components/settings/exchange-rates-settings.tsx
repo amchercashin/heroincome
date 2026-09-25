@@ -3,6 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/database';
 import { useExchangeRates } from '@/hooks/use-exchange-rates';
 import { normalizeCurrency, updateExchangeRate } from '@/services/exchange-rates';
+import { Card, Section } from '@/components/ds/surface';
 
 const COMMON_CURRENCIES = ['USD', 'EUR', 'CNY'] as const;
 
@@ -39,24 +40,17 @@ export function ExchangeRatesSettings() {
   };
 
   return (
-    <div>
-      <div className="text-[var(--hi-ash)] text-[length:var(--hi-text-caption)] font-mono uppercase tracking-[0.15em] mb-3">
-        Курсы валют
-      </div>
-      <div className="bg-[var(--hi-stone)] rounded-xl px-4 border border-[rgba(200,180,140,0.06)]">
-        <div className="flex items-center justify-between py-2.5 border-b border-[rgba(200,180,140,0.06)]">
-          <span className="text-[var(--hi-text)] text-[length:var(--hi-text-body)]">RUB</span>
-          <span className="font-mono text-[length:var(--hi-text-body)] text-[var(--hi-ash)]">1 ₽</span>
-        </div>
+    <Section title="Курсы валют" description="Для пересчёта валютных активов и выплат в рубли.">
+      <Card className="overflow-hidden px-4">
         {sortedCurrencies.map((currency) => {
           const rate = rateByCurrency.get(currency);
           const value = drafts[currency] ?? (rate ? String(rate.rateToRub) : '');
           return (
-            <div key={currency} className="flex items-center justify-between gap-3 py-2.5 border-b border-[rgba(200,180,140,0.06)] last:border-b-0">
+            <div key={currency} className="flex items-center justify-between gap-3 border-b border-[var(--hi-line)] py-3 last:border-b-0">
               <div>
-                <div className="text-[var(--hi-text)] text-[length:var(--hi-text-body)]">{currency}</div>
+                <div className="text-[length:var(--hi-text-body)] font-semibold text-[var(--hi-text)]">{currency}</div>
                 {rate?.updatedAt && (
-                  <div className="font-mono text-[length:var(--hi-text-micro)] text-[var(--hi-muted)]">
+                  <div className="text-[length:var(--hi-text-micro)] text-[var(--hi-text-3)]">
                     обновлён {rate.updatedAt.toLocaleDateString('ru-RU')}
                   </div>
                 )}
@@ -75,14 +69,15 @@ export function ExchangeRatesSettings() {
                     }
                   }}
                   placeholder="курс"
-                  className="w-20 bg-[var(--hi-void)] border border-[var(--hi-shadow)] rounded-md px-2 py-1 text-base text-right text-[var(--hi-text)] outline-none focus:border-[var(--hi-gold)]"
+                  aria-label={`Курс ${currency} к рублю`}
+                  className="h-10 w-24 rounded-xl border border-[var(--hi-line)] bg-[var(--hi-void)] px-3 text-right text-base text-[var(--hi-text)] outline-none placeholder:text-[var(--hi-text-3)] focus:border-[var(--hi-gold-deep)]"
                 />
-                <span className="font-mono text-[length:var(--hi-text-caption)] text-[var(--hi-ash)]">₽</span>
+                <span className="text-[length:var(--hi-text-caption)] text-[var(--hi-text-3)]">₽</span>
               </div>
             </div>
           );
         })}
-      </div>
-    </div>
+      </Card>
+    </Section>
   );
 }

@@ -22,12 +22,16 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="h-[100vh] h-[100dvh] bg-[var(--hi-void)] flex items-center justify-center p-6">
-          <div className="text-center">
-            <div className="text-[var(--hi-ash)] text-[length:var(--hi-text-body)] mb-4">Произошла ошибка</div>
+        <div className="flex h-[100vh] h-[100dvh] items-center justify-center bg-[var(--hi-void)] p-6">
+          <div className="max-w-[300px] text-center">
+            <div className="font-serif text-[32px] leading-tight text-[var(--hi-text)]">Что-то пошло не так</div>
+            <p className="mt-2 text-[length:var(--hi-text-body)] leading-relaxed text-[var(--hi-text-2)]">
+              Ваши данные в безопасности — они хранятся на устройстве. Попробуйте перезагрузить приложение.
+            </p>
             <button
+              type="button"
               onClick={() => window.location.reload()}
-              className="text-[var(--hi-gold)] border border-[rgba(200,180,140,0.2)] px-4 py-2 rounded-lg text-[length:var(--hi-text-body)]"
+              className="mt-6 h-12 rounded-2xl bg-[var(--hi-gold)] px-6 text-[length:var(--hi-text-body)] font-semibold text-[#1a1509]"
             >
               Перезагрузить
             </button>

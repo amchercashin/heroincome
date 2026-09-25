@@ -3,8 +3,8 @@ import { getTypeColor, getDefaultFrequency, getTypeSuggestions } from '@/models/
 
 describe('getTypeColor', () => {
   it('returns predefined color for known types', () => {
-    expect(getTypeColor('Акции')).toBe('#c8b48c');
-    expect(getTypeColor('Облигации')).toBe('#8b7355');
+    expect(getTypeColor('Акции')).toBe('#d9c08e');
+    expect(getTypeColor('Облигации')).toBe('#8fb0c9');
   });
   it('returns consistent hash color for custom types', () => {
     const color1 = getTypeColor('Мой тип');

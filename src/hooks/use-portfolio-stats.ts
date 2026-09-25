@@ -1,16 +1,24 @@
+import { useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/db/database';
-import type { PortfolioStats, CategoryStats } from '@/models/types';
+import type { Asset, PortfolioStats, CategoryStats } from '@/models/types';
 import { calculatePortfolioSnapshot, type CalculatedAssetStats } from '@/services/portfolio-calculator';
+import { projectIncome, incomeTimeline, type ProjectedPayment, type TimelinePoint } from '@/services/income-projection';
 import { getNdflRates } from '@/services/app-settings';
 import { ratesArrayToMap } from '@/services/exchange-rates';
 
-export function usePortfolioStats(): {
+export function usePortfolioStats(options: { withTimeline?: boolean } = {}): {
   portfolio: PortfolioStats;
   categories: CategoryStats[];
   assetsById: Map<number, CalculatedAssetStats>;
+  assets: Asset[];
+  /** Projected net payments for the next 12 months, soonest first. */
+  projection: ProjectedPayment[];
+  /** Monthly income history + forecast (only when `withTimeline`). */
+  timeline: TimelinePoint[];
   isLoading: boolean;
 } {
+  const withTimeline = options.withTimeline ?? false;
   const assets = useLiveQuery(() => db.assets.toArray(), []);
   const holdings = useLiveQuery(() => db.holdings.toArray(), []);
   const allHistory = useLiveQuery(() => db.paymentHistory.toArray(), []);
@@ -23,13 +31,23 @@ export function usePortfolioStats(): {
     ndflRates === undefined ||
     exchangeRates === undefined;
 
-  const { portfolio, categories, assetsById } = calculatePortfolioSnapshot({
-    assets: assets ?? [],
-    holdings: holdings ?? [],
-    paymentHistory: allHistory ?? [],
-    ndflRates: ndflRates ?? new Map(),
-    exchangeRates: ratesArrayToMap(exchangeRates ?? []),
-  });
-
-  return { portfolio, categories, assetsById, isLoading };
+  return useMemo(() => {
+    const input = {
+      assets: assets ?? [],
+      holdings: holdings ?? [],
+      paymentHistory: allHistory ?? [],
+      ndflRates: ndflRates ?? new Map<string, number>(),
+      exchangeRates: ratesArrayToMap(exchangeRates ?? []),
+    };
+    const { portfolio, categories, assetsById } = calculatePortfolioSnapshot(input);
+    const projectionInput = {
+      assets: input.assets,
+      paymentHistory: input.paymentHistory,
+      assetsById,
+      ndflRates: input.ndflRates,
+    };
+    const projection = projectIncome(projectionInput);
+    const timeline = withTimeline && !isLoading ? incomeTimeline(projectionInput) : [];
+    return { portfolio, categories, assetsById, assets: input.assets, projection, timeline, isLoading };
+  }, [assets, holdings, allHistory, ndflRates, exchangeRates, isLoading, withTimeline]);
 }

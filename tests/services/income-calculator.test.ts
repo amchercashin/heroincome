@@ -6,6 +6,8 @@ import {
   calcYieldPercent,
   calcCAGR,
   calcAnnualIncomePerUnit,
+  calcAnnualIncomePerUnitByPeriod,
+  calcAssetAnnualIncomePerUnit,
 } from '@/services/income-calculator';
 
 describe('income-calculator', () => {
@@ -228,5 +230,64 @@ describe('income-calculator', () => {
       const result = calcYieldPercent(1e15, 1e16);
       expect(isFinite(result)).toBe(true);
     });
+  });
+});
+
+describe('calcAnnualIncomePerUnitByPeriod (pocket per period)', () => {
+  const now = new Date('2026-09-25T12:00:00');
+
+  it('counts monthly rent in full right after the first payment', () => {
+    const r = calcAnnualIncomePerUnitByPeriod([{ amount: 50000, date: new Date('2026-09-05') }], 12, now);
+    expect(r.annualIncome).toBe(600000);
+  });
+
+  it('uses the latest payout, so a raise shows up immediately', () => {
+    const r = calcAnnualIncomePerUnitByPeriod(
+      [{ amount: 50000, date: new Date('2026-08-05') }, { amount: 55000, date: new Date('2026-09-05') }],
+      12,
+      now,
+    );
+    expect(r.annualIncome).toBe(660000);
+    expect(r.usedPayments).toHaveLength(1);
+  });
+
+  it('empties the pocket when the next payout is overdue by more than half a period', () => {
+    const late = calcAnnualIncomePerUnitByPeriod([{ amount: 50000, date: new Date('2026-08-05') }], 12, now);
+    expect(late.annualIncome).toBe(0);
+    const quarterly = calcAnnualIncomePerUnitByPeriod([{ amount: 9000, date: new Date('2026-06-01') }], 4, now);
+    expect(quarterly.annualIncome).toBe(36000);
+  });
+
+  it('adds up payouts on the same day', () => {
+    const r = calcAnnualIncomePerUnitByPeriod(
+      [{ amount: 100, date: new Date('2026-09-01') }, { amount: 20, date: new Date('2026-09-02') }],
+      12,
+      now,
+    );
+    expect(r.annualIncome).toBe(1440);
+  });
+
+  it('ignores future-dated records and bad frequency', () => {
+    expect(calcAnnualIncomePerUnitByPeriod([{ amount: 1, date: new Date('2026-10-01') }], 12, now).annualIncome).toBe(0);
+    expect(calcAnnualIncomePerUnitByPeriod([{ amount: 1, date: new Date('2026-09-20') }], 0, now).annualIncome).toBe(0);
+  });
+});
+
+describe('calcAssetAnnualIncomePerUnit', () => {
+  const now = new Date('2026-09-25T12:00:00');
+  const history = [
+    { amount: 30, date: new Date('2026-03-01') },
+    { amount: 10, date: new Date('2026-09-01') },
+  ];
+
+  it('prefers the manual override', () => {
+    const r = calcAssetAnnualIncomePerUnit({ paymentPerUnitSource: 'manual', paymentPerUnit: 7, frequencyPerYear: 2 }, 'year', history, now);
+    expect(r.annualIncome).toBe(7);
+  });
+
+  it('dispatches by spread', () => {
+    const asset = { paymentPerUnitSource: 'fact' as const, frequencyPerYear: 2 };
+    expect(calcAssetAnnualIncomePerUnit(asset, 'year', history, now).annualIncome).toBe(40);
+    expect(calcAssetAnnualIncomePerUnit(asset, 'period', history, now).annualIncome).toBe(20);
   });
 });

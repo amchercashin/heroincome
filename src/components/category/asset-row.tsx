@@ -1,6 +1,10 @@
+import { ChevronRight } from 'lucide-react';
 import { TransitionLink } from '@/components/ui/transition-link';
+import { AssetAvatar } from '@/components/ds/surface';
+import { SourceBadge } from '@/components/ds/badge';
 import type { Asset } from '@/models/types';
-import { formatCurrency, formatPercent } from '@/lib/utils';
+import { getTypeColor } from '@/models/account';
+import { formatCurrency, formatIncome, formatNumber, formatPercent } from '@/lib/utils';
 import type { CalculatedAssetStats } from '@/services/portfolio-calculator';
 
 interface AssetRowProps {
@@ -10,45 +14,33 @@ interface AssetRowProps {
 
 export function AssetRow({ asset, stats }: AssetRowProps) {
   const isManual = asset.paymentPerUnitSource === 'manual';
+  const color = getTypeColor(asset.type);
 
   return (
     <TransitionLink
       to={`/asset/${asset.id}`}
-      className="block py-3 border-b border-[rgba(200,180,140,0.04)] transition-colors active:bg-[var(--hi-stone)]"
+      className="hi-pressable relative flex items-center gap-3 px-4 py-3.5 active:bg-[var(--hi-raised)] after:absolute after:bottom-0 after:left-[68px] after:right-0 after:h-px after:bg-[var(--hi-line)] last:after:hidden"
     >
-      <div className="flex justify-between items-start gap-3">
-        <div className="min-w-0">
-          <div className="text-[length:var(--hi-text-body)] font-medium leading-tight text-[var(--hi-text)] truncate">{asset.name}</div>
-          {(asset.ticker || asset.isin) && (
-            <div className="text-[length:var(--hi-text-caption)] leading-tight text-[var(--hi-muted)] mt-0.5">
-              {[asset.ticker, asset.isin].filter(Boolean).join(' · ')}
-            </div>
-          )}
-          <div className="font-mono text-[length:var(--hi-text-caption)] leading-tight text-[var(--hi-muted)] mt-1.5">
-            {stats.totalQuantity} шт · {formatCurrency(stats.value)}
-          </div>
+      <AssetAvatar label={asset.ticker ?? asset.name} color={color} />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1.5">
+          <span className="truncate text-[length:var(--hi-text-body)] font-semibold leading-tight text-[var(--hi-text)]">{asset.name}</span>
+          {isManual && <SourceBadge source="manual" />}
         </div>
-        <div className="flex-shrink-0 text-right">
-          <div className="flex items-center gap-1.5 justify-end">
-            <span className="font-mono text-[length:var(--hi-text-body)] font-medium text-[var(--hi-gold)]">{formatCurrency(stats.incomePerMonth)}</span>
-            <span className={`font-mono text-[length:var(--hi-text-caption)] px-1.5 py-0.5 rounded min-w-[52px] text-center ${
-              isManual
-                ? 'bg-[rgba(90,85,72,0.15)] text-[var(--hi-ash)]'
-                : 'bg-[rgba(200,180,140,0.1)] text-[var(--hi-gold)]'
-            }`}>
-              {isManual ? 'ручной' : 'факт'}
-            </span>
-          </div>
-          {stats.yieldPercent != null && (
-            <div className="font-mono text-[length:var(--hi-text-caption)] text-[var(--hi-muted)] text-right mt-0.5">
-              {formatPercent(stats.yieldPercent)} годовых
-            </div>
-          )}
-          <div className="font-mono text-[length:var(--hi-text-micro)] text-[var(--hi-ash)] text-right">
-            после НДФЛ
-          </div>
+        <div className="mt-1 truncate text-[length:var(--hi-text-caption)] leading-tight text-[var(--hi-text-3)]">
+          {asset.ticker && <span className="font-semibold tracking-wide">{asset.ticker} · </span>}
+          {formatNumber(stats.totalQuantity)} шт · {formatCurrency(stats.value)}
         </div>
       </div>
+      <div className="shrink-0 text-right">
+        <div className="text-[length:var(--hi-text-body)] font-semibold text-[var(--hi-gold)]">
+          {formatIncome(stats.incomePerMonth)}
+        </div>
+        <div className="mt-1 text-[length:var(--hi-text-caption)] text-[var(--hi-text-3)]">
+          {stats.yieldPercent > 0 ? formatPercent(stats.yieldPercent) : 'нет выплат'}
+        </div>
+      </div>
+      <ChevronRight className="size-4 shrink-0 text-[var(--hi-text-3)]" />
     </TransitionLink>
   );
 }

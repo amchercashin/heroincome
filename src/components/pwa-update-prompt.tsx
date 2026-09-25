@@ -1,4 +1,6 @@
 import { useRegisterSW } from 'virtual:pwa-register/react';
+import { Sparkles } from 'lucide-react';
+import { Button } from '@/components/ds/button';
 
 export function PwaUpdatePrompt() {
   const {
@@ -9,24 +11,14 @@ export function PwaUpdatePrompt() {
   if (!needRefresh) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-50 flex items-center justify-between gap-3 rounded-lg border border-[var(--hi-gold)]/20 bg-[var(--hi-stone)] px-4 py-3 shadow-lg sm:left-auto sm:right-4 sm:max-w-sm">
-      <p className="text-[length:var(--hi-text-body)] text-[var(--hi-text)]">
-        Доступно обновление
-      </p>
-      <div className="flex gap-2 shrink-0">
-        <button
-          onClick={() => setNeedRefresh(false)}
-          className="rounded px-3 py-1.5 text-[length:var(--hi-text-body)] text-[var(--hi-ash)] hover:text-[var(--hi-text)] transition-colors"
-        >
-          Позже
-        </button>
-        <button
-          onClick={() => updateServiceWorker(true)}
-          className="rounded bg-[var(--hi-gold)] px-3 py-1.5 text-[length:var(--hi-text-body)] font-medium text-[var(--hi-void)] hover:bg-[var(--hi-earth)] transition-colors"
-        >
-          Обновить
-        </button>
-      </div>
+    <div
+      role="status"
+      className="fixed inset-x-4 top-[max(12px,var(--hi-safe-top))] z-[65] mx-auto flex max-w-[520px] items-center gap-3 rounded-[22px] border border-[rgba(217,192,142,0.25)] bg-[var(--hi-raised)]/95 py-2.5 pl-4 pr-2 shadow-[0_18px_40px_-16px_rgba(0,0,0,0.9)] backdrop-blur-xl animate-[hi-fade-slide-down_0.4s_var(--hi-ease-out)_both]"
+    >
+      <Sparkles className="size-4 shrink-0 text-[var(--hi-gold)]" />
+      <p className="min-w-0 flex-1 text-[length:var(--hi-text-body)] text-[var(--hi-text)]">Доступна новая версия</p>
+      <Button variant="ghost" size="sm" onClick={() => setNeedRefresh(false)}>Позже</Button>
+      <Button variant="primary" size="sm" onClick={() => updateServiceWorker(true)}>Обновить</Button>
     </div>
   );
 }

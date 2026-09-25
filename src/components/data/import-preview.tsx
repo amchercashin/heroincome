@@ -17,31 +17,31 @@ export function ImportPreview({ diff }: ImportPreviewProps) {
   return (
     <div>
       {/* Summary chips */}
-      <div className="flex gap-2 flex-wrap mb-3 text-[length:var(--hi-text-body)]">
+      <div className="mb-3 flex flex-wrap gap-2 text-[length:var(--hi-text-caption)] font-semibold">
         {summary.added > 0 && (
-          <span className="bg-[#1a2a1a] border border-[#2d5a2d] text-[#6bba6b] px-2.5 py-1 rounded-full">
+          <span className="rounded-full bg-[var(--hi-positive-tint)] px-3 py-1 text-[var(--hi-positive)]">
             +{summary.added} новых
           </span>
         )}
         {summary.changed > 0 && (
-          <span className="bg-[#2a2a1a] border border-[#5a5a2d] text-[#baba6b] px-2.5 py-1 rounded-full">
+          <span className="rounded-full bg-[var(--hi-gold-tint)] px-3 py-1 text-[var(--hi-gold)]">
             {summary.changed} изменено
           </span>
         )}
         {summary.removed > 0 && (
-          <span className="bg-[#2a1a1a] border border-[#5a2d2d] text-[#ba6b6b] px-2.5 py-1 rounded-full">
+          <span className="rounded-full bg-[var(--hi-negative-tint)] px-3 py-1 text-[var(--hi-negative)]">
             &minus;{summary.removed} удалён
           </span>
         )}
         {summary.unchanged > 0 && (
-          <span className="bg-[#1a1a1a] border border-[var(--hi-shadow)] text-[var(--hi-muted)] px-2.5 py-1 rounded-full">
+          <span className="rounded-full bg-[rgba(236,220,190,0.06)] px-3 py-1 text-[var(--hi-text-3)]">
             {summary.unchanged} ок
           </span>
         )}
       </div>
 
       {/* Diff table */}
-      <div className="space-y-0.5">
+      <div className="overflow-hidden rounded-[22px] border border-[var(--hi-line)] bg-[var(--hi-surface)]">
         {/* Added */}
         {added.map((item, i) => (
           <DiffRow key={`a-${i}`} item={item} />
@@ -58,7 +58,7 @@ export function ImportPreview({ diff }: ImportPreviewProps) {
         {unchanged.length > 0 && !showUnchanged && (
           <button
             onClick={() => setShowUnchanged(true)}
-            className="w-full py-2 text-center text-[var(--hi-muted)] text-[length:var(--hi-text-body)]"
+            className="w-full py-3 text-center text-[length:var(--hi-text-caption)] font-semibold text-[var(--hi-text-3)]"
           >
             &#x25B8; {unchanged.length} без изменений
           </button>
@@ -73,16 +73,16 @@ export function ImportPreview({ diff }: ImportPreviewProps) {
 
 function DiffRow({ item }: { item: DiffItem }) {
   const borderColor = {
-    added: 'border-l-[#6bba6b]',
-    changed: 'border-l-[#baba6b]',
-    removed: 'border-l-[#ba6b6b]',
+    added: 'border-l-[var(--hi-positive)]',
+    changed: 'border-l-[var(--hi-gold)]',
+    removed: 'border-l-[var(--hi-negative)]',
     unchanged: 'border-l-transparent',
   }[item.status];
 
   const bgColor = {
-    added: 'bg-[#181e18]',
-    changed: 'bg-[#1e1e18]',
-    removed: 'bg-[#1e1818]',
+    added: 'bg-[var(--hi-positive-tint)]',
+    changed: 'bg-[var(--hi-gold-tint)]',
+    removed: 'bg-[var(--hi-negative-tint)]',
     unchanged: '',
   }[item.status];
 
@@ -96,13 +96,13 @@ function DiffRow({ item }: { item: DiffItem }) {
 
 
   return (
-    <div className={`${bgColor} ${borderColor} border-l-3 rounded px-2 py-1.5 flex items-center justify-between text-[length:var(--hi-text-heading)]`}>
+    <div className={`${bgColor} ${borderColor} flex items-center justify-between border-b border-l-[3px] border-b-[var(--hi-line)] px-3 py-2.5 text-[length:var(--hi-text-body)] last:border-b-0`}>
       <div className="min-w-0">
-        <span className={`font-medium ${isRemoved ? 'text-[var(--hi-muted)] line-through' : 'text-[var(--hi-text)]'}`}>
+        <span className={`font-medium ${isRemoved ? 'text-[var(--hi-text-3)] line-through' : 'text-[var(--hi-text)]'}`}>
           {ticker}
         </span>
         {name && ticker !== name && (
-          <span className={`ml-1 text-[length:var(--hi-text-body)] ${isRemoved ? 'text-[var(--hi-muted)]' : 'text-[var(--hi-ash)]'}`}>
+          <span className={`ml-1 text-[length:var(--hi-text-body)] ${isRemoved ? 'text-[var(--hi-text-3)]' : 'text-[var(--hi-text-2)]'}`}>
             {name}
           </span>
         )}
@@ -122,19 +122,19 @@ function DiffValue({ oldVal, newVal, status, suffix = '' }: {
   suffix?: string;
 }) {
   if (status === 'added') {
-    return <span className="text-[#6bba6b] font-semibold">{newVal}{suffix}</span>;
+    return <span className="font-semibold text-[var(--hi-positive)]">{newVal}{suffix}</span>;
   }
   if (status === 'removed') {
-    return <span className="text-[var(--hi-muted)] line-through text-[length:var(--hi-text-body)]">{oldVal}{suffix}</span>;
+    return <span className="text-[var(--hi-text-3)] line-through text-[length:var(--hi-text-body)]">{oldVal}{suffix}</span>;
   }
   if (oldVal === newVal || newVal == null) {
-    return <span className="text-[var(--hi-ash)]">{oldVal ?? '\u2014'}{oldVal != null ? suffix : ''}</span>;
+    return <span className="text-[var(--hi-text-2)]">{oldVal ?? '\u2014'}{oldVal != null ? suffix : ''}</span>;
   }
   return (
     <span>
-      <span className="text-[var(--hi-muted)] line-through text-[length:var(--hi-text-body)]">{oldVal}{suffix}</span>
+      <span className="text-[var(--hi-text-3)] line-through text-[length:var(--hi-text-body)]">{oldVal}{suffix}</span>
       {' '}
-      <span className="text-[#baba6b] font-semibold">{newVal}{suffix}</span>
+      <span className="font-semibold text-[var(--hi-gold)]">{newVal}{suffix}</span>
     </span>
   );
 }

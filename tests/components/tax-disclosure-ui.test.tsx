@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
-import { HeroIncome } from '@/components/main/hero-income';
-import { StatBlocks } from '@/components/shared/stat-blocks';
+import { IncomeHero } from '@/components/main/income-hero';
+import { SummaryCard } from '@/components/shared/summary-card';
 import { AddPaymentForm } from '@/components/payments/add-payment-form';
 import { NdflSettings } from '@/components/settings/ndfl-settings';
 import { AssetRow } from '@/components/category/asset-row';
@@ -17,15 +17,13 @@ describe('tax disclosure UI', () => {
 
   it('marks the main income as shown after NDFL', () => {
     render(
-      <HeroIncome
+      <IncomeHero
         income={12000}
+        incomePerYear={144000}
         yieldPercent={8.2}
         totalValue={500000}
         mode="month"
-        onToggle={vi.fn()}
-        onSync={vi.fn()}
-        syncing={false}
-        lastSyncAt={null}
+        onModeChange={vi.fn()}
         animate={false}
       />,
     );
@@ -34,18 +32,18 @@ describe('tax disclosure UI', () => {
     expect(screen.getByText('после НДФЛ')).toBeInTheDocument();
   });
 
-  it('marks the income stat block as shown after NDFL', () => {
+  it('marks the income summary card as shown after NDFL', () => {
     render(
-      <StatBlocks
+      <SummaryCard
         incomePerMonth={12000}
         totalValue={500000}
         yieldPercent={8.2}
         portfolioSharePercent={40}
-        isManualIncome={false}
+        badges={<span>факт</span>}
       />,
     );
 
-    expect(screen.getByText('Доход/мес')).toBeInTheDocument();
+    expect(screen.getByText('Доход в месяц')).toBeInTheDocument();
     expect(screen.getByText('после НДФЛ')).toBeInTheDocument();
     expect(screen.getByText('факт')).toBeInTheDocument();
   });
@@ -77,7 +75,7 @@ describe('tax disclosure UI', () => {
     expect(screen.getByText('Выплаты хранятся до налога. Доход и доходность считаются после применения ставки.')).toBeInTheDocument();
   });
 
-  it('keeps asset ticker and position value grouped in the left asset metadata', () => {
+  it('keeps ticker, quantity and position value together under the asset name', () => {
     const asset = {
       ...createAssetDraft({
         type: 'Акции',
@@ -109,9 +107,10 @@ describe('tax disclosure UI', () => {
       </MemoryRouter>,
     );
 
-    const rowText = container.textContent ?? '';
-    expect(rowText.indexOf('GAZP · RU0007661625')).toBeGreaterThan(-1);
-    expect(rowText.indexOf('20790 шт · ₽ 2.6M')).toBeGreaterThan(rowText.indexOf('GAZP · RU0007661625'));
-    expect(rowText.indexOf('20790 шт · ₽ 2.6M')).toBeLessThan(rowText.indexOf('₽ 0'));
+    const rowText = (container.textContent ?? '').replace(/\u00a0/g, ' ');
+    const meta = 'GAZP · 20 790 шт · 2,6 млн ₽';
+    expect(rowText.indexOf('ГАЗПРОМ ao')).toBeGreaterThan(-1);
+    expect(rowText.indexOf(meta)).toBeGreaterThan(rowText.indexOf('ГАЗПРОМ ao'));
+    expect(rowText.indexOf(meta)).toBeLessThan(rowText.indexOf('0 ₽'));
   });
 });
