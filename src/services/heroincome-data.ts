@@ -20,7 +20,7 @@ interface DohodTickerData {
 
 interface DohodIndex {
   updatedAt: string;
-  tickerCount: number;
+  tickersCount?: number;
   tickers: string[];
 }
 
@@ -33,8 +33,9 @@ export interface DohodDividendRow {
 // ---- Fund distribution types ----
 
 interface FundDistributionRaw {
-  paymentDate: string;
-  recordDate: string;
+  paymentDate: string | null;
+  /** Occasionally missing in the source sheet — fall back to paymentDate. */
+  recordDate: string | null;
   unitPrice: number;
   amountBeforeTax: number;
   amountAfterTax: number;
@@ -108,8 +109,10 @@ export async function fetchDohodDividends(ticker: string): Promise<DohodDividend
     const res = await fetchWithTimeout(`${BASE_URL}/stocks/dohod/${upperTicker}.json`);
     if (!res.ok) return null;
     const data = (await res.json()) as DohodTickerData;
+    // A zero-amount forecast is dohod.ru saying "no dividend expected" — keep it
+    // (the projection uses it to stop repeating last year's payment); drop other empties.
     return data.payments
-      .filter((p) => p.amount != null)
+      .filter((p) => p.amount != null && p.recordDate && (p.amount > 0 || p.isForecast))
       .map((p) => ({ date: new Date(p.recordDate), amount: p.amount!, isForecast: p.isForecast }));
   } catch {
     return null;
@@ -151,9 +154,9 @@ export async function fetchFundDistributions(key: string): Promise<DividendHisto
     if (!res.ok) return null;
     const data = (await res.json()) as FundDistributionData;
     return data.distributions
-      .filter((d) => d.amountBeforeTax != null && d.amountBeforeTax > 0)
+      .filter((d) => d.amountBeforeTax != null && d.amountBeforeTax > 0 && (d.recordDate || d.paymentDate))
       .map((d) => ({
-        date: new Date(d.recordDate),
+        date: new Date((d.recordDate ?? d.paymentDate)!),
         amount: d.amountBeforeTax,
       }));
   } catch {

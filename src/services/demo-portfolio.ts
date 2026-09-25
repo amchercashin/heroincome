@@ -67,7 +67,7 @@ const DEMO: DemoAsset[] = [
   },
   {
     asset: {
-      type: 'Фонды', ticker: 'RU000A104KU3', isin: 'RU000A104KU3', name: 'Парус-Двинцев', currency: 'RUB', currentPrice: 1150,
+      type: 'Фонды', ticker: 'RU000A104KU3', isin: 'RU000A104KU3', name: 'Парус-Нордвей', currency: 'RUB', currentPrice: 1150,
       dataSource: 'manual', paymentPerUnitSource: 'fact', frequencyPerYear: 12, frequencySource: 'moex',
     },
     quantity: 40, averagePrice: 1000,

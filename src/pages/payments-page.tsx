@@ -24,6 +24,8 @@ export function PaymentsPage() {
   const paymentsByAsset = useMemo(() => {
     const map = new Map<number, PaymentHistory[]>();
     for (const p of allPayments) {
+      // Zero-amount forecasts only mean "no dividend expected" — not a row to show.
+      if (p.isForecast && p.amount <= 0) continue;
       const arr = map.get(p.assetId) ?? [];
       arr.push(p);
       map.set(p.assetId, arr);
