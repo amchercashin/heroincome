@@ -71,6 +71,16 @@ describe('projectIncome', () => {
     expect(projection[0]).toMatchObject({ perUnit: 40, announced: true });
   });
 
+  it('treats a zero-amount forecast as "no payment expected"', () => {
+    const { projection, timeline } = run(
+      [stock({ id: 1 })],
+      [holding(1, 1)],
+      [payment(1, '2026-07-18', 36), payment(1, '2027-07-10', 0, { isForecast: true })],
+    );
+    expect(projection).toEqual([]);
+    expect(timeline[36].value).toBe(0);
+  });
+
   it('adds up to the yearly income when there are no forecasts', () => {
     const { snapshot, projection } = run(
       [

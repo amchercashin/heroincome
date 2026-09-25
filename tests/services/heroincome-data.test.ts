@@ -13,7 +13,7 @@ import {
 
 const MOCK_INDEX = {
   updatedAt: '2026-03-31T14:22:20Z',
-  tickerCount: 3,
+  tickersCount: 3,
   tickers: ['LKOH', 'SBER', 'GAZP'],
 };
 
@@ -122,6 +122,25 @@ describe('heroincome-data', () => {
       expect(rows![1].isForecast).toBe(true);
     });
 
+    it('keeps zero-amount forecasts ("no dividend expected") but drops zero facts', async () => {
+      mockFetchResponses({
+        'dohod/index.json': MOCK_INDEX,
+        'dohod/SBER.json': {
+          ticker: 'SBER', scrapedAt: '', source: 'dohod.ru',
+          payments: [
+            { recordDate: '2027-07-20', declaredDate: null, amount: 0, year: null, isForecast: true },
+            { recordDate: '2022-07-20', declaredDate: null, amount: 0, year: 2022, isForecast: false },
+            { recordDate: '2026-07-20', declaredDate: null, amount: 37.64, year: 2026, isForecast: false },
+          ],
+        },
+      });
+      const rows = await fetchDohodDividends('SBER');
+      expect(rows).toEqual([
+        { date: new Date('2027-07-20'), amount: 0, isForecast: true },
+        { date: new Date('2026-07-20'), amount: 37.64, isForecast: false },
+      ]);
+    });
+
     it('returns null for ticker not in index', async () => {
       mockFetchResponses({ 'stocks/dohod/index.json': MOCK_INDEX });
       expect(await fetchDohodDividends('UNKNOWN')).toBeNull();
@@ -224,6 +243,20 @@ describe('heroincome-data', () => {
       });
       const rows = await fetchFundDistributions('TEST');
       expect(rows).toHaveLength(2);
+    });
+
+    it('falls back to paymentDate when recordDate is missing, skips rows without any date', async () => {
+      mockFetchResponses({
+        'funds/distributions/TEST.json': {
+          ...MOCK_PLZ5_DISTRIBUTIONS,
+          distributions: [
+            { paymentDate: '2023-03-14', recordDate: null, unitPrice: 1000, amountBeforeTax: 10, amountAfterTax: 8.7, yieldPrc: 12, status: 'paid' },
+            { paymentDate: null, recordDate: null, unitPrice: 1000, amountBeforeTax: 10, amountAfterTax: 8.7, yieldPrc: 12, status: 'paid' },
+          ],
+        },
+      });
+      const rows = await fetchFundDistributions('TEST');
+      expect(rows).toEqual([{ date: new Date('2023-03-14'), amount: 10 }]);
     });
 
     it('returns null when distribution file not found', async () => {

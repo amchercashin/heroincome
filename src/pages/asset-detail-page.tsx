@@ -53,7 +53,9 @@ export function AssetDetailPage() {
       costBasis,
       next,
       stats: assetsById.get(assetId),
-      chartHistory: history.map((h) => ({ amount: h.amount, date: new Date(h.date), isForecast: h.isForecast })),
+      chartHistory: history
+        .filter((h) => !(h.isForecast && h.amount <= 0))
+        .map((h) => ({ amount: h.amount, date: new Date(h.date), isForecast: h.isForecast })),
     };
   }, [asset, history, holdings, assetsById, projection, assetId]);
 

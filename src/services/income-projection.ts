@@ -120,11 +120,17 @@ function futurePaymentsFor(asset: Asset, history: PaymentHistory[], now: Date, h
   for (const p of real) {
     if (p.date > now && p.date <= horizon) out.push({ ...p, estimated: false, announced: true });
   }
+  // A zero-amount forecast means "no payment expected": it cancels the repeated
+  // payment but is not a payment itself.
+  const announcedDates: Date[] = [];
   for (const p of forecasts) {
-    if (p.date > now && p.date <= horizon) out.push({ ...p, estimated: false, announced: true });
+    if (p.date <= now || p.date > horizon) continue;
+    announcedDates.push(p.date);
+    if (p.amount > 0) out.push({ ...p, estimated: false, announced: true });
   }
+  for (const q of out) announcedDates.push(q.date);
   const isCovered = (date: Date) =>
-    out.some((q) => q.announced && Math.abs(q.date.getTime() - date.getTime()) <= MATCH_WINDOW_DAYS * DAY_MS);
+    announcedDates.some((d) => Math.abs(d.getTime() - date.getTime()) <= MATCH_WINDOW_DAYS * DAY_MS);
 
   const past = real.filter((p) => p.date <= now);
   if (spread === 'year') {
