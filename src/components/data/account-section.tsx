@@ -22,10 +22,20 @@ interface AccountSectionProps {
   onImport: () => void;
   highlightAssetId?: number;
   isDemo?: boolean;
+  /** Open and scroll into view (e.g. right after the account was created). */
+  focus?: boolean;
 }
 
-export function AccountSection({ account, holdings, assets, onImport, highlightAssetId, isDemo }: AccountSectionProps) {
-  const [expanded, setExpanded] = useState(highlightAssetId != null);
+export function AccountSection({ account, holdings, assets, onImport, highlightAssetId, isDemo, focus }: AccountSectionProps) {
+  const [expanded, setExpanded] = useState(highlightAssetId != null || !!focus);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!focus) return;
+    setExpanded(true);
+    const t = setTimeout(() => cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
+    return () => clearTimeout(t);
+  }, [focus]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
   const [addAssetOpen, setAddAssetOpen] = useState(false);
@@ -86,7 +96,7 @@ export function AccountSection({ account, holdings, assets, onImport, highlightA
   };
 
   return (
-    <Card className="overflow-hidden" data-account-id={account.id}>
+    <Card ref={cardRef} className="overflow-hidden" data-account-id={account.id}>
       <div className="flex items-center">
         <button
           type="button"
@@ -161,7 +171,9 @@ export function AccountSection({ account, holdings, assets, onImport, highlightA
                       <div className="shrink-0 text-right">
                         <div className="text-[length:var(--hi-text-body)] font-semibold text-[var(--hi-text)]">{formatMoney(valueOwn, asset.currency)}</div>
                         {cost != null && cost > 0 && (
-                          <div className="mt-0.5 text-[length:var(--hi-text-micro)] text-[var(--hi-text-3)]">куплено за {formatMoney(cost, asset.currency)}</div>
+                          <div className="mt-0.5 whitespace-nowrap text-[length:var(--hi-text-micro)] text-[var(--hi-text-3)]">
+                            куплено за {asset.currency && asset.currency !== 'RUB' ? formatMoney(cost, asset.currency) : formatCurrency(cost)}
+                          </div>
                         )}
                       </div>
                     </button>

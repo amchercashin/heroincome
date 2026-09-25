@@ -81,11 +81,18 @@ export function AssetDetailPage() {
     }));
   const openPayments = () => withViewTransition(() => navigate('/payments', { state: { highlightAssetId: assetId } }));
 
-  const incomeExplanation = spread === 'period'
+  const hasPayments = calculated.usedPayments.length > 0;
+  const incomeExplanation = !hasPayments
+    ? exchange
+      ? 'За последние 12 месяцев выплат не было. Нажмите «Обновить» на главной, чтобы загрузить их с биржи.'
+      : spread === 'period'
+        ? 'Выплат пока нет — запишите первую, и доход появится сразу.'
+        : 'За последние 12 месяцев выплат не было.'
+    : spread === 'period'
       ? `Последняя выплата × ${asset.frequencyPerYear} (${formatFrequency(asset.frequencyPerYear)})`
-      : calculated.usedPayments.length > 0
-        ? `Сумма ${calculated.usedPayments.length} ${calculated.usedPayments.length === 1 ? 'выплаты' : 'выплат'} за 12 месяцев`
-        : 'За последние 12 месяцев выплат не было';
+      : `Сумма ${calculated.usedPayments.length} ${calculated.usedPayments.length === 1 ? 'выплаты' : 'выплат'} за 12 месяцев`;
+  // "на 1 бумагу" for securities, "на 1 шт" for several units, nothing for a single object.
+  const perUnitLabel = exchange ? 'на 1 бумагу' : totalQuantity === 1 ? '' : 'на 1 шт';
 
   return (
     <AppShell back={`/category/${encodeURIComponent(asset.type)}`} title={asset.name} subtitle={identifiers}>
@@ -142,7 +149,7 @@ export function AssetDetailPage() {
                 <span className="text-[22px] font-semibold text-[var(--hi-text)]">
                   {annualIncome > 0 ? formatPrice(annualIncome, currency) : '—'}
                 </span>
-                <span className="text-[length:var(--hi-text-caption)] text-[var(--hi-text-3)]">в год на 1 шт, до НДФЛ</span>
+                <span className="text-[length:var(--hi-text-caption)] text-[var(--hi-text-3)]">в год{perUnitLabel && ` ${perUnitLabel}`}, до НДФЛ</span>
               </div>
               <div className="mt-1 text-[length:var(--hi-text-caption)] leading-snug text-[var(--hi-text-3)]">{incomeExplanation}</div>
               {calculated.usedPayments.length > 0 && (
@@ -195,7 +202,7 @@ export function AssetDetailPage() {
             <div className="min-w-0 flex-1">
               <div className="text-[length:var(--hi-text-body)] font-semibold text-[var(--hi-text)]">{formatLongDate(next.date)}</div>
               <div className="mt-0.5 text-[length:var(--hi-text-caption)] text-[var(--hi-text-3)]">
-                {formatPrice(next.perUnit, currency)} на бумагу · {next.announced ? 'объявлено' : next.estimated ? 'оценка' : 'ожидается'}
+                {perUnitLabel ? `${formatPrice(next.perUnit, currency)} ${perUnitLabel} · ` : ''}{next.announced ? 'объявлено' : next.estimated ? 'дата условная' : 'ожидается'}
               </div>
             </div>
             <div className="shrink-0 text-right">
@@ -217,7 +224,7 @@ export function AssetDetailPage() {
           />
           <ListRow
             title="Текущая цена"
-            subtitle={exchange && price != null ? 'Мосбиржа' : undefined}
+            subtitle={asset.moexSecid && price != null ? 'Мосбиржа' : undefined}
             trailing={<span className="font-semibold text-[var(--hi-text)]">{formatPrice(price, currency)}</span>}
           />
           <ListRow

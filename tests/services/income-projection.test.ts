@@ -57,7 +57,7 @@ describe('projectIncome', () => {
     expect(day(projection[0].date)).toBe('2027-07-18');
     expect(projection[0].amount).toBeCloseTo(36 * 10 * 0.87);
     expect(projection[0].perUnit).toBe(36);
-    expect(projection[0]).toMatchObject({ estimated: false, announced: false });
+    expect(projection[0]).toMatchObject({ estimated: false, announced: false, basis: 'last-year' });
   });
 
   it('prefers an announced forecast over the repeated payment', () => {
@@ -68,7 +68,7 @@ describe('projectIncome', () => {
     );
     expect(projection).toHaveLength(1);
     expect(day(projection[0].date)).toBe('2027-07-10');
-    expect(projection[0]).toMatchObject({ perUnit: 40, announced: true });
+    expect(projection[0]).toMatchObject({ perUnit: 40, announced: true, basis: 'announced' });
   });
 
   it('treats a zero-amount forecast as "no payment expected"', () => {
@@ -130,6 +130,7 @@ describe('projectIncome', () => {
     expect(snapshot.portfolio.totalIncomePerMonth).toBe(50000);
     expect(projection).toHaveLength(12);
     expect(day(projection[0].date)).toBe('2026-10-05');
+    expect(projection[0].basis).toBe('last-payout');
   });
 
   it('skips assets without holdings', () => {
@@ -168,23 +169,25 @@ describe('incomeTimeline', () => {
 });
 
 describe('bucketByMonth', () => {
-  it('returns 12 months starting from the current month', () => {
+  it('returns at least 12 real months starting from the current month', () => {
     const buckets = bucketByMonth([], NOW);
     expect(buckets).toHaveLength(12);
     expect(buckets[0]).toMatchObject({ month: 8, year: 2026 });
     expect(buckets[11]).toMatchObject({ month: 7, year: 2027 });
   });
 
-  it('sums payments per calendar month', () => {
+  it('keeps each payment under its true month (13 buckets when the horizon ends mid-month)', () => {
     const { projection } = run(
       [stock({ id: 1 })],
       [holding(1, 1)],
-      [payment(1, '2026-01-10', 5), payment(1, '2026-01-20', 7), payment(1, '2026-03-01', 1)],
+      [payment(1, '2026-01-10', 5), payment(1, '2026-01-20', 7), payment(1, '2026-09-10', 1)],
     );
     const buckets = bucketByMonth(projection, NOW);
+    expect(buckets).toHaveLength(13);
+    expect(buckets[0]).toMatchObject({ month: 8, year: 2026, total: 0 });
     const jan = buckets.find((b) => b.month === 0)!;
-    expect(jan.total).toBe(12);
-    expect(jan.payments).toHaveLength(2);
+    expect(jan).toMatchObject({ year: 2027, total: 12 });
+    expect(buckets[12]).toMatchObject({ month: 8, year: 2027, total: 1 });
     expect(buckets.reduce((s, b) => s + b.total, 0)).toBe(13);
   });
 });

@@ -15,6 +15,8 @@ export interface SecurityInfo {
   secid: string;
   primaryBoardId: string;
   market: 'shares' | 'bonds';
+  /** Human-readable short name, e.g. "Сбербанк" — when MOEX returns it. */
+  shortName?: string;
 }
 
 export interface MoexSecurityFull {
@@ -241,7 +243,7 @@ export async function resolveSecurityInfo(
 ): Promise<SecurityInfo | null> {
   const data = await fetchISS('/securities.json', {
     q: query,
-    'securities.columns': 'secid,primary_boardid,group,is_traded',
+    'securities.columns': 'secid,shortname,primary_boardid,group,is_traded',
   });
   if (!data?.securities) return null;
 
@@ -261,7 +263,8 @@ export async function resolveSecurityInfo(
   const market = resolveMarket(boardId, group);
   if (!market) return null;
 
-  return { secid, primaryBoardId: boardId, market };
+  const shortName = typeof match.shortname === 'string' && match.shortname.trim() ? match.shortname.trim() : undefined;
+  return { secid, primaryBoardId: boardId, market, ...(shortName ? { shortName } : {}) };
 }
 
 export async function resolveSecurityFull(

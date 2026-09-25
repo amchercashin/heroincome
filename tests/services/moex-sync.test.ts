@@ -92,6 +92,28 @@ describe('syncAllAssets', () => {
     expect(asset!.frequencySource).toBe('moex');
   });
 
+  it('replaces a ticker-only name with the MOEX short name, keeps user names', async () => {
+    const tickerNamed = (await db.assets.add({
+      type: 'Акции', ticker: 'SBER', name: 'SBER', dataSource: 'manual',
+      createdAt: new Date(), updatedAt: new Date(), ...ASSET_DEFAULTS,
+    })) as number;
+    const userNamed = (await db.assets.add({
+      type: 'Акции', ticker: 'GAZP', name: 'Мой Газпром', dataSource: 'manual',
+      createdAt: new Date(), updatedAt: new Date(), ...ASSET_DEFAULTS,
+    })) as number;
+
+    (resolveSecurityInfo as Mock).mockImplementation(async (q: string) => ({
+      secid: q, primaryBoardId: 'TQBR', market: 'shares', shortName: q === 'SBER' ? 'Сбербанк' : 'ГАЗПРОМ ао',
+    }));
+    (fetchBatchStockPrices as Mock).mockResolvedValue(new Map());
+    (fetchDividends as Mock).mockResolvedValue(null);
+
+    await syncAllAssets();
+
+    expect((await db.assets.get(tickerNamed))!.name).toBe('Сбербанк');
+    expect((await db.assets.get(userNamed))!.name).toBe('Мой Газпром');
+  });
+
   it('syncs bond: converts price from % to rub, updates frequency on asset', async () => {
     const assetId = (await db.assets.add({
       type: 'Облигации',

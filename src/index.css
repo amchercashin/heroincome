@@ -318,8 +318,8 @@ html[data-nav="tab"]::view-transition-new(root) { animation: hi-vt-fade-rise 260
   0%, 100% { opacity: 0.55; transform: scale(1); }
   50% { opacity: 0.9; transform: scale(1.06); }
 }
-@keyframes hi-toast-in {
-  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+@keyframes hi-toast-in-top {
+  from { opacity: 0; transform: translateY(-12px) scale(0.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 @keyframes a2hs-tap {

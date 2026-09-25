@@ -69,9 +69,11 @@ export function IncomeDynamicsChart({ points, mode, animate = true }: IncomeDyna
     const baseline = PAD_TOP + innerH;
     const area = (c: [number, number][]) =>
       c.length ? `${linePath(c)}L${c[c.length - 1][0].toFixed(1)},${baseline}L${c[0][0].toFixed(1)},${baseline}Z` : '';
+    const nowX = x(nowVisible);
     const years = visible
       .map((p, i) => ({ i, date: p.date }))
-      .filter(({ date, i }) => date.getMonth() === 0 && i > 1 && i < visible.length - 2);
+      // January ticks, skipping edges and any that would collide with the "сейчас" label.
+      .filter(({ date, i }) => date.getMonth() === 0 && i > 1 && i < visible.length - 2 && Math.abs(x(i) - nowX) > 44);
     return { x, coords, past, future, pastArea: area(past), futureArea: area(future), baseline, years };
   }, [visible, width, k, nowVisible]);
 
@@ -79,7 +81,9 @@ export function IncomeDynamicsChart({ points, mode, animate = true }: IncomeDyna
 
   const current = visible[nowVisible];
   const yearAgo = visible[nowVisible - 12];
-  const change = yearAgo && yearAgo.value > 0 ? ((current.value - yearAgo.value) / yearAgo.value) * 100 : null;
+  const rawChange = yearAgo && yearAgo.value > 0 ? ((current.value - yearAgo.value) / yearAgo.value) * 100 : null;
+  // A flat line (e.g. only fixed amounts) has nothing to report.
+  const change = rawChange != null && Math.abs(rawChange) >= 0.05 ? rawChange : null;
   const focus = active != null ? visible[active] : null;
 
   const handlePointer = (e: PointerEvent<SVGSVGElement>) => {

@@ -5,8 +5,6 @@ import { useExchangeRates } from '@/hooks/use-exchange-rates';
 import { normalizeCurrency, updateExchangeRate } from '@/services/exchange-rates';
 import { Card, Section } from '@/components/ds/surface';
 
-const COMMON_CURRENCIES = ['USD', 'EUR', 'CNY'] as const;
-
 export function ExchangeRatesSettings() {
   const assets = useLiveQuery(() => db.assets.toArray(), [], []);
   const rates = useExchangeRates();
@@ -21,7 +19,6 @@ export function ExchangeRatesSettings() {
     const currency = normalizeCurrency(rate.currency);
     if (currency !== 'RUB') currencies.add(currency);
   }
-  for (const currency of COMMON_CURRENCIES) currencies.add(currency);
 
   const rateByCurrency = new Map(rates.map((rate) => [normalizeCurrency(rate.currency), rate]));
   const sortedCurrencies = [...currencies].sort();
@@ -42,6 +39,11 @@ export function ExchangeRatesSettings() {
   return (
     <Section title="Курсы валют" description="Для пересчёта валютных активов и выплат в рубли.">
       <Card className="overflow-hidden px-4">
+        {sortedCurrencies.length === 0 && (
+          <div className="py-4 text-[length:var(--hi-text-caption)] leading-snug text-[var(--hi-text-3)]">
+            Валютных активов нет. Курс появится здесь, когда вы добавите актив в долларах, евро или юанях.
+          </div>
+        )}
         {sortedCurrencies.map((currency) => {
           const rate = rateByCurrency.get(currency);
           const value = drafts[currency] ?? (rate ? String(rate.rateToRub) : '');

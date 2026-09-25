@@ -16,8 +16,8 @@ interface SummaryCardProps {
 export function SummaryCard({ incomePerMonth, totalValue, yieldPercent, portfolioSharePercent, badges }: SummaryCardProps) {
   return (
     <Card glow className="p-5">
-      <div className="flex items-center justify-between gap-2">
-        <div className="hi-eyebrow">Доход в месяц</div>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="hi-eyebrow whitespace-nowrap">Доход в месяц</div>
         <div className="flex flex-wrap justify-end gap-1.5">
           <NetOfTaxBadge />
           {badges}

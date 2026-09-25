@@ -25,10 +25,8 @@ export function BottomSheet({ open, onOpenChange, title, description, hideDescri
       <Dialog.Portal>
         <Dialog.Overlay className="hi-sheet-overlay fixed inset-0 z-50 bg-[var(--hi-overlay)] backdrop-blur-[2px]" />
         <Dialog.Content
-          data-slot="sheet-content"
-          data-side="bottom"
           className={cn(
-            'hi-sheet fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[92dvh] w-full max-w-[560px] flex-col',
+            'hi-sheet fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[92dvh] w-full max-w-[560px] flex-col overflow-x-hidden [overflow-wrap:anywhere]',
             'rounded-t-[28px] border-t border-[var(--hi-line-strong)] bg-[var(--hi-raised)] text-[var(--hi-text)]',
             'shadow-[0_-24px_60px_-20px_rgba(0,0,0,0.9)] outline-none',
             className,

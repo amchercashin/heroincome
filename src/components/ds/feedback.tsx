@@ -67,7 +67,7 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
       {typeof document !== 'undefined' && createPortal(
         <div
           className="pointer-events-none fixed inset-x-0 z-[70] flex flex-col items-center gap-2 px-4"
-          style={{ bottom: 'calc(var(--hi-tabbar-h) + var(--hi-safe-bottom) + 20px)' }}
+          style={{ top: 'calc(max(12px, var(--hi-safe-top)) + 8px)' }}
           aria-live="polite"
         >
           {toasts.map((t) => (
@@ -77,7 +77,7 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
               className={cn(
                 'pointer-events-auto flex max-w-[420px] items-center gap-2.5 rounded-2xl border border-[var(--hi-line-strong)]',
                 'bg-[var(--hi-raised)]/95 px-4 py-3 text-[length:var(--hi-text-body)] text-[var(--hi-text)] backdrop-blur-xl',
-                'shadow-[0_16px_40px_-12px_rgba(0,0,0,0.9)] animate-[hi-toast-in_0.35s_var(--hi-ease-spring)_both] [&_svg]:size-[18px] [&_svg]:shrink-0',
+                'shadow-[0_16px_40px_-12px_rgba(0,0,0,0.9)] animate-[hi-toast-in-top_0.35s_var(--hi-ease-spring)_both] [&_svg]:size-[18px] [&_svg]:shrink-0',
               )}
             >
               {TOAST_ICON[t.tone]}

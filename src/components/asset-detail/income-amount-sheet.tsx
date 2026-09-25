@@ -56,7 +56,7 @@ export function IncomeAmountSheet({ open, onOpenChange, annualIncome, calculated
       open={open}
       onOpenChange={onOpenChange}
       title="Своя сумма дохода"
-      description="Доход на 1 бумагу (или на объект) до НДФЛ. Он будет учитываться каждый месяц, пока вы его не измените, — записывать выплаты не нужно."
+      description="Сколько приносит одна бумага или объект, до НДФЛ. Сумма учитывается каждый месяц, пока вы её не измените, — записывать выплаты не нужно."
       footer={
         <Button variant="primary" size="lg" block disabled={!valid} onClick={save}>
           Сохранить

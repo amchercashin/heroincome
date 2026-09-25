@@ -141,6 +141,17 @@ describe('resolveSecurityInfo', () => {
     expect(result).toEqual({ secid: 'SBER', primaryBoardId: 'TQBR', market: 'shares' });
   });
 
+  it('returns the MOEX short name when present', async () => {
+    vi.stubGlobal('fetch', mockFetch({
+      securities: {
+        columns: ['secid', 'shortname', 'primary_boardid', 'group', 'is_traded'],
+        data: [['SBER', 'Сбербанк', 'TQBR', 'stock_shares', 1]],
+      },
+    }));
+    const result = await resolveSecurityInfo('SBER');
+    expect(result).toEqual({ secid: 'SBER', primaryBoardId: 'TQBR', market: 'shares', shortName: 'Сбербанк' });
+  });
+
   it('resolves bond ticker to TQOB/bonds', async () => {
     vi.stubGlobal('fetch', mockFetch({
       securities: {
