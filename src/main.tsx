@@ -18,7 +18,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-const SPLASH_STORAGE_KEY = 'rt-splash-seen';
+const SPLASH_STORAGE_KEY = 'rt-splash-seen-v2';
 const SPLASH_DURATION_MS = 1900;
 
 // Splash: the animation itself is pure CSS in index.html. Show it once per brand
