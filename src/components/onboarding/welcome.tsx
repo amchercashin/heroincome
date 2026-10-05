@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Bot, FileUp, Landmark, LineChart, Lock, PenLine, Sparkles } from 'lucide-react';
 import { db } from '@/db/database';
-import { BrandMark } from '@/components/ds/brand-mark';
+import { BrandMark, Wordmark } from '@/components/ds/brand-mark';
 import { Button } from '@/components/ds/button';
 import { isWelcomeDone, markWelcomeDone } from '@/lib/hints';
 import { loadDemoPortfolio } from '@/services/demo-portfolio';
@@ -154,7 +154,9 @@ export function Welcome() {
             <BrandMark framed className="relative size-28 drop-shadow-[0_20px_40px_rgba(0,0,0,0.6)] animate-[hi-fade-scale-in_0.9s_var(--hi-ease-out)_both]" />
           </div>
           <div className="mt-10">
-            <SlideTitle>Рантье</SlideTitle>
+            <SlideTitle>
+              <Wordmark inherit />
+            </SlideTitle>
           </div>
           <SlideText>
             Учёт пассивного дохода. Не котировки и не «плюс-минус за день», а деньги, которые капитал приносит вам каждый месяц.

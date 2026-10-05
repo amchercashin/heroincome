@@ -41,11 +41,51 @@ export function BrandMark({ className, framed = false }: { className?: string; f
   );
 }
 
-export function Wordmark({ className }: { className?: string }) {
+/**
+ * The wordmark's first letter: the same Cormorant «Р» with a ruble crossbar, gold, sized in em
+ * so it sits in a line of text like an ordinary capital (viewBox: advance width × cap height).
+ */
+export function RubleP({ className }: { className?: string }) {
+  const id = useId().replace(/:/g, '');
   return (
-    <span className={cn('inline-flex items-center gap-1.5', className)}>
-      <BrandMark className="size-[20px]" />
-      <span className="font-serif text-[23px] font-medium leading-none tracking-[0.01em] text-[var(--hi-text)]">Рантье</span>
+    <svg
+      viewBox="0 -640 535 640"
+      aria-hidden="true"
+      className={cn('shrink-0 overflow-visible', className)}
+      style={{ height: '0.64em', width: '0.535em' }}
+    >
+      <defs>
+        <linearGradient id={`g${id}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#f3dfb0" />
+          <stop offset="1" stopColor="#c3a164" />
+        </linearGradient>
+      </defs>
+      <g fill={`url(#g${id})`} stroke={`url(#g${id})`} strokeWidth="10" strokeLinejoin="round">
+        <path d={GLYPH} />
+        <rect x="28" y="-196" width="300" height="20" rx="4" />
+      </g>
+    </svg>
+  );
+}
+
+/**
+ * «Рантье» with the first letter drawn as the gold ruble «Р». `inherit` keeps the surrounding
+ * font (headings); by default it is the compact header size. Screen readers get the plain word.
+ */
+export function Wordmark({ className, inherit = false }: { className?: string; inherit?: boolean }) {
+  return (
+    <span
+      className={cn(
+        'inline-flex items-baseline',
+        !inherit && 'font-serif text-[23px] font-medium leading-none tracking-[0.01em] text-[var(--hi-text)]',
+        className,
+      )}
+    >
+      <span className="sr-only">Рантье</span>
+      <span aria-hidden="true" className="inline-flex items-baseline">
+        <RubleP />
+        <span>антье</span>
+      </span>
     </span>
   );
 }

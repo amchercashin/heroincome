@@ -104,7 +104,7 @@ Page navigation uses the View Transitions API. `withViewTransition(cb, direction
 
 Apply via `text-[length:var(--hi-text-heading)]`. Prefer a token over hardcoded `text-[Xpx]`. Exception: `text-base` (16px) on inputs must stay for iOS zoom prevention.
 
-**Brand** — name «Рантье», monogram = Cormorant «Р» with a ruble crossbar (`BrandMark`; icons in `public/` are generated from the same path). IndexedDB name `HeroIncomeDB` and the deploy path `/heroincome/` are intentionally unchanged — renaming them would lose user data / break installs.
+**Brand** — name «Рантье», monogram = Cormorant «Р» with a ruble crossbar (`BrandMark`; icons in `public/` are generated from the same path). The wordmark (`Wordmark`, also the splash in `index.html`) writes the name with that «Р» as a gold first letter followed by «антье» — use it wherever the name is shown as a title; in running text the name stays plain. IndexedDB name `HeroIncomeDB` and the deploy path `/heroincome/` are intentionally unchanged — renaming them would lose user data / break installs.
 
 ## Conventions
 

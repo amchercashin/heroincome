@@ -4,7 +4,7 @@ import { Download, Lightbulb, Sparkles, Trash2, Upload } from 'lucide-react';
 import { withViewTransition } from '@/lib/view-transition';
 import { AppShell } from '@/components/layout/app-shell';
 import { Card, ListRow, Section } from '@/components/ds/surface';
-import { BrandMark } from '@/components/ds/brand-mark';
+import { BrandMark, Wordmark } from '@/components/ds/brand-mark';
 import { useFeedback } from '@/components/ds/feedback';
 import { clearAllData } from '@/services/app-settings';
 import { exportAllData, importAllData } from '@/services/backup';
@@ -132,7 +132,7 @@ export function SettingsPage() {
 
       <div className="mt-12 flex flex-col items-center text-center">
         <BrandMark framed className="size-14" />
-        <div className="mt-3 font-serif text-[26px] leading-none text-[var(--hi-text)]">Рантье</div>
+        <Wordmark className="mt-3 text-[26px]" />
         <div className="mt-1.5 text-[length:var(--hi-text-caption)] text-[var(--hi-text-3)]">Капитал, который платит</div>
         <div className="mt-1 text-[length:var(--hi-text-micro)] text-[var(--hi-text-3)]">
           Данные: Мосбиржа, dohod.ru · работает офлайн
