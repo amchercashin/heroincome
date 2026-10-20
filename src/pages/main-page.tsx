@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileUp, PenLine, Sparkles, X } from 'lucide-react';
+import { Download, FileUp, PenLine, ShieldCheck, Sparkles, X } from 'lucide-react';
 import { AppShell } from '@/components/layout/app-shell';
 import { SyncButton } from '@/components/layout/sync-button';
 import { IncomeHero, type IncomePeriod } from '@/components/main/income-hero';
@@ -16,6 +16,8 @@ import { TransitionLink } from '@/components/ui/transition-link';
 import { usePortfolioStats } from '@/hooks/use-portfolio-stats';
 import { useInstallPrompt } from '@/hooks/use-install-prompt';
 import { useDemoAccountId } from '@/hooks/use-demo';
+import { useBackupReminder } from '@/hooks/use-backup-reminder';
+import { useNdflRates } from '@/hooks/use-ndfl-rates';
 import { InstallButton } from '@/components/install-button';
 import { upcomingPayments } from '@/services/income-projection';
 import { loadDemoPortfolio, removeDemoPortfolio } from '@/services/demo-portfolio';
@@ -40,6 +42,10 @@ export function MainPage() {
   const demoAccountId = useDemoAccountId();
   const navigate = useNavigate();
   const { toast, confirm } = useFeedback();
+  const backup = useBackupReminder();
+  const ndflRates = useNdflRates();
+  // The hero promises "after tax" only when some rate is actually set for the categories held.
+  const taxed = categories.some((c) => (ndflRates.get(c.type) ?? 0) > 0);
 
   useEffect(() => { hasVisitedMainPage = true; }, []);
 
@@ -92,6 +98,39 @@ export function MainPage() {
         </div>
       )}
 
+      {backup.show && !isEmpty && (
+        <div
+          role="note"
+          className="mb-4 rounded-2xl border border-[rgba(217,192,142,0.22)] bg-[linear-gradient(135deg,rgba(217,192,142,0.10),rgba(217,192,142,0.03))] px-4 py-3 animate-[hi-fade-slide-down_0.4s_var(--hi-ease-out)_both]"
+        >
+          <div className="flex gap-3">
+            <ShieldCheck className="mt-0.5 size-4 shrink-0 text-[var(--hi-gold)]" />
+            <div className="min-w-0 flex-1">
+              <div className="text-[length:var(--hi-text-body)] font-semibold text-[var(--hi-text)]">Сохраните бэкап</div>
+              <div className="mt-0.5 text-[length:var(--hi-text-caption)] leading-relaxed text-[var(--hi-text-2)]">
+                Портфель хранится только на этом устройстве. Файл бэкапа вернёт всё, если телефон сменится или браузер очистит данные.
+              </div>
+              <div className="mt-2.5 flex gap-2">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  icon={<Download />}
+                  onClick={async () => {
+                    await backup.download();
+                    toast('Бэкап сохранён');
+                  }}
+                >
+                  Скачать бэкап
+                </Button>
+                <Button variant="ghost" size="sm" onClick={backup.later}>
+                  Позже
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {isEmpty ? (
         <EmptyState
           icon={<Sparkles />}
@@ -119,6 +158,7 @@ export function MainPage() {
             mode={mode}
             onModeChange={changeMode}
             animate={animate}
+            taxed={taxed}
           />
 
           <div className="mt-8" style={animate ? { animation: 'hi-fade-slide-up 0.7s var(--hi-ease-out) 0.65s both' } : undefined}>

@@ -1,4 +1,5 @@
 import { useCountUp } from '@/hooks/use-count-up';
+import { TransitionLink } from '@/components/ui/transition-link';
 import { Segmented } from '@/components/ds/segmented';
 import { NBSP, formatCurrency, formatCurrencyFull, formatPercent } from '@/lib/utils';
 
@@ -14,6 +15,8 @@ interface IncomeHeroProps {
   mode: IncomePeriod;
   onModeChange: (mode: IncomePeriod) => void;
   animate?: boolean;
+  /** False when every NDFL rate in play is 0% — the amount is then gross, and the label says so. */
+  taxed?: boolean;
 }
 
 function splitAmount(value: number | null): { digits: string; empty: boolean } {
@@ -21,7 +24,7 @@ function splitAmount(value: number | null): { digits: string; empty: boolean } {
   return { digits: formatCurrencyFull(value).replace(`${NBSP}₽`, ''), empty: false };
 }
 
-export function IncomeHero({ income, incomePerYear, yieldPercent, totalValue, mode, onModeChange, animate = true }: IncomeHeroProps) {
+export function IncomeHero({ income, incomePerYear, yieldPercent, totalValue, mode, onModeChange, animate = true, taxed = true }: IncomeHeroProps) {
   const animated = useCountUp(income, animate);
   const { digits } = splitAmount(animated);
   const perDay = incomePerYear != null && incomePerYear > 0 ? incomePerYear / 365 : null;
@@ -69,9 +72,20 @@ export function IncomeHero({ income, incomePerYear, yieldPercent, totalValue, mo
         className="relative mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[length:var(--hi-text-caption)] text-[var(--hi-text-3)]"
         {...a('hi-fade-in 0.6s ease-out 0.45s both')}
       >
-        <span className="rounded-full border border-[var(--hi-line)] px-2 py-0.5 text-[length:var(--hi-text-micro)] font-semibold uppercase tracking-[0.12em] text-[var(--hi-text-2)]">
-          после НДФЛ
-        </span>
+        {taxed ? (
+          <span className="rounded-full border border-[var(--hi-line)] px-2 py-0.5 text-[length:var(--hi-text-micro)] font-semibold uppercase tracking-[0.12em] text-[var(--hi-text-2)]">
+            после НДФЛ
+          </span>
+        ) : (
+          <TransitionLink
+            to="/settings"
+            direction="tab"
+            title="Ставка НДФЛ не задана — суммы до налога. Нажмите, чтобы указать ставку"
+            className="rounded-full border border-[var(--hi-line)] px-2 py-0.5 text-[length:var(--hi-text-micro)] font-semibold uppercase tracking-[0.12em] text-[var(--hi-text-2)]"
+          >
+            до НДФЛ
+          </TransitionLink>
+        )}
         {perDay != null && <span>≈{NBSP}{formatCurrencyFull(perDay)} в день</span>}
       </div>
 

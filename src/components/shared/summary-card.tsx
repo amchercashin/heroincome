@@ -10,16 +10,18 @@ interface SummaryCardProps {
   portfolioSharePercent: number | null;
   /** Extra badges next to "после НДФЛ" (e.g. source of the income figure). */
   badges?: ReactNode;
+  /** False when the NDFL rate for this category is 0% — the badge then reads "до НДФЛ". */
+  taxed?: boolean;
 }
 
 /** Income-first summary: monthly income large, then year / value / yield / share. */
-export function SummaryCard({ incomePerMonth, totalValue, yieldPercent, portfolioSharePercent, badges }: SummaryCardProps) {
+export function SummaryCard({ incomePerMonth, totalValue, yieldPercent, portfolioSharePercent, badges, taxed = true }: SummaryCardProps) {
   return (
     <Card glow className="p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="hi-eyebrow whitespace-nowrap">Доход в месяц</div>
         <div className="flex flex-wrap justify-end gap-1.5">
-          <NetOfTaxBadge />
+          <NetOfTaxBadge taxed={taxed} />
           {badges}
         </div>
       </div>

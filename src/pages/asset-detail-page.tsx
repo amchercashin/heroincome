@@ -14,6 +14,7 @@ import { Button } from '@/components/ds/button';
 import { Hint } from '@/components/ds/hint';
 import { useAsset, updateAsset } from '@/hooks/use-assets';
 import { usePortfolioStats } from '@/hooks/use-portfolio-stats';
+import { useNdflRates } from '@/hooks/use-ndfl-rates';
 import { usePaymentHistory } from '@/hooks/use-payment-history';
 import { useHoldingsByAsset } from '@/hooks/use-holdings';
 import { useAccounts } from '@/hooks/use-accounts';
@@ -34,6 +35,7 @@ export function AssetDetailPage() {
   const history = usePaymentHistory(assetId);
   const holdings = useHoldingsByAsset(assetId);
   const accounts = useAccounts();
+  const ndflRates = useNdflRates();
   const [editIncome, setEditIncome] = useState(false);
   const [editFrequency, setEditFrequency] = useState(false);
 
@@ -93,6 +95,7 @@ export function AssetDetailPage() {
       : `Сумма ${calculated.usedPayments.length} ${calculated.usedPayments.length === 1 ? 'выплаты' : 'выплат'} за 12 месяцев`;
   // "на 1 бумагу" for securities, "на 1 шт" for several units, nothing for a single object.
   const perUnitLabel = exchange ? 'на 1 бумагу' : totalQuantity === 1 ? '' : 'на 1 шт';
+  const taxed = (ndflRates.get(asset.type) ?? 0) > 0;
 
   return (
     <AppShell back={`/category/${encodeURIComponent(asset.type)}`} title={asset.name} subtitle={identifiers}>
@@ -102,6 +105,7 @@ export function AssetDetailPage() {
         yieldPercent={stats?.yieldPercent ?? null}
         portfolioSharePercent={stats?.portfolioSharePercent ?? null}
         badges={<SourceBadge source={isManual ? 'manual' : 'fact'} />}
+        taxed={taxed}
       />
 
       <Section title="Как считать доход" className="mt-8">
@@ -207,7 +211,7 @@ export function AssetDetailPage() {
             </div>
             <div className="shrink-0 text-right">
               <div className="text-[length:var(--hi-text-body)] font-semibold text-[var(--hi-positive)]">+{formatCurrencyFull(next.amount)}</div>
-              <div className="mt-0.5 text-[length:var(--hi-text-micro)] text-[var(--hi-text-3)]">после НДФЛ</div>
+              <div className="mt-0.5 text-[length:var(--hi-text-micro)] text-[var(--hi-text-3)]">{taxed ? 'после НДФЛ' : 'до НДФЛ'}</div>
             </div>
           </Card>
         </Section>
@@ -242,7 +246,7 @@ export function AssetDetailPage() {
       </Section>
 
       <Section title="История" className="mt-8">
-        <PaymentHistoryChart history={computed.chartHistory} currency={currency} />
+        <PaymentHistoryChart history={computed.chartHistory} currency={currency} unitLabel={perUnitLabel} />
         <Button variant="secondary" block className="mt-3" icon={<History />} onClick={openPayments}>
           Все выплаты <ChevronRight className="ml-auto text-[var(--hi-text-3)]" />
         </Button>
