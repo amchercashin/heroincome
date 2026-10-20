@@ -10,8 +10,8 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then((registrations) => {
     for (const reg of registrations) {
       const scope = new URL(reg.scope).pathname;
-      if (scope === '/' || scope === '/way' || scope === '/heroincome') {
-        // Root-scope SW or missing trailing slash — leftover from old deploy
+      if (scope === '/' || scope === '/way' || scope === '/heroincome' || scope === '/heroincome/') {
+        // Root-scope SW, missing trailing slash, or the pre-rename deploy path — leftovers from old deploys
         reg.unregister();
       }
     }
