@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Download, Lightbulb, Sparkles, Trash2, Upload } from 'lucide-react';
 import { withViewTransition } from '@/lib/view-transition';
@@ -7,12 +7,15 @@ import { Card, ListRow, Section } from '@/components/ds/surface';
 import { BrandMark, Wordmark } from '@/components/ds/brand-mark';
 import { useFeedback } from '@/components/ds/feedback';
 import { clearAllData } from '@/services/app-settings';
-import { exportAllData, importAllData } from '@/services/backup';
+import { importAllData } from '@/services/backup';
+import { downloadBackup } from '@/lib/download-backup';
+import { formatBackupAge, getLastBackupAt } from '@/lib/backup-reminder';
 import { removeDemoPortfolio } from '@/services/demo-portfolio';
 import { resetHints } from '@/lib/hints';
 import { useDemoAccountId } from '@/hooks/use-demo';
 import { NdflSettings } from '@/components/settings/ndfl-settings';
 import { ExchangeRatesSettings } from '@/components/settings/exchange-rates-settings';
+import { PrivacyCard } from '@/components/settings/privacy-card';
 
 function RowIcon({ children, tone = 'gold' }: { children: React.ReactNode; tone?: 'gold' | 'danger' }) {
   return (
@@ -33,16 +36,11 @@ export function SettingsPage() {
   const { toast, confirm } = useFeedback();
   const fileRef = useRef<HTMLInputElement>(null);
   const demoAccountId = useDemoAccountId();
+  const [lastBackupAt, setLastBackupAt] = useState(getLastBackupAt);
 
   const handleExport = async () => {
-    const json = await exportAllData();
-    const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `rantie-backup-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    await downloadBackup();
+    setLastBackupAt(getLastBackupAt());
     toast('Бэкап сохранён');
   };
 
@@ -86,13 +84,21 @@ export function SettingsPage() {
 
       <ExchangeRatesSettings />
 
-      <Section title="Данные" description="Всё хранится только на этом устройстве. Сохраняйте бэкап, чтобы перенести данные или не потерять их.">
+      <Section title="Данные" description="Портфель хранится только на этом устройстве. Бэкап — единственный способ перенести его на другой телефон или вернуть, если браузер очистит данные.">
         <Card className="overflow-hidden">
-          <ListRow leading={<RowIcon><Download /></RowIcon>} title="Скачать бэкап" subtitle="JSON-файл со всеми данными" chevron onClick={handleExport} />
+          <ListRow
+            leading={<RowIcon><Download /></RowIcon>}
+            title="Скачать бэкап"
+            subtitle={`Последний: ${formatBackupAge(lastBackupAt)}`}
+            chevron
+            onClick={handleExport}
+          />
           <ListRow leading={<RowIcon><Upload /></RowIcon>} title="Восстановить из бэкапа" subtitle="Заменит текущие данные" chevron onClick={() => fileRef.current?.click()} />
         </Card>
         <input ref={fileRef} type="file" accept=".json,application/json" onChange={handleImport} className="hidden" />
       </Section>
+
+      <PrivacyCard />
 
       <Section title="Обучение">
         <Card className="overflow-hidden">

@@ -50,11 +50,18 @@ export function SourceBadge({ source, className }: { source: SourceKind; classNa
   );
 }
 
-/** Marks an amount as net of personal income tax. */
-export function NetOfTaxBadge({ className }: { className?: string }) {
+/**
+ * Marks an amount as net of personal income tax — or, when no rate is set (0%),
+ * honestly as gross, so the label never promises a deduction that was not made.
+ */
+export function NetOfTaxBadge({ className, taxed = true }: { className?: string; taxed?: boolean }) {
   return (
-    <Badge tone="neutral" className={className} title="Суммы показаны за вычетом НДФЛ по ставкам из настроек">
-      после НДФЛ
+    <Badge
+      tone="neutral"
+      className={className}
+      title={taxed ? 'Суммы показаны за вычетом НДФЛ по ставкам из настроек' : 'Ставка НДФЛ не задана — суммы до налога. Ставку можно указать в настройках'}
+    >
+      {taxed ? 'после НДФЛ' : 'до НДФЛ'}
     </Badge>
   );
 }

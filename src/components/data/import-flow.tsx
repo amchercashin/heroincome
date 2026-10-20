@@ -10,7 +10,7 @@ import { applyImportDiff } from '@/services/import-applier';
 import type { ImportDiff } from '@/services/import-diff';
 import type { ImportRecord } from '@/models/types';
 import { ImportPreview } from './import-preview';
-import { Landmark, Bot, ArrowLeft, Copy, Check } from 'lucide-react';
+import { Landmark, Bot, ArrowLeft, Copy, Check, ShieldAlert } from 'lucide-react';
 import { useSyncContext } from '@/contexts/sync-context';
 import { syncSingleAsset, isSyncable } from '@/services/moex-sync';
 import { db } from '@/db/database';
@@ -268,6 +268,12 @@ export function ImportFlow({ open, onClose, accountId, accountName }: ImportFlow
             <li><span className="font-semibold text-[var(--hi-gold)]">2.</span> Отправьте его ИИ вместе с отчётом брокера</li>
             <li><span className="font-semibold text-[var(--hi-gold)]">3.</span> Вставьте ответ ниже</li>
           </ol>
+          <p className="flex gap-2 rounded-2xl border border-[var(--hi-line)] px-3.5 py-2.5 text-[length:var(--hi-text-micro)] leading-relaxed text-[var(--hi-text-3)]">
+            <ShieldAlert className="mt-px size-3.5 shrink-0 text-[var(--hi-gold)]" />
+            <span>
+              Отчёт увидит ИИ-сервис, которому вы его отправите. ФИО и номер договора для импорта не нужны — их можно удалить из файла заранее.
+            </span>
+          </p>
           <div className="relative">
             <pre className="max-h-40 max-w-full overflow-auto whitespace-pre-wrap rounded-2xl border border-[var(--hi-line)] bg-[var(--hi-surface)] p-3.5 pr-12 text-[12px] leading-relaxed text-[var(--hi-text-3)]">
               {AI_PROMPT}

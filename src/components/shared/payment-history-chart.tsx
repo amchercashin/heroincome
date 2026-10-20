@@ -12,6 +12,8 @@ export interface ChartPaymentRecord extends PaymentRecord {
 interface PaymentHistoryChartProps {
   history: ChartPaymentRecord[];
   currency?: string;
+  /** "на 1 бумагу" / "на 1 шт" / '' for a single object (rent, a deposit). */
+  unitLabel?: string;
 }
 
 interface YearData {
@@ -24,7 +26,7 @@ interface YearData {
 const BAR_AREA = 112;
 
 /** Payments per unit, grouped by calendar year; forecasts drawn hatched on top. */
-export function PaymentHistoryChart({ history, currency = 'RUB' }: PaymentHistoryChartProps) {
+export function PaymentHistoryChart({ history, currency = 'RUB', unitLabel = 'на 1 бумагу' }: PaymentHistoryChartProps) {
   const [selected, setSelected] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const currentYear = new Date().getFullYear();
@@ -74,7 +76,7 @@ export function PaymentHistoryChart({ history, currency = 'RUB' }: PaymentHistor
   return (
     <Card className="px-4 pt-4 pb-3">
       <div className="flex items-baseline justify-between gap-3">
-        <div className="hi-eyebrow">На 1 бумагу по годам</div>
+        <div className="hi-eyebrow">{unitLabel ? `${unitLabel} по годам` : 'Выплаты по годам'}</div>
         {cagr != null && (
           <Badge tone={cagr >= 0 ? 'positive' : 'negative'} title="Среднегодовой рост выплат (CAGR)">
             {cagr >= 0 ? '+' : ''}{formatPercent(cagr)} в год
@@ -82,7 +84,7 @@ export function PaymentHistoryChart({ history, currency = 'RUB' }: PaymentHistor
         )}
       </div>
 
-      <div ref={scrollRef} className="hi-scroll-hide mt-4 flex items-end gap-1.5 overflow-x-auto pb-1" style={{ height: BAR_AREA + 40 }}>
+      <div ref={scrollRef} className="hi-scroll-hide mt-4 flex items-end gap-1.5 overflow-x-auto pb-1" style={{ height: BAR_AREA + 52 }}>
         {years.map((y, i) => {
           const isCurrent = y.year === currentYear;
           const isSelected = y.year === selected;
