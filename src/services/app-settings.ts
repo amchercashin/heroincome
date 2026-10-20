@@ -11,8 +11,22 @@ export async function clearAllData(): Promise<void> {
   await db.open();
 }
 
+/**
+ * Rate a category gets until the user picks one. 13% is what most people pay on dividends,
+ * coupons and deposit interest; an over-taxed estimate is safer than a gross one shown as net.
+ */
+export const DEFAULT_NDFL_RATE = 13;
+
+/**
+ * Rates for every category in the portfolio: the user's choice where saved,
+ * DEFAULT_NDFL_RATE otherwise. Pure calculators treat a missing key as 0%, so the
+ * default must be filled in here — this is the one place the app reads rates from.
+ */
 export async function getNdflRates(): Promise<Map<string, number>> {
-  const rows: { key: string; value: string }[] = await db.table('settings').toArray();
+  const [rows, types] = await Promise.all([
+    db.table('settings').toArray() as Promise<{ key: string; value: string }[]>,
+    db.assets.orderBy('type').uniqueKeys(),
+  ]);
   const map = new Map<string, number>();
   for (const row of rows) {
     if (row.key.startsWith(NDFL_PREFIX)) {
@@ -20,6 +34,9 @@ export async function getNdflRates(): Promise<Map<string, number>> {
       const rate = Number(row.value);
       if (isFinite(rate)) map.set(category, rate);
     }
+  }
+  for (const type of types) {
+    if (typeof type === 'string' && !map.has(type)) map.set(type, DEFAULT_NDFL_RATE);
   }
   return map;
 }
