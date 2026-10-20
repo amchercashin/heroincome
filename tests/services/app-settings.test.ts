@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { db } from '@/db/database';
-import { updateAppSetting, getNdflRates, updateNdflRate } from '@/services/app-settings';
+import { updateAppSetting, getNdflRates, updateNdflRate, DEFAULT_NDFL_RATE } from '@/services/app-settings';
+import { createAssetDraft } from '@/services/asset-factory';
 
 describe('app-settings', () => {
   beforeEach(async () => {
@@ -49,6 +50,25 @@ describe('app-settings', () => {
       const rates = await getNdflRates();
       expect(rates.size).toBe(1);
       expect(rates.has('Акции')).toBe(true);
+    });
+
+    it('gives every held category 13% until the user picks a rate', async () => {
+      await db.assets.add(createAssetDraft({ type: 'Акции', name: 'Сбер', dataSource: 'manual' }));
+      await db.assets.add(createAssetDraft({ type: 'Вклады', name: 'Вклад', dataSource: 'manual' }));
+      const rates = await getNdflRates();
+      expect(DEFAULT_NDFL_RATE).toBe(13);
+      expect(rates.get('Акции')).toBe(13);
+      expect(rates.get('Вклады')).toBe(13);
+    });
+
+    it('keeps a rate the user chose, including 0%', async () => {
+      await db.assets.add(createAssetDraft({ type: 'Акции', name: 'Сбер', dataSource: 'manual' }));
+      await db.assets.add(createAssetDraft({ type: 'Недвижимость', name: 'Студия', dataSource: 'manual' }));
+      await updateNdflRate('Акции', 0);
+      await updateNdflRate('Недвижимость', 4);
+      const rates = await getNdflRates();
+      expect(rates.get('Акции')).toBe(0);
+      expect(rates.get('Недвижимость')).toBe(4);
     });
 
     it('handles custom fractional rates', async () => {

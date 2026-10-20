@@ -136,5 +136,7 @@ test('mobile manual flow supports foreign currency asset and payment', async ({ 
 
   await page.goto('/');
   await expect(page.getByText(nb('18 тыс ₽'))).toBeVisible();
-  await expect(page.getByTestId('hero-amount')).toHaveText(nb('180'));
+  // 12 USD × 2 × 90 ₽ = 2 160 ₽ a year → 180 ₽ a month gross; the default 13% NDFL leaves 157 ₽.
+  await expect(page.getByTestId('hero-amount')).toHaveText(nb('157'));
+  await expect(page.getByText('после НДФЛ')).toBeVisible();
 });

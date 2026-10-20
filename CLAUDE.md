@@ -36,7 +36,7 @@ MOEX API / Import files → services/ (pure parsing) → Dexie DB → useLiveQue
 - **`src/components/ds/`** — the design system: `Button`/`IconButton`, `Card`/`Section`/`ListRow`/`Stat`/`EmptyState`/`AssetAvatar`, `Badge`/`SourceBadge`, `Segmented`, `BottomSheet` (Radix dialog), `Field`/`TextInput`/`SelectInput` + `parseDecimal`, `Hint` (inline dismissible coach mark), `BrandMark`/`Wordmark`, `FeedbackProvider` → `useFeedback()` for `toast()` and promise-based `confirm()`. Never use `window.confirm`/`alert`.
 - **`src/components/onboarding/welcome.tsx`** — first-launch welcome slides ending with Import / Manual / Demo. Persistence for welcome + hints lives in `src/lib/hints.ts` (`rt-welcome-done`, `rt-hint-*`).
 - **Backup reminder & privacy** — `src/lib/backup-reminder.ts` (pure `shouldRemindBackup`, dates in `rt-last-backup` / `rt-backup-snooze`), `src/lib/download-backup.ts` (the one place that saves a backup file), `useBackupReminder()` drives the nudge on the main page. `src/components/settings/privacy-card.tsx` states who sees the portfolio — keep it true to the code: the only network calls are MOEX ISS and heroincome-data on GitHub, carrying tickers/ISINs only.
-- **NDFL labels** — "после НДФЛ" is shown only when a rate > 0 is set for the categories in view; with 0% the UI says "до НДФЛ" (`NetOfTaxBadge taxed`, `IncomeHero taxed`).
+- **NDFL labels** — "после НДФЛ" is shown only when the rate for the categories in view is > 0 (13% by default); when the user sets 0% the UI says "до НДФЛ" (`NetOfTaxBadge taxed`, `IncomeHero taxed`).
 - **`src/components/ui/`** — shadcn-generated components. Do not edit by hand; use `npx shadcn@latest add <component>`. (`transition-link.tsx` is ours.)
 
 ### Source-aware income model
@@ -68,7 +68,7 @@ Dividend/distribution history uses source priority: `dohod > moex` for stocks an
 
 ### NDFL tax
 
-Per-category tax rates stored in Dexie `settings` table with `ndfl-{category}` keys. `useNdflRates()` hook provides reactive `Map<string, number>`. Tax multiplier `(1 - rate/100)` applied to income in `usePortfolioStats`, `asset-detail-page`, `category-page`. Settings UI in `src/components/settings/ndfl-rate-selector.tsx`.
+Per-category tax rates stored in Dexie `settings` table with `ndfl-{category}` keys. `getNdflRates()` fills every category held with `DEFAULT_NDFL_RATE` (13%) until the user picks a rate — pure calculators treat a missing key as 0%, so the default lives only there. `useNdflRates()` hook provides reactive `Map<string, number>`. Tax multiplier `(1 - rate/100)` applied to income in `usePortfolioStats`, `asset-detail-page`, `category-page`. Settings UI in `src/components/settings/ndfl-rate-selector.tsx`.
 
 ### Navigation & View Transitions
 
