@@ -14,7 +14,7 @@ npm run test:e2e   # Playwright smoke tests (set PW_CHROMIUM=/path/to/chromium t
 
 ## Architecture
 
-**Рантье** (repo/deploy name `heroincome`) — local-first PWA for tracking passive income from stocks, bonds, deposits, real estate, and funds. No backend — all data stored in IndexedDB via Dexie. External reads: MOEX ISS API for prices/dividends, heroincome-data repo (dohod.ru) for stock dividends with priority over MOEX.
+**Рантье** (repo/deploy name `rantie`, formerly `heroincome`) — local-first PWA for tracking passive income from stocks, bonds, deposits, real estate, and funds. No backend — all data stored in IndexedDB via Dexie. External reads: MOEX ISS API for prices/dividends, heroincome-data repo (dohod.ru) for stock dividends with priority over MOEX.
 
 **Stack:** React 19 + React Router v7 (SPA) + Dexie (IndexedDB) + Tailwind v4 + shadcn/ui + vite-plugin-pwa + Vitest
 
@@ -81,7 +81,7 @@ Page navigation uses the View Transitions API. `withViewTransition(cb, direction
 - **Vitest** — config embedded in `vite.config.ts`. Environment: `happy-dom`, globals enabled. Setup file `tests/setup.ts` imports `fake-indexeddb/auto` and `@testing-library/jest-dom/vitest`.
 - **TypeScript** — strict mode with `noUnusedLocals` and `noUnusedParameters`.
 - **PWA** — `vite-plugin-pwa` with `registerType: 'prompt'`. User gets update prompt on new deploy, not auto-reload.
-- **Deploy** — GitHub Pages at subpath `/heroincome/`. CI sets `BASE_URL=/heroincome/` env var; `vite.config.ts` reads it for `base`. Workflow in `.github/workflows/deploy.yml`.
+- **Deploy** — GitHub Pages at subpath `/rantie/` (repo renamed from `heroincome` in Oct 2026). CI sets `BASE_URL=/rantie/` env var; `vite.config.ts` reads it for `base`. Workflow in `.github/workflows/deploy.yml`. The old path `/heroincome/` is served by the user-site repo `amchercashin.github.io`: a redirect page plus a self-unregistering `sw.js` that retires the old service worker. Same origin, so IndexedDB/localStorage carry over.
 
 ### Design system (Рантье)
 
@@ -106,7 +106,7 @@ Page navigation uses the View Transitions API. `withViewTransition(cb, direction
 
 Apply via `text-[length:var(--hi-text-heading)]`. Prefer a token over hardcoded `text-[Xpx]`. Exception: `text-base` (16px) on inputs must stay for iOS zoom prevention.
 
-**Brand** — name «Рантье», monogram = Cormorant «Р» with a ruble crossbar (`BrandMark`; icons in `public/` are generated from the same path). The wordmark (`Wordmark`, also the splash in `index.html`) writes the name with that «Р» as a gold first letter followed by «антье» — use it wherever the name is shown as a title; in running text the name stays plain. IndexedDB name `HeroIncomeDB` and the deploy path `/heroincome/` are intentionally unchanged — renaming them would lose user data / break installs.
+**Brand** — name «Рантье», monogram = Cormorant «Р» with a ruble crossbar (`BrandMark`; icons in `public/` are generated from the same path). The wordmark (`Wordmark`, also the splash in `index.html`) writes the name with that «Р» as a gold first letter followed by «антье» — use it wherever the name is shown as a title; in running text the name stays plain. IndexedDB name `HeroIncomeDB` and the data repo `heroincome-data` are intentionally unchanged — users never see them, and renaming the DB would lose user data.
 
 ## Conventions
 
